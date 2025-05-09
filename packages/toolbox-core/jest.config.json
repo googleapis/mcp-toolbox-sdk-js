@@ -1,0 +1,7 @@
+{
+    "testMatch": [
+        "<rootDir>/test/**"
+    ],
+    "preset": "ts-jest",
+    "testEnvironment": "node"
+}

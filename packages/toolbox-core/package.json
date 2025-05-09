@@ -44,9 +44,5 @@
         "jest": "^29.7.0",
         "ts-jest": "^29.3.2",
         "typescript": "^5.8.3"
-    },
-    "jest": {
-        "preset": "ts-jest",
-        "testEnvironment": "node"
     }
 }

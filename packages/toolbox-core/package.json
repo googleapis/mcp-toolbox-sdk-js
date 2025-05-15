@@ -36,17 +36,12 @@
         "webpack": "webpack",
         "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
     },
-    "dependencies": {
-    },
     "devDependencies": {
+        "@types/jest": "^29.5.14",
         "cross-env": "^7.0.3",
         "gts": "^5.3.1",
         "jest": "^29.7.0",
         "ts-jest": "^29.3.2",
         "typescript": "^5.8.3"
-    },
-    "jest": {
-        "preset": "ts-jest",
-        "testEnvironment": "node"
     }
 }

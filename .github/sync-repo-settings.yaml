@@ -30,6 +30,7 @@ branchProtectionRules:
       - "conventionalcommits.org"
       - "header-check"
       # Add required status checks like presubmit tests
+      - "core-js-sdk-pr (toolbox-testing-438616)"
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
     requiresStrictStatusChecks: true

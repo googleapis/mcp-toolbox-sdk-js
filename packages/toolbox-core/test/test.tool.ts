@@ -101,7 +101,7 @@ describe('ToolboxTool', () => {
 
     it('should throw a formatted ZodError if argument validation fails', async () => {
       const currentTool = ToolboxTool(mockSession, baseURL, toolName, toolDescription, basicParamSchema);
-      const invalidArgs = { query: '' }; // Fails min(1) constraint
+      const invalidArgs = { query: '' }; // Fails because of empty string
 
       await expect(currentTool(invalidArgs)).rejects.toThrow(
         `Argument validation failed for tool "${toolName}":\n - query: Query cannot be empty`

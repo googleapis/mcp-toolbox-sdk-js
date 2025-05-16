@@ -51,7 +51,7 @@ function ToolboxTool(session: AxiosInstance, baseUrl: string, name: string, desc
     return this.toolName;
   };
   callable.getDescription = function () {
-    return this.getDescription;
+    return this.description;
   }
   callable.getParamSchema = function () {
     return this.params;

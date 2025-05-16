@@ -43,5 +43,10 @@
         "jest": "^29.7.0",
         "ts-jest": "^29.3.2",
         "typescript": "^5.8.3"
+    },
+    "dependencies": {
+        "axios": "^1.9.0",
+        "axois": "^0.0.1-security",
+        "zod": "^3.24.4"
     }
 }

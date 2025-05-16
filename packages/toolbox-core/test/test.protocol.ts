@@ -336,4 +336,17 @@ describe('createZodObjectSchemaFromParameters', () => {
         expect(getErrorMessages(result.error)).toContain('matrix.0.1: Expected number, received string');
     }
   });
+
+  it('should throw an error for an unknown parameter type in buildZodShapeFromParameter', () => {
+    const paramsWithUnknownType = [
+      {
+        name: 'faultyParam',
+        description: 'This param has a type that buildZodShapeFromParameter does not handle',
+        type: 'someUnrecognizedType' as any, // Forcing an invalid type
+      },
+    ];
+    expect(() => createZodObjectSchemaFromParameters(paramsWithUnknownType)).toThrow(
+      'Unknown parameter type: someUnrecognizedType'
+    );
+  });
 });

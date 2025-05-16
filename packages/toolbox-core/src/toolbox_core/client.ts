@@ -38,8 +38,6 @@ class ToolboxClient {
       const response: AxiosResponse = await this._session.get(url);
       const responseData = response.data;
 
-      console.log("DEBUGggggg, response data", responseData)
-
       const manifestResponse = ZodManifestSchema.safeParse(responseData);
       if (manifestResponse.success) {
         const manifest = manifestResponse.data;

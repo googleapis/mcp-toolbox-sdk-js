@@ -126,5 +126,5 @@ export function createZodObjectSchemaFromParameters(params: ParameterSchema[]): 
     for (const param of params) {
         shape[param.name] = buildZodShapeFromParameter(param);
     }
-    return z.object(shape);
+    return z.object(shape).strict();
 }

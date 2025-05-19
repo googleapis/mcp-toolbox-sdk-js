@@ -22,7 +22,6 @@ describe('ToolboxClient E2E Tests', () => {
     commonToolboxClient = new ToolboxClient('http://localhost:5000');
   });
 
-
   describe('TestBasicE2E', () => {
     let getNRowsTool: ReturnType<typeof ToolboxTool>;
 

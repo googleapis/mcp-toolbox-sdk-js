@@ -13,13 +13,11 @@
 // limitations under the License.
 
 import * as os from 'os';
-import * as path from 'path';
 import * as fs from 'fs-extra';
-import { spawn, ChildProcess } from 'child_process';
 import tmp from 'tmp';
-import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
-import { Storage } from '@google-cloud/storage';
-import { GoogleAuth } from 'google-auth-library';
+import {SecretManagerServiceClient} from '@google-cloud/secret-manager';
+import {Storage} from '@google-cloud/storage';
+import {GoogleAuth} from 'google-auth-library';
 
 /**
  * Gets environment variables.
@@ -38,7 +36,7 @@ export function getEnvVar(key: string): string {
 export async function accessSecretVersion(
   projectId: string,
   secretId: string,
-  versionId = 'latest',
+  versionId = 'latest'
 ): Promise<string> {
   const client = new SecretManagerServiceClient();
   const [version] = await client.accessSecretVersion({
@@ -57,13 +55,11 @@ export async function accessSecretVersion(
  */
 export async function createTmpFile(content: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    tmp.file({ postfix: '.tmp' }, (err, filePath, fd, cleanupCallback) => {
+    tmp.file({postfix: '.tmp'}, (err, filePath, _, _) => {
       if (err) return reject(err);
       fs.writeFile(filePath, content)
         .then(() => resolve(filePath))
         .catch(reject);
-      // Note: You'll need to manage cleanupCallback if you don't want automatic deletion on process exit
-      // For this example, we'll remove it manually after use in the fixture.
     });
   });
 }
@@ -74,7 +70,7 @@ export async function createTmpFile(content: string): Promise<string> {
 export async function downloadBlob(
   bucketName: string,
   sourceBlobName: string,
-  destinationFileName: string,
+  destinationFileName: string
 ): Promise<void> {
   const storage = new Storage();
   await storage.bucket(bucketName).file(sourceBlobName).download({

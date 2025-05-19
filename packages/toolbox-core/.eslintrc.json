@@ -3,5 +3,19 @@
     "env": {
         "node": true,
         "jest": true
-    }
+    },
+    "overrides": [
+        {
+          "files": [
+            "**/test/**/*.ts",
+            "**/*.test.ts",
+            "**/jest.globalSetup.ts",
+            "**/jest.globalTeardown.ts",
+            "**/jest.setup.ts"
+          ],
+          "rules": {
+            "n/no-unpublished-import": "off"
+          }
+        }
+      ]
 }

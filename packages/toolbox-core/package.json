@@ -34,7 +34,8 @@
         "compile": "tsc -p .",
         "prepare": "npm run compile",
         "webpack": "webpack",
-        "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
+        "test:unit": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json",
+        "coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json --coverage"
     },
     "devDependencies": {
         "@types/jest": "^29.5.14",

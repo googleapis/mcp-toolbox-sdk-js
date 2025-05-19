@@ -26,5 +26,4 @@ jobs:
         contents: 'read'
     uses: ./.github/workflows/cloud_build_failure_reporter.yml
     with:
-      # TODO: Create triggers
-      trigger_names: "core-js-sdk-test-on-merge"
+      trigger_names: "core-js-sdk-test-on-merge,core-js-sdk-test-nightly"

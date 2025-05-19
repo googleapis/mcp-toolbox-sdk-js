@@ -34,9 +34,9 @@ describe('ToolboxClient E2E Tests', () => {
       const response = await getNRowsTool({num_rows: '2'});
       const result = response['result'];
       expect(typeof result).toBe('string');
-      expect(result).toContain('test text 1');
-      expect(result).toContain('test text 2');
-      expect(result).not.toContain('test text 3');
+      expect(result).toContain('row1');
+      expect(result).toContain('row2');
+      expect(result).not.toContain('row3');
     });
 
     test('run_tool_missing_params', async () => {

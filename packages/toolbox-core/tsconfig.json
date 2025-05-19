@@ -6,7 +6,7 @@
     },
     "include": [
       "src/**/*.ts",
-      "test/*.ts",
+      "test/*.ts", "test/e2e/fixtures.ts", "test/e2e/test.e2e.ts", "test/e2e/utils.ts", "test/e2e/fixtures_final.ts",
     ],
     "exclude": [
       "node_modules",

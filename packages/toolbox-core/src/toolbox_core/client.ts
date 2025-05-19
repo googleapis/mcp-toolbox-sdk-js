@@ -26,6 +26,7 @@ class ToolboxClient {
 
   /**
    * @param {string} url - The base URL for the Toolbox service API.
+   * @param {AxiosInstance} [session] - Optional pre-configured Axios instance.
    */
   constructor(url: string, session?: AxiosInstance) {
     this._baseUrl = url;

@@ -43,7 +43,7 @@ interface ArrayParameter extends BaseParameter {
   items: ParameterSchema; // Recursive reference to the ParameterSchema type
 }
 
-type ParameterSchema =
+export type ParameterSchema =
   | StringParameter
   | IntegerParameter
   | FloatParameter
@@ -114,9 +114,7 @@ function buildZodShapeFromParameter(param: ParameterSchema): ZodTypeAny {
     default: {
       // This ensures exhaustiveness at compile time if ParameterSchema is a discriminated union
       const _exhaustiveCheck: never = param;
-      throw new Error(
-        `Unknown parameter type: ${(_exhaustiveCheck as any).type}`
-      );
+      throw new Error(`Unknown parameter type: ${_exhaustiveCheck['type']}`);
     }
   }
 }

@@ -17,6 +17,7 @@ import {
   ZodParameterSchema,
   ZodToolSchema,
   ZodManifestSchema,
+  ParameterSchema,
   createZodObjectSchemaFromParameters,
 } from '../src/toolbox_core/protocol';
 
@@ -273,7 +274,7 @@ describe('ZodManifestSchema', () => {
 
 describe('createZodObjectSchemaFromParameters', () => {
   it('should create an empty Zod object for an empty parameters array (and be strict)', () => {
-    const params: any[] = [];
+    const params: ParameterSchema[] = [];
     const schema = createZodObjectSchemaFromParameters(params);
 
     expectParseSuccess(schema, {});
@@ -285,7 +286,7 @@ describe('createZodObjectSchemaFromParameters', () => {
   });
 
   it('should create a Zod object schema from mixed parameter types and validate data', () => {
-    const params: any[] = [
+    const params: ParameterSchema[] = [
       {
         name: 'username',
         description: 'User login name',
@@ -310,7 +311,7 @@ describe('createZodObjectSchemaFromParameters', () => {
   });
 
   it('should create a Zod object schema with an array parameter', () => {
-    const params: any[] = [
+    const params: ParameterSchema[] = [
       {
         name: 'tags',
         description: 'List of tags',
@@ -333,7 +334,7 @@ describe('createZodObjectSchemaFromParameters', () => {
   });
 
   it('should create a Zod object schema with a nested array parameter', () => {
-    const params: any[] = [
+    const params: ParameterSchema[] = [
       {
         name: 'matrix',
         description: 'A matrix of numbers',
@@ -376,12 +377,12 @@ describe('createZodObjectSchemaFromParameters', () => {
   });
 
   it('should throw an error when creating schema from parameter with unknown type', () => {
-    const paramsWithUnknownType: any[] = [
+    const paramsWithUnknownType: ParameterSchema[] = [
       {
         name: 'faultyParam',
         description: 'This param has an unhandled type',
-        type: 'someUnrecognizedType' as any, // Forcing an invalid type
-      },
+        type: 'someUnrecognizedType',
+      } as unknown as ParameterSchema,
     ];
     expect(() =>
       createZodObjectSchemaFromParameters(paramsWithUnknownType)

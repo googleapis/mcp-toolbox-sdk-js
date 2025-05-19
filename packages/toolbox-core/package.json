@@ -34,10 +34,9 @@
         "compile": "tsc -p .",
         "prepare": "npm run compile",
         "webpack": "webpack",
-        "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.js",
-        "test:unit": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.js",
-        "test:e2e": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.e2e.config.js --runInBand",
-        "coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.js --coverage"
+        "test:unit": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json",
+        "test:e2e": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.e2e.config.json --runInBand",
+        "coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json --coverage"
     },
     "devDependencies": {
         "@google-cloud/secret-manager": "^6.0.1",

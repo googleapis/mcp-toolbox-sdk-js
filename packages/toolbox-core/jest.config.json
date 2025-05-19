@@ -1,7 +1,6 @@
 {
     "testMatch": [
-        "<rootDir>/test/**",
-        "!**/*.e2e.ts"
+        "<rootDir>/test/*.ts"
     ],
     "preset": "ts-jest",
     "testEnvironment": "node",

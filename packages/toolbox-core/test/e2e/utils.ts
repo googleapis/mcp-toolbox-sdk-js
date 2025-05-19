@@ -54,22 +54,25 @@ export async function accessSecretVersion(
  */
 export async function createTmpFile(content: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    tmp.file({postfix: '.tmp'}, (
-      err: Error | null,
-      filePath: string,
-      _fd: number,
-      cleanupCallback: () => void
-    ) => {
-      if (err) {
-        return reject(err);
+    tmp.file(
+      {postfix: '.tmp'},
+      (
+        err: Error | null,
+        filePath: string,
+        _fd: number,
+        cleanupCallback: () => void
+      ) => {
+        if (err) {
+          return reject(err);
+        }
+        fs.writeFile(filePath, content, 'utf-8')
+          .then(() => resolve(filePath))
+          .catch(writeErr => {
+            cleanupCallback();
+            reject(writeErr);
+          });
       }
-      fs.writeFile(filePath, content, 'utf-8')
-        .then(() => resolve(filePath))
-        .catch(writeErr => {
-          cleanupCallback();
-          reject(writeErr);
-        });
-    });
+    );
   });
 }
 

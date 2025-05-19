@@ -14,10 +14,9 @@
 
 import * as os from 'os';
 import * as fs from 'fs-extra';
-import tmp from 'tmp';
+import * as tmp from 'tmp';
 import {SecretManagerServiceClient} from '@google-cloud/secret-manager';
 import {Storage} from '@google-cloud/storage';
-import {GoogleAuth} from 'google-auth-library';
 
 /**
  * Gets environment variables.

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import {ToolboxTool} from '../src/toolbox_core/tool';
-import {z, ZodObject} from 'zod';
+import {z, ZodObject, ZodRawShape} from 'zod';
 import {AxiosInstance, AxiosResponse} from 'axios';
 
 // Global mocks for Axios
@@ -23,10 +23,10 @@ const mockSession = {
 } as unknown as AxiosInstance;
 
 // Helper to create structured API error objects for testing
-type ApiErrorWithMessage = Error & {response?: {data: any}};
+type ApiErrorWithMessage = Error & {response?: {data: unknown}};
 const createApiError = (
   message: string,
-  responseData?: any
+  responseData?: unknown
 ): ApiErrorWithMessage => {
   const error = new Error(message) as ApiErrorWithMessage;
   if (responseData !== undefined) {
@@ -42,7 +42,7 @@ describe('ToolboxTool', () => {
   const toolDescription = 'This is a description for the test tool.';
 
   // Variables to be initialized in beforeEach
-  let basicParamSchema: ZodObject<any>;
+  let basicParamSchema: ZodObject<ZodRawShape>;
   let consoleErrorSpy: jest.SpyInstance;
   let tool: ReturnType<typeof ToolboxTool>;
 
@@ -129,8 +129,8 @@ describe('ToolboxTool', () => {
         throw new Error(
           `Expected currentTool to throw a Zod validation error for tool "${toolName}", but it did not.`
         );
-      } catch (e: any) {
-        expect(e.message).toBe(
+      } catch (e) {
+        expect((e as Error).message).toBe(
           `Argument validation failed for tool "${toolName}":\n - query: Query cannot be empty`
         );
       }
@@ -156,16 +156,16 @@ describe('ToolboxTool', () => {
         throw new Error(
           'Expected currentTool to throw a Zod validation error, but it did not.'
         );
-      } catch (e: any) {
-        expect(e.message).toEqual(
+      } catch (e) {
+        expect((e as Error).message).toEqual(
           expect.stringContaining(
             `Argument validation failed for tool "${toolName}":`
           )
         );
-        expect(e.message).toEqual(
+        expect((e as Error).message).toEqual(
           expect.stringContaining('name: Name is required')
         );
-        expect(e.message).toEqual(
+        expect((e as Error).message).toEqual(
           expect.stringContaining('age: Age must be positive')
         );
       }
@@ -178,7 +178,7 @@ describe('ToolboxTool', () => {
         parse: jest.fn().mockImplementation(() => {
           throw customError;
         }),
-      } as unknown as ZodObject<any>;
+      } as unknown as ZodObject<ZodRawShape>;
       const currentTool = ToolboxTool(
         mockSession,
         baseURL,
@@ -193,8 +193,8 @@ describe('ToolboxTool', () => {
         throw new Error(
           'Expected currentTool to throw a non-Zod error during parsing, but it did not.'
         );
-      } catch (e: any) {
-        expect(e.message).toBe(
+      } catch (e) {
+        expect((e as Error).message).toBe(
           `Argument validation failed: ${String(customError)}`
         );
       }
@@ -233,13 +233,15 @@ describe('ToolboxTool', () => {
         throw new Error(
           `Expected currentTool to throw a Zod validation error for tool "${toolName}" when no args provided, but it did not.`
         );
-      } catch (e: any) {
-        expect(e.message).toEqual(
+      } catch (e) {
+        expect((e as Error).message).toEqual(
           expect.stringContaining(
             'Argument validation failed for tool "myTestTool":'
           )
         );
-        expect(e.message).toEqual(expect.stringContaining('query: Required'));
+        expect((e as Error).message).toEqual(
+          expect.stringContaining('query: Required')
+        );
       }
       expect(mockAxiosPost).not.toHaveBeenCalled();
     });
@@ -285,8 +287,8 @@ describe('ToolboxTool', () => {
         throw new Error(
           'Expected tool call to throw an API error with response data, but it did not.'
         );
-      } catch (e: any) {
-        expect(e).toBe(apiError);
+      } catch (e) {
+        expect(e as ApiErrorWithMessage).toBe(apiError);
       }
       expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs);
       expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -305,8 +307,8 @@ describe('ToolboxTool', () => {
         throw new Error(
           'Expected tool call to throw an API error without response data, but it did not.'
         );
-      } catch (e: any) {
-        expect(e).toBe(apiError);
+      } catch (e) {
+        expect(e as ApiErrorWithMessage).toBe(apiError);
       }
       expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs);
       expect(consoleErrorSpy).toHaveBeenCalledWith(

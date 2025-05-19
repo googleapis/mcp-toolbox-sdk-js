@@ -18,7 +18,9 @@ import {
   ZodManifestSchema,
   createZodObjectSchemaFromParameters,
 } from '../src/toolbox_core/protocol';
-import axios, {AxiosInstance, AxiosResponse} from 'axios';
+import axios from 'axios';
+import type {AxiosInstance, AxiosResponse} from 'axios';
+import type {ZodObject, ZodRawShape} from 'zod';
 
 // --- Mocking External Dependencies ---
 jest.mock('axios');
@@ -46,10 +48,10 @@ const MockedCreateZodObjectSchemaFromParameters =
   >;
 
 // --- Test Helper Functions ---
-type ApiErrorWithMessage = Error & {response?: {data: any}};
+type ApiErrorWithMessage = Error & {response?: {data: unknown}};
 const createApiError = (
   message: string,
-  responseData?: any
+  responseData?: unknown
 ): ApiErrorWithMessage => {
   const error = new Error(message) as ApiErrorWithMessage;
   if (responseData !== undefined) {
@@ -57,6 +59,16 @@ const createApiError = (
   }
   return error;
 };
+
+// Helper interfaces for Zod safeParse mock return values
+interface MockSafeParseSuccess<T> {
+  success: true;
+  data: T;
+}
+interface MockSafeParseError {
+  success: false;
+  error: {message: string}; // Simplified for test cases
+}
 
 describe('ToolboxClient', () => {
   const testBaseUrl = 'http://api.example.com';
@@ -82,10 +94,12 @@ describe('ToolboxClient', () => {
     it('should set baseUrl and create a new session if one is not provided', () => {
       const client = new ToolboxClient(testBaseUrl);
 
-      expect((client as any)._baseUrl).toBe(testBaseUrl);
+      expect((client as {_baseUrl: string})._baseUrl).toBe(testBaseUrl);
       expect(mockedAxios.create).toHaveBeenCalledTimes(1);
       expect(mockedAxios.create).toHaveBeenCalledWith({baseURL: testBaseUrl});
-      expect((client as any)._session.get).toBe(mockSessionGet);
+      expect((client as {_session: AxiosInstance})._session.get).toBe(
+        mockSessionGet
+      );
     });
 
     it('should set baseUrl and use the provided session if one is given', () => {
@@ -94,8 +108,10 @@ describe('ToolboxClient', () => {
       } as unknown as AxiosInstance;
       const client = new ToolboxClient(testBaseUrl, customMockSession);
 
-      expect((client as any)._baseUrl).toBe(testBaseUrl);
-      expect((client as any)._session).toBe(customMockSession);
+      expect((client as {_baseUrl: string})._baseUrl).toBe(testBaseUrl);
+      expect((client as {_session: AxiosInstance})._session).toBe(
+        customMockSession
+      );
       expect(mockedAxios.create).not.toHaveBeenCalled();
     });
   });
@@ -136,11 +152,13 @@ describe('ToolboxClient', () => {
       MockedZodManifestSchema.safeParse.mockReturnValueOnce({
         success: true,
         data: manifestData,
-      } as any);
+      } as MockSafeParseSuccess<typeof manifestData>);
       MockedCreateZodObjectSchemaFromParameters.mockReturnValueOnce(
-        zodParamsSchema as any
+        zodParamsSchema as ZodObject<ZodRawShape>
       );
-      MockedToolboxToolFactory.mockReturnValueOnce(toolInstance as any);
+      MockedToolboxToolFactory.mockReturnValueOnce(
+        toolInstance as ReturnType<typeof ToolboxTool>
+      );
 
       return {manifestData, zodParamsSchema, toolInstance};
     };
@@ -165,7 +183,7 @@ describe('ToolboxClient', () => {
         mockToolDefinition.parameters
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
-        (client as any)._session,
+        (client as {_session: AxiosInstance})._session,
         testBaseUrl,
         toolName,
         mockToolDefinition.description,
@@ -183,7 +201,7 @@ describe('ToolboxClient', () => {
       MockedZodManifestSchema.safeParse.mockReturnValueOnce({
         success: false,
         error: mockZodErrorDetail,
-      } as any);
+      } as MockSafeParseError);
 
       await expect(client.loadTool(toolName)).rejects.toThrow(
         `Invalid manifest structure received: ${mockZodErrorDetail.message}`
@@ -201,7 +219,7 @@ describe('ToolboxClient', () => {
       MockedZodManifestSchema.safeParse.mockReturnValueOnce({
         success: true,
         data: mockManifestWithoutTools,
-      } as any);
+      } as MockSafeParseSuccess<typeof mockManifestWithoutTools>);
 
       await expect(client.loadTool(toolName)).rejects.toThrow(
         `Tool "${toolName}" not found in manifest.`
@@ -221,7 +239,7 @@ describe('ToolboxClient', () => {
       MockedZodManifestSchema.safeParse.mockReturnValueOnce({
         success: true,
         data: mockManifestWithOtherTools,
-      } as any);
+      } as MockSafeParseSuccess<typeof mockManifestWithOtherTools>);
 
       await expect(client.loadTool(toolName)).rejects.toThrow(
         `Tool "${toolName}" not found in manifest.`

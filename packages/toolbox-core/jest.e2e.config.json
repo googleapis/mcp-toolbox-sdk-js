@@ -2,7 +2,7 @@
     "preset": "ts-jest",
     "testEnvironment": "node",
     "testMatch": [
-        "<rootDir>/test/**/*.e2e.ts"
+        "<rootDir>/test/e2e/*.e2e.ts"
     ],
     "globalSetup": "<rootDir>/test/e2e/jest.globalSetup.ts",
     "globalTeardown": "<rootDir>/test/e2e/jest.globalTeardown.ts",

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ToolboxClient} from '../../src/toolbox_core/client.js';
-import {ToolboxTool} from '../../src/toolbox_core/tool.js';
+import {ToolboxClient} from '../../src/toolbox_core/client';
+import {ToolboxTool} from '../../src/toolbox_core/tool';
 
 describe('ToolboxClient E2E Tests', () => {
   let commonToolboxClient: ToolboxClient;

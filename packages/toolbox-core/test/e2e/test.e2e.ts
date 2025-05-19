@@ -32,7 +32,7 @@ describe('ToolboxClient E2E Tests', () => {
 
     test('run_tool', async () => {
       const response = await getNRowsTool({num_rows: '2'});
-      const result = response["result"]
+      const result = response['result'];
       expect(typeof result).toBe('string');
       expect(result).toContain('row1');
       expect(result).toContain('row2');

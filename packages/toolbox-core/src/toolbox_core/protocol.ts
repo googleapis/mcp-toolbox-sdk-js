@@ -111,12 +111,13 @@ function buildZodShapeFromParameter(param: ParameterSchema): ZodTypeAny {
     case 'array':
       // Recursively build the schema for array items
       return z.array(buildZodShapeFromParameter(param.items));
-    default:
+    default: {
       // This ensures exhaustiveness at compile time if ParameterSchema is a discriminated union
       const _exhaustiveCheck: never = param;
       throw new Error(
         `Unknown parameter type: ${(_exhaustiveCheck as any).type}`
       );
+    }
   }
 }
 

@@ -54,11 +54,21 @@ export async function accessSecretVersion(
  */
 export async function createTmpFile(content: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    tmp.file({postfix: '.tmp'}, (err, filePath) => {
-      if (err) return reject(err);
-      fs.writeFile(filePath, content)
+    tmp.file({postfix: '.tmp'}, (
+      err: Error | null,
+      filePath: string,
+      _fd: number,
+      cleanupCallback: () => void
+    ) => {
+      if (err) {
+        return reject(err);
+      }
+      fs.writeFile(filePath, content, 'utf-8')
         .then(() => resolve(filePath))
-        .catch(reject);
+        .catch(writeErr => {
+          cleanupCallback();
+          reject(writeErr);
+        });
     });
   });
 }
@@ -82,8 +92,8 @@ export async function downloadBlob(
  * Constructs the GCS path to the toolbox binary.
  */
 export function getToolboxBinaryGcsPath(toolboxVersion: string): string {
-  const system = os.platform().toLowerCase(); // 'darwin', 'linux'
-  let arch = os.arch(); // 'amd64', 'arm64', etc.
+  const system = os.platform().toLowerCase(); // 'darwin', 'linux', 'windows'
+  let arch = os.arch(); // 'amd64', 'arm64'
 
   if (system === 'darwin' && arch === 'arm64') {
     arch = 'arm64';
@@ -94,7 +104,6 @@ export function getToolboxBinaryGcsPath(toolboxVersion: string): string {
   return `v${toolboxVersion}/${osSystemForPath}/${arch}/toolbox`;
 }
 
-// Helper to wait for a bit
 export function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }

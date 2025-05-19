@@ -12,11 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ZodObject, ZodError } from 'zod';
-import { AxiosInstance, AxiosResponse } from 'axios';
+import {ZodObject, ZodError} from 'zod';
+import {AxiosInstance, AxiosResponse} from 'axios';
 
-
-function ToolboxTool(session: AxiosInstance, baseUrl: string, name: string, description: string, paramSchema: ZodObject<any>) {
+function ToolboxTool(
+  session: AxiosInstance,
+  baseUrl: string,
+  name: string,
+  description: string,
+  paramSchema: ZodObject<any>
+) {
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
 
   const callable = async function (callArguments: Record<string, any> = {}) {
@@ -26,23 +31,28 @@ function ToolboxTool(session: AxiosInstance, baseUrl: string, name: string, desc
     } catch (error) {
       if (error instanceof ZodError) {
         const errorMessages = error.errors.map(
-          (e) => `${e.path.join(".") || "payload"}: ${e.message}`
+          e => `${e.path.join('.') || 'payload'}: ${e.message}`
         );
         throw new Error(
-          `Argument validation failed for tool "${name}":\n - ${errorMessages.join("\n - ")}`
+          `Argument validation failed for tool "${name}":\n - ${errorMessages.join('\n - ')}`
         );
       }
       throw new Error(`Argument validation failed: ${String(error)}`);
     }
 
     try {
-      const response: AxiosResponse = await session.post(toolUrl, validatedPayload);
+      const response: AxiosResponse = await session.post(
+        toolUrl,
+        validatedPayload
+      );
       return response.data;
     } catch (error) {
-      console.error(`Error posting data to ${toolUrl}:`, (error as any).response?.data || (error as any).message);
+      console.error(
+        `Error posting data to ${toolUrl}:`,
+        (error as any).response?.data || (error as any).message
+      );
       throw error;
     }
-
   };
   callable.toolName = name;
   callable.description = description;
@@ -52,10 +62,10 @@ function ToolboxTool(session: AxiosInstance, baseUrl: string, name: string, desc
   };
   callable.getDescription = function () {
     return this.description;
-  }
+  };
   callable.getParamSchema = function () {
     return this.params;
-  }
+  };
   return callable;
 }
 

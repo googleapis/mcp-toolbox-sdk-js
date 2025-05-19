@@ -11,35 +11,44 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
-import { test, expect } from './fixtures';
-import { ToolboxTool } from '../../src/toolbox_core/tool';
 
+import {ToolboxClient} from '../../src/toolbox_core/client.js';
+import {ToolboxTool} from '../../src/toolbox_core/tool.js';
 
-test.describe('TestBasicE2E', () => {
-  let getNRowsTool: ReturnType<typeof ToolboxTool>; // Declare a variable to hold the loaded tool
+describe('ToolboxClient E2E Tests', () => {
+  let commonToolboxClient: ToolboxClient;
 
-  test.beforeEach(async ({ toolboxClient }) => {
-    // Load the tool before each test in this describe block
-    getNRowsTool = await toolboxClient.loadTool('get-n-rows');
-    expect((getNRowsTool as any).toolName).toBe('get-n-rows'); // Basic assertion
+  beforeAll(async () => {
+    commonToolboxClient = new ToolboxClient('http://localhost:5000');
   });
 
-  test('run_tool', async () => { // No longer destructures getNRowsTool from fixture
-    const response = await getNRowsTool({ num_rows: '2' });
-    expect(typeof response).toBe('string');
-    expect(response).toContain('row1');
-    expect(response).toContain('row2');
-    expect(response).not.toContain('row3');
-  });
-  
-  test('run_tool_missing_params', async () => {
-    await expect(getNRowsTool())
-      .rejects.toThrowError(/missing a required argument: 'num_rows'|InputCoercionError|ValidationError/i);
-  });
 
-  test('run_tool_wrong_param_type', async () => {
-    await expect(getNRowsTool({ num_rows: 2 } as any))
-      .rejects.toThrowError(/Input should be a valid string|ValidationError|Expected string, received number/i);
+  describe('TestBasicE2E', () => {
+    let getNRowsTool: ReturnType<typeof ToolboxTool>;
+
+    beforeEach(async () => {
+      getNRowsTool = await commonToolboxClient.loadTool('get-n-rows');
+      expect(getNRowsTool.getName()).toBe('get-n-rows');
+    });
+
+    test('run_tool', async () => {
+      const response = await getNRowsTool({num_rows: '2'});
+      expect(typeof response).toBe('string');
+      expect(response).toContain('row1');
+      expect(response).toContain('row2');
+      expect(response).not.toContain('row3');
+    });
+
+    test('run_tool_missing_params', async () => {
+      await expect(getNRowsTool()).rejects.toThrow(
+        /Argument validation failed for tool "get-n-rows":\s*- num_rows: Required/
+      );
+    });
+
+    test('run_tool_wrong_param_type', async () => {
+      await expect(getNRowsTool({num_rows: 2})).rejects.toThrow(
+        /Argument validation failed for tool "get-n-rows":\s*- num_rows: Expected string, received number/
+      );
+    });
   });
 });

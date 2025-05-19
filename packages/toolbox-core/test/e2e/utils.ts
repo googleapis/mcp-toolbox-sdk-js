@@ -12,18 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as fs from 'fs';
 import * as os from 'os';
-import * as tmp from 'tmp';
+import * as path from 'path';
+import * as fs from 'fs-extra';
+import { spawn, ChildProcess } from 'child_process';
+import tmp from 'tmp';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import { Storage } from '@google-cloud/storage';
 import { GoogleAuth } from 'google-auth-library';
 
 /**
- * Gets an environment variable by key.
- * @param key - The environment variable key.
- * @returns The value of the environment variable.
- * @throws Error if the environment variable is not set.
+ * Gets environment variables.
  */
 export function getEnvVar(key: string): string {
   const value = process.env[key];
@@ -35,126 +34,88 @@ export function getEnvVar(key: string): string {
 
 /**
  * Accesses the payload of a given secret version from Secret Manager.
- * @param projectId - The Google Cloud project ID.
- * @param secretId - The ID of the secret.
- * @param versionId - The version of the secret (defaults to 'latest').
- * @returns The secret payload as a string.
- * @throws Error if the secret payload is empty.
  */
 export async function accessSecretVersion(
   projectId: string,
   secretId: string,
-  versionId = 'latest'
+  versionId = 'latest',
 ): Promise<string> {
   const client = new SecretManagerServiceClient();
-  const name = `projects/${projectId}/secrets/${secretId}/versions/${versionId}`;
-  const [response] = await client.accessSecretVersion({ name });
-
-  if (!response.payload?.data) {
-    throw new Error(`Secret ${name} payload is empty or data is missing.`);
+  const [version] = await client.accessSecretVersion({
+    name: `projects/${projectId}/secrets/${secretId}/versions/${versionId}`,
+  });
+  const payload = version.payload?.data?.toString();
+  if (!payload) {
+    throw new Error(`No payload for secret ${secretId}`);
   }
-  return response.payload.data.toString('utf-8');
+  return payload;
 }
 
 /**
- * Creates a temporary file with the given content (asynchronously).
- * The 'tmp' library handles automatic cleanup on process exit by default when keep: false.
- * @param content - The content to write to the temporary file.
- * @returns A promise that resolves with the path to the temporary file.
+ * Creates a temporary file with the given content.
+ * Returns the path to the temporary file.
  */
-export function createTmpfile(content: string): Promise<string> {
+export async function createTmpFile(content: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    // 'keep: false' means tmp will try to delete the file on process exit.
-    tmp.file({ mode: 0o600, postfix: '.txt', keep: false }, (err, filePath, _fd, cleanupCallback) => {
-      if (err) {
-        return reject(err);
-      }
-      fs.writeFile(filePath, content, (writeErr) => {
-        if (writeErr) {
-          // Attempt to cleanup if write fails, though tmp might handle it.
-          try {
-            cleanupCallback();
-          } catch (cleanupErr) {
-            console.error('Error during cleanup after write failure:', cleanupErr);
-          }
-          return reject(writeErr);
-        }
-        resolve(filePath);
-      });
+    tmp.file({ postfix: '.tmp' }, (err, filePath, fd, cleanupCallback) => {
+      if (err) return reject(err);
+      fs.writeFile(filePath, content)
+        .then(() => resolve(filePath))
+        .catch(reject);
+      // Note: You'll need to manage cleanupCallback if you don't want automatic deletion on process exit
+      // For this example, we'll remove it manually after use in the fixture.
     });
   });
 }
 
 /**
- * Creates a temporary file with the given content (synchronously) and returns a cleanup function.
- * @param content - The content to write to the temporary file.
- * @returns An object containing the file path (`name`) and a `cleanup` function.
- */
-export function createTmpfileSync(content: string): { name: string; cleanup: () => void } {
-  // 'keep: true' to manually control deletion via the returned cleanup function.
-  const tmpFile = tmp.fileSync({ mode: 0o600, postfix: '.txt', keep: true });
-  fs.writeFileSync(tmpFile.name, content);
-  return { name: tmpFile.name, cleanup: tmpFile.removeCallback };
-}
-
-/**
  * Downloads a blob from a GCS bucket.
- * @param bucketName - The name of the GCS bucket.
- * @param sourceBlobName - The name of the blob in the bucket.
- * @param destinationFileName - The local path to save the downloaded file.
  */
 export async function downloadBlob(
   bucketName: string,
   sourceBlobName: string,
-  destinationFileName: string
+  destinationFileName: string,
 ): Promise<void> {
   const storage = new Storage();
-  const options = {
+  await storage.bucket(bucketName).file(sourceBlobName).download({
     destination: destinationFileName,
-  };
-  await storage.bucket(bucketName).file(sourceBlobName).download(options);
+  });
   console.log(`Blob ${sourceBlobName} downloaded to ${destinationFileName}.`);
 }
 
 /**
- * Constructs the GCS path to the toolbox binary based on OS and architecture.
- * @param toolboxVersion - The version of the toolbox.
- * @returns The GCS path string.
+ * Constructs the GCS path to the toolbox binary.
  */
-export function getToolboxBinaryUrl(toolboxVersion: string): string {
-  const system = os.platform().toLowerCase(); // e.g., 'darwin', 'linux', 'win32'
-  let platformForUrl = system;
-  if (system === 'win32') {
-    platformForUrl = 'windows'; // Adjust if your GCS path specifically uses 'windows'
-  }
+export function getToolboxBinaryGcsPath(toolboxVersion: string): string {
+  const system = os.platform().toLowerCase(); // 'darwin', 'linux', 'win32'
+  let arch = os.arch(); // 'x64', 'arm64', etc.
 
-  let arch = os.arch(); // e.g., 'x64' (for amd64), 'arm64'
-  if (arch === 'x64') {
-    arch = 'amd64';
+  if (system === 'darwin' && arch === 'arm64') {
+    arch = 'arm64';
+  } else {
+    arch = 'amd64'; // Assuming default amd64 for others if not explicitly arm64 on darwin
   }
-
-  // Ensure toolboxVersion doesn't already have 'v'
-  const versionPrefix = toolboxVersion.startsWith('v') ? '' : 'v';
-  return `${versionPrefix}${toolboxVersion}/${platformForUrl}/${arch}/toolbox`;
+  // Adjust 'os_system' mapping if Node's os.platform() differs from Python's platform.system()
+  const osSystemForPath = system === 'win32' ? 'windows' : system;
+  return `v${toolboxVersion}/${osSystemForPath}/${arch}/toolbox`;
 }
 
 /**
- * Retrieves a Google ID token for a given client ID, typically for service-to-service authentication.
- * Assumes running on GCP or with Application Default Credentials (ADC) configured.
- * @param clientId - The audience/client ID for the ID token.
- * @returns The ID token string.
- * @throws Error if the ID token cannot be fetched.
+ * Retrieves an authentication token for Compute Engine (ID Token).
  */
 export async function getAuthToken(clientId: string): Promise<string> {
-  const auth = new GoogleAuth({
-    scopes: 'email', // 'email' scope is often used with ID tokens, but may not be strictly necessary for getIdTokenClient.
-  });
-
+  const auth = new GoogleAuth();
+  // This assumes the environment is configured to provide ID tokens (e.g., running on GCE, or gcloud auth configured)
+  // For a specific target audience (client_id for an IAP-secured resource or Cloud Run service)
   const idTokenClient = await auth.getIdTokenClient(clientId);
   const idToken = await idTokenClient.idTokenProvider.fetchIdToken(clientId);
-
   if (!idToken) {
     throw new Error('Failed to retrieve ID token.');
   }
   return idToken;
+}
+
+// Helper to wait for a bit
+export function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }

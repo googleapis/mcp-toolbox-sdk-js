@@ -37,7 +37,10 @@
         "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
     },
     "devDependencies": {
+        "@playwright/test": "^1.52.0",
         "@types/jest": "^29.5.14",
+        "@types/node": "^22.15.19",
+        "@types/tmp": "^0.2.6",
         "cross-env": "^7.0.3",
         "gts": "^5.3.1",
         "jest": "^29.7.0",
@@ -45,8 +48,12 @@
         "typescript": "^5.8.3"
     },
     "dependencies": {
+        "@google-cloud/secret-manager": "^6.0.1",
+        "@google-cloud/storage": "^7.16.0",
         "axios": "^1.9.0",
         "axois": "^0.0.1-security",
+        "google-auth-library": "^9.15.1",
+        "tmp": "^0.2.3",
         "zod": "^3.24.4"
     }
 }

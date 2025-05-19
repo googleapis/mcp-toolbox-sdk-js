@@ -17,15 +17,42 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import {ZodManifestSchema, createZodObjectSchemaFromParameters} from './protocol';
 
 class ToolboxClient {
-  /** @private */ _baseUrl;
-  /** @private */ _session;
+  /** @private */ private _baseUrl: string;
+  /** @private */ private _session: AxiosInstance;
+  /** @private */ private _abortController: AbortController | null = null;
+  /** @private */ private _isClosed: boolean = false;
 
   /**
    * @param {string} url - The base URL for the Toolbox service API.
+   * @param {AxiosInstance} [session] - Optional pre-configured Axios instance.
    */
   constructor(url: string, session?: AxiosInstance) {
     this._baseUrl = url;
-    this._session = session || axios.create({ baseURL: url });
+    if (session) {
+      this._session = session;
+    } else {
+      this._abortController = new AbortController();
+      this._session = axios.create({
+        baseURL: url,
+        signal: this._abortController.signal,
+      });
+    }
+  }
+
+  /**
+   * Closes the ToolboxClient.
+   * If the client created its own Axios session, it attempts to abort pending requests.
+   * Marks the client as closed to prevent further operations.
+   */
+  public close(): void {
+    if (this._isClosed) {
+      console.warn('ToolboxClient is already closed.');
+      return;
+    }
+    if (this._abortController) {
+      this._abortController.abort();
+    }
+    this._isClosed = true;
   }
 
   /**
@@ -33,6 +60,9 @@ class ToolboxClient {
    * @returns {ToolboxTool} - A ToolboxTool instance.
    */
   async loadTool(toolName: string): Promise<ReturnType<typeof ToolboxTool>> {
+    if (this._isClosed) {
+      throw new Error('ToolboxClient is closed. Cannot load new tools.');
+    }
     const url = `${this._baseUrl}/api/tool/${toolName}`
     try {
       const response: AxiosResponse = await this._session.get(url);

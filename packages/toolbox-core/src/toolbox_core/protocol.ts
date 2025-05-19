@@ -58,7 +58,7 @@ const ZodBaseParameter = z.object({
   authSources: z.array(z.string()).optional(),
 });
 
-export const ZodParameterSchema: z.ZodType<ParameterSchema> = z.lazy(() =>
+export const ZodParameterSchema = z.lazy(() =>
   z.discriminatedUnion('type', [
     ZodBaseParameter.extend({
       type: z.literal('string'),
@@ -77,7 +77,7 @@ export const ZodParameterSchema: z.ZodType<ParameterSchema> = z.lazy(() =>
       items: ZodParameterSchema, // Recursive reference for the item's definition
     }),
   ])
-);
+) as z.ZodType<ParameterSchema>;
 
 export const ZodToolSchema = z.object({
   description: z.string().min(1, 'Tool description cannot be empty'),

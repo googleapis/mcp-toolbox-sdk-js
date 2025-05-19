@@ -83,32 +83,16 @@ export async function downloadBlob(
  * Constructs the GCS path to the toolbox binary.
  */
 export function getToolboxBinaryGcsPath(toolboxVersion: string): string {
-  const system = os.platform().toLowerCase(); // 'darwin', 'linux', 'win32'
-  let arch = os.arch(); // 'x64', 'arm64', etc.
+  const system = os.platform().toLowerCase(); // 'darwin', 'linux'
+  let arch = os.arch(); // 'amd64', 'arm64', etc.
 
   if (system === 'darwin' && arch === 'arm64') {
     arch = 'arm64';
   } else {
-    arch = 'amd64'; // Assuming default amd64 for others if not explicitly arm64 on darwin
+    arch = 'amd64';
   }
-  // Adjust 'os_system' mapping if Node's os.platform() differs from Python's platform.system()
   const osSystemForPath = system === 'win32' ? 'windows' : system;
   return `v${toolboxVersion}/${osSystemForPath}/${arch}/toolbox`;
-}
-
-/**
- * Retrieves an authentication token for Compute Engine (ID Token).
- */
-export async function getAuthToken(clientId: string): Promise<string> {
-  const auth = new GoogleAuth();
-  // This assumes the environment is configured to provide ID tokens (e.g., running on GCE, or gcloud auth configured)
-  // For a specific target audience (client_id for an IAP-secured resource or Cloud Run service)
-  const idTokenClient = await auth.getIdTokenClient(clientId);
-  const idToken = await idTokenClient.idTokenProvider.fetchIdToken(clientId);
-  if (!idToken) {
-    throw new Error('Failed to retrieve ID token.');
-  }
-  return idToken;
 }
 
 // Helper to wait for a bit

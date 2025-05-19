@@ -13,19 +13,23 @@
 // limitations under the License.
 
 import {ToolboxTool} from './tool';
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import {ZodManifestSchema, createZodObjectSchemaFromParameters} from './protocol';
+import axios from 'axios';
+import type {AxiosInstance, AxiosResponse} from 'axios';
+import {
+  ZodManifestSchema,
+  createZodObjectSchemaFromParameters,
+} from './protocol';
 
 class ToolboxClient {
-  /** @private */ _baseUrl;
-  /** @private */ _session;
+  /** @private */ private _baseUrl: string;
+  /** @private */ private _session: AxiosInstance;
 
   /**
    * @param {string} url - The base URL for the Toolbox service API.
    */
   constructor(url: string, session?: AxiosInstance) {
     this._baseUrl = url;
-    this._session = session || axios.create({ baseURL: url });
+    this._session = session || axios.create({baseURL: url});
   }
 
   /**
@@ -33,7 +37,7 @@ class ToolboxClient {
    * @returns {ToolboxTool} - A ToolboxTool instance.
    */
   async loadTool(toolName: string): Promise<ReturnType<typeof ToolboxTool>> {
-    const url = `${this._baseUrl}/api/tool/${toolName}`
+    const url = `${this._baseUrl}/api/tool/${toolName}`;
     try {
       const response: AxiosResponse = await this._session.get(url);
       const responseData = response.data;
@@ -43,8 +47,9 @@ class ToolboxClient {
         const manifest = manifestResponse.data;
         if (manifest.tools && manifest.tools.hasOwnProperty(toolName)) {
           const specificToolSchema = manifest.tools[toolName];
-          const paramZodSchema = createZodObjectSchemaFromParameters(specificToolSchema.parameters)
-
+          const paramZodSchema = createZodObjectSchemaFromParameters(
+            specificToolSchema.parameters
+          );
           return ToolboxTool(
             this._session,
             this._baseUrl,
@@ -56,11 +61,15 @@ class ToolboxClient {
           throw new Error(`Tool "${toolName}" not found in manifest.`);
         }
       } else {
-        throw new Error(`Invalid manifest structure received: ${manifestResponse.error.message}`);
+        throw new Error(
+          `Invalid manifest structure received: ${manifestResponse.error.message}`
+        );
       }
-
     } catch (error) {
-      console.error(`Error fetching data from ${url}:`, (error as any).response?.data || (error as any).message);
+      console.error(
+        `Error fetching data from ${url}:`,
+        (error as any).response?.data || (error as any).message
+      );
       throw error;
     }
   }

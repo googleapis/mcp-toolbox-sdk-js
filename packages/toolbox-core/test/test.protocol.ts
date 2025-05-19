@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ZodError, ZodTypeAny } from 'zod';
+import {ZodError, ZodTypeAny} from 'zod';
 import {
   ZodParameterSchema,
   ZodToolSchema,
@@ -23,32 +23,34 @@ import {
 // HELPER FUNCTIONS
 
 const getErrorMessages = (error: ZodError): string[] => {
-    return error.errors.map((e) => {
-      if (e.path.length > 0) {
-        return `${e.path.join('.')}: ${e.message}`;
-      }
-      return e.message;
-    });
-};
-  
-const expectParseSuccess = (schema: ZodTypeAny, data: unknown) => {
-    const result = schema.safeParse(data);
-    expect(result.success).toBe(true);
-};
-  
-const expectParseFailure = (
-    schema: ZodTypeAny,
-    data: unknown,
-    errorMessageCheck: (errors: string[]) => void
-) => {
-    const result = schema.safeParse(data);
-    expect(result.success).toBe(false);
-  
-    if (!result.success) {
-      errorMessageCheck(getErrorMessages(result.error));
-    } else {
-      fail(`Parsing was expected to fail for ${JSON.stringify(data)} but succeeded.`);
+  return error.errors.map(e => {
+    if (e.path.length > 0) {
+      return `${e.path.join('.')}: ${e.message}`;
     }
+    return e.message;
+  });
+};
+
+const expectParseSuccess = (schema: ZodTypeAny, data: unknown) => {
+  const result = schema.safeParse(data);
+  expect(result.success).toBe(true);
+};
+
+const expectParseFailure = (
+  schema: ZodTypeAny,
+  data: unknown,
+  errorMessageCheck: (errors: string[]) => void
+) => {
+  const result = schema.safeParse(data);
+  expect(result.success).toBe(false);
+
+  if (!result.success) {
+    errorMessageCheck(getErrorMessages(result.error));
+  } else {
+    fail(
+      `Parsing was expected to fail for ${JSON.stringify(data)} but succeeded.`
+    );
+  }
 };
 
 // TESTS
@@ -57,23 +59,28 @@ describe('ZodParameterSchema', () => {
   const validParameterTestCases = [
     {
       description: 'correct string parameter',
-      data: { name: 'testString', description: 'A string', type: 'string' },
+      data: {name: 'testString', description: 'A string', type: 'string'},
     },
     {
       description: 'string parameter with authSources',
-      data: { name: 'testString', description: 'A string', type: 'string', authSources: ['google', 'custom'] },
+      data: {
+        name: 'testString',
+        description: 'A string',
+        type: 'string',
+        authSources: ['google', 'custom'],
+      },
     },
     {
       description: 'correct integer parameter',
-      data: { name: 'testInt', description: 'An integer', type: 'integer' },
+      data: {name: 'testInt', description: 'An integer', type: 'integer'},
     },
     {
       description: 'correct float parameter',
-      data: { name: 'testFloat', description: 'A float', type: 'float' },
+      data: {name: 'testFloat', description: 'A float', type: 'float'},
     },
     {
       description: 'correct boolean parameter',
-      data: { name: 'testBool', description: 'A boolean', type: 'boolean' },
+      data: {name: 'testBool', description: 'A boolean', type: 'boolean'},
     },
     {
       description: 'correct array parameter with string items',
@@ -81,7 +88,7 @@ describe('ZodParameterSchema', () => {
         name: 'testArray',
         description: 'An array of strings',
         type: 'array',
-        items: { name: 'item_name', description: 'item_desc', type: 'string' },
+        items: {name: 'item_name', description: 'item_desc', type: 'string'},
       },
     },
     {
@@ -90,7 +97,7 @@ describe('ZodParameterSchema', () => {
         name: 'testArrayInt',
         description: 'An array of integers',
         type: 'array',
-        items: { name: 'int_item', description: 'item_desc', type: 'integer' },
+        items: {name: 'int_item', description: 'item_desc', type: 'integer'},
       },
     },
     {
@@ -103,27 +110,36 @@ describe('ZodParameterSchema', () => {
           name: 'innerArray',
           description: 'Inner array of integers',
           type: 'array',
-          items: { name: 'intItem', description: 'integer item', type: 'integer' },
+          items: {
+            name: 'intItem',
+            description: 'integer item',
+            type: 'integer',
+          },
         },
       },
     },
   ];
 
-  test.each(validParameterTestCases)('should validate a $description', ({ data }) => {
-    expectParseSuccess(ZodParameterSchema, data);
-  });
+  test.each(validParameterTestCases)(
+    'should validate a $description',
+    ({data}) => {
+      expectParseSuccess(ZodParameterSchema, data);
+    }
+  );
 
   it('should invalidate a string parameter with an empty name', () => {
-    const data = { name: '', description: 'A string', type: 'string' };
-    expectParseFailure(ZodParameterSchema, data, (errors) => {
+    const data = {name: '', description: 'A string', type: 'string'};
+    expectParseFailure(ZodParameterSchema, data, errors => {
       expect(errors).toContain('name: Parameter name cannot be empty');
     });
   });
 
   it('should invalidate an array parameter with missing items definition', () => {
-    const data = { name: 'testArray', description: 'An array', type: 'array' };
-    expectParseFailure(ZodParameterSchema, data, (errors) => {
-      expect(errors).toEqual(expect.arrayContaining([expect.stringMatching(/items: Required/i)]));
+    const data = {name: 'testArray', description: 'An array', type: 'array'};
+    expectParseFailure(ZodParameterSchema, data, errors => {
+      expect(errors).toEqual(
+        expect.arrayContaining([expect.stringMatching(/items: Required/i)])
+      );
     });
   });
 
@@ -132,23 +148,31 @@ describe('ZodParameterSchema', () => {
       name: 'testArray',
       description: 'An array',
       type: 'array',
-      items: { name: '', description: 'item desc', type: 'string' },
+      items: {name: '', description: 'item desc', type: 'string'},
     };
-    expectParseFailure(ZodParameterSchema, data, (errors) => {
+    expectParseFailure(ZodParameterSchema, data, errors => {
       expect(errors).toContain('items.name: Parameter name cannot be empty');
     });
   });
 
   it('should invalidate if type is missing', () => {
-    const data = { name: 'testParam', description: 'A param' }; // type is missing
-    expectParseFailure(ZodParameterSchema, data, (errors) => {
-      expect(errors).toEqual(expect.arrayContaining([expect.stringMatching(/Invalid discriminator value/i)]));
+    const data = {name: 'testParam', description: 'A param'}; // type is missing
+    expectParseFailure(ZodParameterSchema, data, errors => {
+      expect(errors).toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(/Invalid discriminator value/i),
+        ])
+      );
     });
   });
 });
 
 describe('ZodToolSchema', () => {
-  const validParameter = { name: 'param1', description: 'String param', type: 'string' as const };
+  const validParameter = {
+    name: 'param1',
+    description: 'String param',
+    type: 'string' as const,
+  };
 
   it('should validate a correct tool schema', () => {
     const data = {
@@ -168,8 +192,8 @@ describe('ZodToolSchema', () => {
   });
 
   it('should invalidate a tool schema with an empty description', () => {
-    const data = { description: '', parameters: [validParameter] };
-    expectParseFailure(ZodToolSchema, data, (errors) => {
+    const data = {description: '', parameters: [validParameter]};
+    expectParseFailure(ZodToolSchema, data, errors => {
       expect(errors).toContain('description: Tool description cannot be empty');
     });
   });
@@ -177,10 +201,12 @@ describe('ZodToolSchema', () => {
   it('should invalidate a tool schema with an invalid parameter', () => {
     const data = {
       description: 'My test tool',
-      parameters: [{ name: '', description: 'Empty name param', type: 'string' }],
+      parameters: [{name: '', description: 'Empty name param', type: 'string'}],
     };
-    expectParseFailure(ZodToolSchema, data, (errors) => {
-      expect(errors).toContain('parameters.0.name: Parameter name cannot be empty');
+    expectParseFailure(ZodToolSchema, data, errors => {
+      expect(errors).toContain(
+        'parameters.0.name: Parameter name cannot be empty'
+      );
     });
   });
 });
@@ -188,7 +214,9 @@ describe('ZodToolSchema', () => {
 describe('ZodManifestSchema', () => {
   const validTool = {
     description: 'Tool A does something',
-    parameters: [{ name: 'input', description: 'input string', type: 'string' as const }],
+    parameters: [
+      {name: 'input', description: 'input string', type: 'string' as const},
+    ],
   };
 
   it('should validate a correct manifest schema', () => {
@@ -198,7 +226,13 @@ describe('ZodManifestSchema', () => {
         toolA: validTool,
         toolB: {
           description: 'Tool B does something else',
-          parameters: [{ name: 'count', description: 'count number', type: 'integer' as const }],
+          parameters: [
+            {
+              name: 'count',
+              description: 'count number',
+              type: 'integer' as const,
+            },
+          ],
           authRequired: ['admin'],
         },
       },
@@ -207,26 +241,32 @@ describe('ZodManifestSchema', () => {
   });
 
   it('should invalidate a manifest schema with an empty serverVersion', () => {
-    const data = { serverVersion: '', tools: { toolA: validTool } };
-    expectParseFailure(ZodManifestSchema, data, (errors) => {
+    const data = {serverVersion: '', tools: {toolA: validTool}};
+    expectParseFailure(ZodManifestSchema, data, errors => {
       expect(errors).toContain('serverVersion: Server version cannot be empty');
     });
   });
 
   it('should invalidate a manifest schema with an empty tool name', () => {
-    const data = { serverVersion: '1.0.0', tools: { '': validTool } };
-    expectParseFailure(ZodManifestSchema, data, (errors) => {
-      expect(errors).toEqual(expect.arrayContaining([expect.stringMatching(/Tool name cannot be empty/i)]));
+    const data = {serverVersion: '1.0.0', tools: {'': validTool}};
+    expectParseFailure(ZodManifestSchema, data, errors => {
+      expect(errors).toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(/Tool name cannot be empty/i),
+        ])
+      );
     });
   });
 
   it('should invalidate a manifest schema with an invalid tool structure', () => {
     const data = {
       serverVersion: '1.0.0',
-      tools: { toolA: { description: '', parameters: [] } },
+      tools: {toolA: {description: '', parameters: []}},
     };
-    expectParseFailure(ZodManifestSchema, data, (errors) => {
-      expect(errors).toContain('tools.toolA.description: Tool description cannot be empty');
+    expectParseFailure(ZodManifestSchema, data, errors => {
+      expect(errors).toContain(
+        'tools.toolA.description: Tool description cannot be empty'
+      );
     });
   });
 });
@@ -237,25 +277,34 @@ describe('createZodObjectSchemaFromParameters', () => {
     const schema = createZodObjectSchemaFromParameters(params);
 
     expectParseSuccess(schema, {});
-    expectParseFailure(schema, { anyKey: 'anyValue' }, (errors) => {
-      expect(errors.some(e => /Unrecognized key\(s\) in object: 'anyKey'/.test(e))).toBe(true);
+    expectParseFailure(schema, {anyKey: 'anyValue'}, errors => {
+      expect(
+        errors.some(e => /Unrecognized key\(s\) in object: 'anyKey'/.test(e))
+      ).toBe(true);
     });
   });
 
   it('should create a Zod object schema from mixed parameter types and validate data', () => {
     const params: any[] = [
-      { name: 'username', description: 'User login name', type: 'string' as const },
-      { name: 'age', description: 'User age', type: 'integer' as const },
-      { name: 'isActive', description: 'User status', type: 'boolean' as const },
+      {
+        name: 'username',
+        description: 'User login name',
+        type: 'string' as const,
+      },
+      {name: 'age', description: 'User age', type: 'integer' as const},
+      {name: 'isActive', description: 'User status', type: 'boolean' as const},
     ];
     const schema = createZodObjectSchemaFromParameters(params);
 
-    expectParseSuccess(schema, { username: 'john_doe', age: 30, isActive: true });
+    expectParseSuccess(schema, {username: 'john_doe', age: 30, isActive: true});
 
-    expectParseFailure(schema, { username: 'john_doe', age: '30', isActive: true }, (errors) =>
-      expect(errors).toContain('age: Expected number, received string')
+    expectParseFailure(
+      schema,
+      {username: 'john_doe', age: '30', isActive: true},
+      errors =>
+        expect(errors).toContain('age: Expected number, received string')
     );
-    expectParseFailure(schema, { username: 'john_doe', isActive: true }, (errors) =>
+    expectParseFailure(schema, {username: 'john_doe', isActive: true}, errors =>
       expect(errors).toContain('age: Required')
     );
   });
@@ -266,15 +315,19 @@ describe('createZodObjectSchemaFromParameters', () => {
         name: 'tags',
         description: 'List of tags',
         type: 'array' as const,
-        items: { name: 'tag_item', description: 'A tag', type: 'string' as const },
+        items: {
+          name: 'tag_item',
+          description: 'A tag',
+          type: 'string' as const,
+        },
       },
-      { name: 'id', description: 'An identifier', type: 'integer' as const },
+      {name: 'id', description: 'An identifier', type: 'integer' as const},
     ];
     const schema = createZodObjectSchemaFromParameters(params);
 
-    expectParseSuccess(schema, { tags: ['news', 'tech'], id: 1 });
+    expectParseSuccess(schema, {tags: ['news', 'tech'], id: 1});
 
-    expectParseFailure(schema, { tags: ['news', 123], id: 1 }, (errors) => {
+    expectParseFailure(schema, {tags: ['news', 123], id: 1}, errors => {
       expect(errors).toContain('tags.1: Expected string, received number');
     });
   });
@@ -289,17 +342,37 @@ describe('createZodObjectSchemaFromParameters', () => {
           name: 'row',
           description: 'A row in the matrix',
           type: 'array' as const,
-          items: { name: 'cell', description: 'A cell value', type: 'float' as const },
+          items: {
+            name: 'cell',
+            description: 'A cell value',
+            type: 'float' as const,
+          },
         },
       },
     ];
     const schema = createZodObjectSchemaFromParameters(params);
 
-    expectParseSuccess(schema, { matrix: [[1.0, 2.5], [3.0, 4.5]] });
-
-    expectParseFailure(schema, { matrix: [[1.0, '2.5'], [3.0, 4.5]] }, (errors) => {
-      expect(errors).toContain('matrix.0.1: Expected number, received string');
+    expectParseSuccess(schema, {
+      matrix: [
+        [1.0, 2.5],
+        [3.0, 4.5],
+      ],
     });
+
+    expectParseFailure(
+      schema,
+      {
+        matrix: [
+          [1.0, '2.5'],
+          [3.0, 4.5],
+        ],
+      },
+      errors => {
+        expect(errors).toContain(
+          'matrix.0.1: Expected number, received string'
+        );
+      }
+    );
   });
 
   it('should throw an error when creating schema from parameter with unknown type', () => {
@@ -310,8 +383,8 @@ describe('createZodObjectSchemaFromParameters', () => {
         type: 'someUnrecognizedType' as any, // Forcing an invalid type
       },
     ];
-    expect(() => createZodObjectSchemaFromParameters(paramsWithUnknownType)).toThrow(
-      'Unknown parameter type: someUnrecognizedType'
-    );
+    expect(() =>
+      createZodObjectSchemaFromParameters(paramsWithUnknownType)
+    ).toThrow('Unknown parameter type: someUnrecognizedType');
   });
 });

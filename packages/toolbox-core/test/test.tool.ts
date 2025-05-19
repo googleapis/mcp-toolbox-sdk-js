@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ToolboxTool } from '../src/toolbox_core/tool';
-import { z, ZodObject } from 'zod';
-import { AxiosInstance, AxiosResponse } from 'axios';
+import {ToolboxTool} from '../src/toolbox_core/tool';
+import {z, ZodObject} from 'zod';
+import {AxiosInstance, AxiosResponse} from 'axios';
 
 // Global mocks for Axios
 const mockAxiosPost = jest.fn();
@@ -23,11 +23,14 @@ const mockSession = {
 } as unknown as AxiosInstance;
 
 // Helper to create structured API error objects for testing
-type ApiErrorWithMessage = Error & { response?: { data: any } };
-const createApiError = (message: string, responseData?: any): ApiErrorWithMessage => {
+type ApiErrorWithMessage = Error & {response?: {data: any}};
+const createApiError = (
+  message: string,
+  responseData?: any
+): ApiErrorWithMessage => {
   const error = new Error(message) as ApiErrorWithMessage;
   if (responseData !== undefined) {
-    error.response = { data: responseData };
+    error.response = {data: responseData};
   }
   return error;
 };
@@ -49,7 +52,7 @@ describe('ToolboxTool', () => {
 
     // Initialize a basic schema used by many tests
     basicParamSchema = z.object({
-      query: z.string().min(1, "Query cannot be empty"),
+      query: z.string().min(1, 'Query cannot be empty'),
       limit: z.number().optional(),
     });
 
@@ -64,7 +67,13 @@ describe('ToolboxTool', () => {
 
   describe('Factory Properties and Getters', () => {
     beforeEach(() => {
-      tool = ToolboxTool(mockSession, baseURL, toolName, toolDescription, basicParamSchema);
+      tool = ToolboxTool(
+        mockSession,
+        baseURL,
+        toolName,
+        toolDescription,
+        basicParamSchema
+      );
     });
 
     it('should correctly assign toolName, description, and params to the callable function', () => {
@@ -88,10 +97,16 @@ describe('ToolboxTool', () => {
 
   describe('Callable Function - Argument Validation', () => {
     it('should call paramSchema.parse with the provided arguments', async () => {
-      const currentTool = ToolboxTool(mockSession, baseURL, toolName, toolDescription, basicParamSchema);
+      const currentTool = ToolboxTool(
+        mockSession,
+        baseURL,
+        toolName,
+        toolDescription,
+        basicParamSchema
+      );
       const parseSpy = jest.spyOn(basicParamSchema, 'parse');
-      const callArgs = { query: 'test query' };
-      mockAxiosPost.mockResolvedValueOnce({ data: 'success' } as AxiosResponse);
+      const callArgs = {query: 'test query'};
+      mockAxiosPost.mockResolvedValueOnce({data: 'success'} as AxiosResponse);
 
       await currentTool(callArgs);
 
@@ -100,33 +115,59 @@ describe('ToolboxTool', () => {
     });
 
     it('should throw a formatted ZodError if argument validation fails', async () => {
-      const currentTool = ToolboxTool(mockSession, baseURL, toolName, toolDescription, basicParamSchema);
-      const invalidArgs = { query: '' }; // Fails because of empty string
+      const currentTool = ToolboxTool(
+        mockSession,
+        baseURL,
+        toolName,
+        toolDescription,
+        basicParamSchema
+      );
+      const invalidArgs = {query: ''}; // Fails because of empty string
 
       try {
         await currentTool(invalidArgs);
-        throw new Error(`Expected currentTool to throw a Zod validation error for tool "${toolName}", but it did not.`);
+        throw new Error(
+          `Expected currentTool to throw a Zod validation error for tool "${toolName}", but it did not.`
+        );
       } catch (e: any) {
-        expect(e.message).toBe(`Argument validation failed for tool "${toolName}":\n - query: Query cannot be empty`);
+        expect(e.message).toBe(
+          `Argument validation failed for tool "${toolName}":\n - query: Query cannot be empty`
+        );
       }
       expect(mockAxiosPost).not.toHaveBeenCalled();
     });
 
     it('should handle multiple ZodError issues in the validation error message', async () => {
       const complexSchema = z.object({
-        name: z.string().min(1, "Name is required"),
-        age: z.number().positive("Age must be positive"),
+        name: z.string().min(1, 'Name is required'),
+        age: z.number().positive('Age must be positive'),
       });
-      const currentTool = ToolboxTool(mockSession, baseURL, toolName, toolDescription, complexSchema);
-      const invalidArgs = { name: '', age: -5 };
+      const currentTool = ToolboxTool(
+        mockSession,
+        baseURL,
+        toolName,
+        toolDescription,
+        complexSchema
+      );
+      const invalidArgs = {name: '', age: -5};
 
       try {
         await currentTool(invalidArgs);
-        throw new Error('Expected currentTool to throw a Zod validation error, but it did not.');
+        throw new Error(
+          'Expected currentTool to throw a Zod validation error, but it did not.'
+        );
       } catch (e: any) {
-        expect(e.message).toEqual(expect.stringContaining(`Argument validation failed for tool "${toolName}":`));
-        expect(e.message).toEqual(expect.stringContaining("name: Name is required"));
-        expect(e.message).toEqual(expect.stringContaining("age: Age must be positive"));
+        expect(e.message).toEqual(
+          expect.stringContaining(
+            `Argument validation failed for tool "${toolName}":`
+          )
+        );
+        expect(e.message).toEqual(
+          expect.stringContaining('name: Name is required')
+        );
+        expect(e.message).toEqual(
+          expect.stringContaining('age: Age must be positive')
+        );
       }
       expect(mockAxiosPost).not.toHaveBeenCalled();
     });
@@ -134,16 +175,28 @@ describe('ToolboxTool', () => {
     it('should throw a generic error if paramSchema.parse throws a non-ZodError', async () => {
       const customError = new Error('A non-Zod parsing error occurred!');
       const failingSchema = {
-        parse: jest.fn().mockImplementation(() => { throw customError; }),
+        parse: jest.fn().mockImplementation(() => {
+          throw customError;
+        }),
       } as unknown as ZodObject<any>;
-      const currentTool = ToolboxTool(mockSession, baseURL, toolName, toolDescription, failingSchema);
-      const callArgs = { query: 'some query' };
+      const currentTool = ToolboxTool(
+        mockSession,
+        baseURL,
+        toolName,
+        toolDescription,
+        failingSchema
+      );
+      const callArgs = {query: 'some query'};
 
       try {
         await currentTool(callArgs);
-        throw new Error('Expected currentTool to throw a non-Zod error during parsing, but it did not.');
+        throw new Error(
+          'Expected currentTool to throw a non-Zod error during parsing, but it did not.'
+        );
       } catch (e: any) {
-         expect(e.message).toBe(`Argument validation failed: ${String(customError)}`);
+        expect(e.message).toBe(
+          `Argument validation failed: ${String(customError)}`
+        );
       }
       expect(mockAxiosPost).not.toHaveBeenCalled();
     });
@@ -151,8 +204,14 @@ describe('ToolboxTool', () => {
     it('should use an empty object as default if no arguments are provided and schema allows it', async () => {
       const emptySchema = z.object({});
       const parseSpy = jest.spyOn(emptySchema, 'parse');
-      const currentTool = ToolboxTool(mockSession, baseURL, toolName, toolDescription, emptySchema);
-      mockAxiosPost.mockResolvedValueOnce({ data: 'success' });
+      const currentTool = ToolboxTool(
+        mockSession,
+        baseURL,
+        toolName,
+        toolDescription,
+        emptySchema
+      );
+      mockAxiosPost.mockResolvedValueOnce({data: 'success'});
 
       await currentTool();
 
@@ -162,29 +221,49 @@ describe('ToolboxTool', () => {
     });
 
     it('should fail validation if no arguments are given and schema requires them', async () => {
-      const currentTool = ToolboxTool(mockSession, baseURL, toolName, toolDescription, basicParamSchema);
+      const currentTool = ToolboxTool(
+        mockSession,
+        baseURL,
+        toolName,
+        toolDescription,
+        basicParamSchema
+      );
       try {
         await currentTool();
-        throw new Error(`Expected currentTool to throw a Zod validation error for tool "${toolName}" when no args provided, but it did not.`);
+        throw new Error(
+          `Expected currentTool to throw a Zod validation error for tool "${toolName}" when no args provided, but it did not.`
+        );
       } catch (e: any) {
-        expect(e.message).toEqual(expect.stringContaining(`Argument validation failed for tool "myTestTool":`));
-        expect(e.message).toEqual(expect.stringContaining("query: Required"));
+        expect(e.message).toEqual(
+          expect.stringContaining(
+            'Argument validation failed for tool "myTestTool":'
+          )
+        );
+        expect(e.message).toEqual(expect.stringContaining('query: Required'));
       }
       expect(mockAxiosPost).not.toHaveBeenCalled();
     });
   });
 
   describe('Callable Function - API Call Execution', () => {
-    const validArgs = { query: 'search term', limit: 10 };
+    const validArgs = {query: 'search term', limit: 10};
     const expectedUrl = `${baseURL}/api/tool/${toolName}/invoke`;
-    const mockApiResponseData = { result: 'Data from API' };
+    const mockApiResponseData = {result: 'Data from API'};
 
     beforeEach(() => {
-      tool = ToolboxTool(mockSession, baseURL, toolName, toolDescription, basicParamSchema);
+      tool = ToolboxTool(
+        mockSession,
+        baseURL,
+        toolName,
+        toolDescription,
+        basicParamSchema
+      );
     });
 
     it('should make a POST request to the correct URL with the validated payload', async () => {
-      mockAxiosPost.mockResolvedValueOnce({ data: mockApiResponseData } as AxiosResponse);
+      mockAxiosPost.mockResolvedValueOnce({
+        data: mockApiResponseData,
+      } as AxiosResponse);
 
       const result = await tool(validArgs);
 
@@ -194,13 +273,18 @@ describe('ToolboxTool', () => {
     });
 
     it('should re-throw the error and log to console.error if API call fails with response data', async () => {
-      const apiErrorResponseData = { error: 'detail from server' };
-      const apiError = createApiError('API request failed', apiErrorResponseData);
+      const apiErrorResponseData = {error: 'detail from server'};
+      const apiError = createApiError(
+        'API request failed',
+        apiErrorResponseData
+      );
       mockAxiosPost.mockRejectedValueOnce(apiError);
 
       try {
         await tool(validArgs);
-        throw new Error('Expected tool call to throw an API error with response data, but it did not.');
+        throw new Error(
+          'Expected tool call to throw an API error with response data, but it did not.'
+        );
       } catch (e: any) {
         expect(e).toBe(apiError);
       }
@@ -218,7 +302,9 @@ describe('ToolboxTool', () => {
 
       try {
         await tool(validArgs);
-        throw new Error('Expected tool call to throw an API error without response data, but it did not.');
+        throw new Error(
+          'Expected tool call to throw an API error without response data, but it did not.'
+        );
       } catch (e: any) {
         expect(e).toBe(apiError);
       }

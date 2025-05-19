@@ -12,59 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ZodObject, ZodError} from 'zod';
-import {AxiosInstance, AxiosResponse} from 'axios';
-
-function ToolboxTool(
-  session: AxiosInstance,
-  baseUrl: string,
-  name: string,
-  description: string,
-  paramSchema: ZodObject<any>
-) {
-  const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
-
-  const callable = async function (callArguments: Record<string, any> = {}) {
-    let validatedPayload: Record<string, any>;
-    try {
-      validatedPayload = paramSchema.parse(callArguments);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        const errorMessages = error.errors.map(
-          e => `${e.path.join('.') || 'payload'}: ${e.message}`
-        );
-        throw new Error(
-          `Argument validation failed for tool "${name}":\n - ${errorMessages.join('\n - ')}`
-        );
-      }
-      throw new Error(`Argument validation failed: ${String(error)}`);
+function ToolboxTool(name: string) {
+  const callable = async function (action: {a: number; b: number}) {
+    // MOCK API CALL
+    async function api_resp(a: number, b: number): Promise<number> {
+      await new Promise(resolve => setTimeout(resolve, 10));
+      return a + 2 * b;
     }
 
-    try {
-      const response: AxiosResponse = await session.post(
-        toolUrl,
-        validatedPayload
-      );
-      return response.data;
-    } catch (error) {
-      console.error(
-        `Error posting data to ${toolUrl}:`,
-        (error as any).response?.data || (error as any).message
-      );
-      throw error;
-    }
+    const result = await api_resp(action.a, action.b);
+    return result;
   };
   callable.toolName = name;
-  callable.description = description;
-  callable.params = paramSchema;
   callable.getName = function () {
     return this.toolName;
-  };
-  callable.getDescription = function () {
-    return this.description;
-  };
-  callable.getParamSchema = function () {
-    return this.params;
   };
   return callable;
 }

@@ -55,7 +55,7 @@ export async function accessSecretVersion(
  */
 export async function createTmpFile(content: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    tmp.file({postfix: '.tmp'}, (err, filePath, _, _) => {
+    tmp.file({postfix: '.tmp'}, (err, filePath) => {
       if (err) return reject(err);
       fs.writeFile(filePath, content)
         .then(() => resolve(filePath))

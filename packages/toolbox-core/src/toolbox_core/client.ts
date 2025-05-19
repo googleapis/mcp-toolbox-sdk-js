@@ -45,7 +45,10 @@ class ToolboxClient {
       const manifestResponse = ZodManifestSchema.safeParse(responseData);
       if (manifestResponse.success) {
         const manifest = manifestResponse.data;
-        if (manifest.tools && manifest.tools.hasOwnProperty(toolName)) {
+        if (
+          manifest.tools &&
+          Object.prototype.hasOwnProperty.call(manifest.tools, toolName)
+        ) {
           const specificToolSchema = manifest.tools[toolName];
           const paramZodSchema = createZodObjectSchemaFromParameters(
             specificToolSchema.parameters

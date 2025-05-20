@@ -24,7 +24,6 @@ describe('ToolboxClient E2E Tests', () => {
     commonToolboxClient = new ToolboxClient(testBaseUrl);
   });
 
-
   beforeEach(async () => {
     getNRowsTool = await commonToolboxClient.loadTool('get-n-rows');
     expect(getNRowsTool.getName()).toBe('get-n-rows');
@@ -69,12 +68,16 @@ describe('ToolboxClient E2E Tests', () => {
 
     specificToolsetTestCases.forEach(testCase => {
       it(`should successfully load the specific toolset "${testCase.name}"`, async () => {
-        const loadedTools = await commonToolboxClient.loadToolset(testCase.name);
+        const loadedTools = await commonToolboxClient.loadToolset(
+          testCase.name
+        );
 
         expect(Array.isArray(loadedTools)).toBe(true);
         expect(loadedTools.length).toBe(testCase.expectedLength);
 
-        const loadedToolNames = new Set(loadedTools.map(tool => tool.getName()));
+        const loadedToolNames = new Set(
+          loadedTools.map(tool => tool.getName())
+        );
         expect(loadedToolNames).toEqual(new Set(testCase.expectedTools));
 
         for (const tool of loadedTools) {
@@ -123,7 +126,7 @@ describe('ToolboxClient E2E Tests', () => {
         commonToolboxClient.loadToolset('non-existent-toolset')
       ).rejects.toThrow(
         /Toolset "non-existent-toolset" not found at http:\/\/localhost:5000\/api\/toolset\/non-existent-toolset/
-       );
+      );
     });
   });
 });

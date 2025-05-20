@@ -31,6 +31,10 @@ steps:
     name: 'node:${_VERSION}'
     entrypoint: /bin/bash
     dir: packages/toolbox-core
+    env:
+      - TOOLBOX_URL=$_TOOLBOX_URL
+      - TOOLBOX_VERSION=$_TOOLBOX_VERSION
+      - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
     args:
       - '-c'
       - npm run test:e2e

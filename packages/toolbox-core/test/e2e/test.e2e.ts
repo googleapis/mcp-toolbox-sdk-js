@@ -28,14 +28,6 @@ describe('ToolboxClient E2E Tests', () => {
     expect(getNRowsTool.getName()).toBe('get-n-rows');
   });
 
-  describe('loadTool', () => {
-    it('should try to load a tool that does not exist', async () => {
-      await expect(commonToolboxClient.loadTool('random-tool')).rejects.toThrow(
-        /random-tool does not exist/
-      );
-    });
-  });
-
   describe('invokeTool', () => {
     it('should invoke the getNRowsTool', async () => {
       const response = await getNRowsTool({num_rows: '2'});

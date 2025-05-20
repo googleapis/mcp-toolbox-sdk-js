@@ -283,8 +283,7 @@ describe('ToolboxClient', () => {
       };
       const zodParamsSchemas: Record<string, any> =
         overrides.zodParamsSchemas || {};
-      const toolInstances: Record<string, any> =
-        overrides.toolInstances || {};
+      const toolInstances: Record<string, any> = overrides.toolInstances || {};
 
       Object.keys(toolDefinitions).forEach(toolName => {
         if (!zodParamsSchemas[toolName]) {
@@ -343,12 +342,12 @@ describe('ToolboxClient', () => {
       expect(MockedZodManifestSchema.safeParse).toHaveBeenCalledWith(
         manifestData
       );
-      expect(
-        MockedCreateZodObjectSchemaFromParameters
-      ).toHaveBeenCalledWith(mockToolDefinitions.toolA.parameters);
-      expect(
-        MockedCreateZodObjectSchemaFromParameters
-      ).toHaveBeenCalledWith(mockToolDefinitions.toolB.parameters);
+      expect(MockedCreateZodObjectSchemaFromParameters).toHaveBeenCalledWith(
+        mockToolDefinitions.toolA.parameters
+      );
+      expect(MockedCreateZodObjectSchemaFromParameters).toHaveBeenCalledWith(
+        mockToolDefinitions.toolB.parameters
+      );
       expect(MockedToolboxToolFactory).toHaveBeenCalledTimes(2);
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
         (client as any)._session,

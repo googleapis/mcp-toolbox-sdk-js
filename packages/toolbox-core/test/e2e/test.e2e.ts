@@ -124,9 +124,7 @@ describe('ToolboxClient E2E Tests', () => {
     it('should throw an error when trying to load a non-existent toolset', async () => {
       await expect(
         commonToolboxClient.loadToolset('non-existent-toolset')
-      ).rejects.toThrow(
-        /Toolset "non-existent-toolset" not found at http:\/\/localhost:5000\/api\/toolset\/non-existent-toolset/
-      );
+      ).rejects.toThrow('Request failed with status code 404');
     });
   });
 });

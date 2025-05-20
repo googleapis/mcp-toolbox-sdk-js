@@ -3,5 +3,16 @@
     "env": {
         "node": true,
         "jest": true
-    }
+    },
+    "overrides": [
+        {
+          "files": [
+            "**/test/**/*.ts",
+            "**/*.test.ts"
+          ],
+          "rules": {
+            "n/no-unpublished-import": "off"
+          }
+        }
+      ]
 }

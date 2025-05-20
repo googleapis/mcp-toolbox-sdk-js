@@ -20,7 +20,14 @@ steps:
     args:
       - -c
       - npm ci
-  - id: Run tests
+  - id: Run unit tests
+    name: 'node:${_VERSION}'
+    entrypoint: /bin/bash
+    dir: packages/toolbox-core
+    args:
+      - '-c'
+      - npm run test:unit
+  - id: Run integration tests
     name: 'node:${_VERSION}'
     entrypoint: /bin/bash
     dir: packages/toolbox-core
@@ -30,7 +37,7 @@ steps:
       - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
     args:
       - '-c'
-      - npm test
+      - npm run test:e2e
 options:
   logging: CLOUD_LOGGING_ONLY
 substitutions:

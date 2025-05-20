@@ -261,4 +261,166 @@ describe('ToolboxClient', () => {
       expect(MockedZodManifestSchema.safeParse).not.toHaveBeenCalled();
     });
   });
+
+  describe('loadToolset', () => {
+    let client: ToolboxClient;
+
+    beforeEach(() => {
+      client = new ToolboxClient(testBaseUrl);
+    });
+
+    const setupMocksForSuccessfulToolsetLoad = (
+      toolDefinitions: Record<string, object>,
+      overrides: Partial<{
+        manifestData: object;
+        zodParamsSchemas: Record<string, object>;
+        toolInstances: Record<string, object>;
+      }> = {}
+    ) => {
+      const manifestData = overrides.manifestData || {
+        serverVersion: '1.0.0',
+        tools: toolDefinitions,
+      };
+      const zodParamsSchemas: Record<string, any> =
+        overrides.zodParamsSchemas || {};
+      const toolInstances: Record<string, any> =
+        overrides.toolInstances || {};
+
+      Object.keys(toolDefinitions).forEach(toolName => {
+        if (!zodParamsSchemas[toolName]) {
+          zodParamsSchemas[toolName] = {
+            _isMockZodParamSchema: true,
+            forTool: toolName,
+          };
+        }
+        if (!toolInstances[toolName]) {
+          toolInstances[toolName] = {
+            _isMockTool: true,
+            loadedName: toolName,
+          };
+        }
+      });
+
+      mockSessionGet.mockResolvedValueOnce({
+        data: manifestData,
+      } as AxiosResponse);
+      MockedZodManifestSchema.safeParse.mockReturnValueOnce({
+        success: true,
+        data: manifestData,
+      } as any);
+
+      Object.keys(toolDefinitions).forEach(toolName => {
+        MockedCreateZodObjectSchemaFromParameters.mockReturnValueOnce(
+          zodParamsSchemas[toolName]
+        );
+        MockedToolboxToolFactory.mockImplementationOnce(
+          () => toolInstances[toolName]
+        );
+      });
+
+      return {manifestData, zodParamsSchemas, toolInstances};
+    };
+
+    it('should successfully load a toolset with multiple tools', async () => {
+      const toolsetName = 'my-toolset';
+      const expectedApiUrl = `${testBaseUrl}/api/toolset/${toolsetName}`;
+      const mockToolDefinitions = {
+        toolA: {
+          description: 'Tool A description',
+          parameters: [{name: 'paramA', type: 'string'}],
+        },
+        toolB: {
+          description: 'Tool B description',
+          parameters: [{name: 'paramB', type: 'integer'}],
+        },
+      };
+
+      const {toolInstances, manifestData} =
+        setupMocksForSuccessfulToolsetLoad(mockToolDefinitions);
+      const loadedTools = await client.loadToolset(toolsetName);
+
+      expect(mockSessionGet).toHaveBeenCalledWith(expectedApiUrl);
+      expect(MockedZodManifestSchema.safeParse).toHaveBeenCalledWith(
+        manifestData
+      );
+      expect(
+        MockedCreateZodObjectSchemaFromParameters
+      ).toHaveBeenCalledWith(mockToolDefinitions.toolA.parameters);
+      expect(
+        MockedCreateZodObjectSchemaFromParameters
+      ).toHaveBeenCalledWith(mockToolDefinitions.toolB.parameters);
+      expect(MockedToolboxToolFactory).toHaveBeenCalledTimes(2);
+      expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
+        (client as any)._session,
+        testBaseUrl,
+        'toolA',
+        mockToolDefinitions.toolA.description,
+        expect.objectContaining({forTool: 'toolA'})
+      );
+      expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
+        (client as any)._session,
+        testBaseUrl,
+        'toolB',
+        mockToolDefinitions.toolB.description,
+        expect.objectContaining({forTool: 'toolB'})
+      );
+      expect(loadedTools).toEqual(
+        expect.arrayContaining([toolInstances.toolA, toolInstances.toolB])
+      );
+      expect(loadedTools.length).toBe(2);
+    });
+
+    it('should request the default toolset if no name is provided', async () => {
+      const expectedApiUrl = `${testBaseUrl}/api/toolset/`;
+      setupMocksForSuccessfulToolsetLoad({});
+      await client.loadToolset();
+      expect(mockSessionGet).toHaveBeenLastCalledWith(expectedApiUrl);
+
+      mockSessionGet.mockReset();
+      setupMocksForSuccessfulToolsetLoad({});
+      await client.loadToolset(null);
+      expect(mockSessionGet).toHaveBeenLastCalledWith(expectedApiUrl);
+    });
+
+    it('should return an empty array if the manifest contains no tools', async () => {
+      const toolsetName = 'empty-set';
+      setupMocksForSuccessfulToolsetLoad({}); // Manifest with empty tools
+      const loadedTools = await client.loadToolset(toolsetName);
+
+      expect(loadedTools).toEqual([]);
+      expect(MockedCreateZodObjectSchemaFromParameters).not.toHaveBeenCalled();
+      expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
+    });
+
+    it('should throw an error if manifest parsing fails for toolset', async () => {
+      const toolsetName = 'bad-manifest-set';
+      const mockApiResponseData = {invalid: 'toolset structure'};
+      const mockZodErrorDetail = {message: 'Zod validation failed on toolset'};
+      mockSessionGet.mockResolvedValueOnce({
+        data: mockApiResponseData,
+      } as AxiosResponse);
+      MockedZodManifestSchema.safeParse.mockReturnValueOnce({
+        success: false,
+        error: mockZodErrorDetail,
+      } as any);
+
+      await expect(client.loadToolset(toolsetName)).rejects.toThrow(
+        `Invalid manifest structure received: ${mockZodErrorDetail.message}`
+      );
+    });
+
+    it('should throw and log error if API GET request for toolset fails', async () => {
+      const toolsetName = 'api-error-set';
+      const expectedApiUrl = `${testBaseUrl}/api/toolset/${toolsetName}`;
+      const errorMessage = 'Toolset API unavailable';
+      const apiError = createApiError(errorMessage);
+      mockSessionGet.mockRejectedValueOnce(apiError);
+
+      await expect(client.loadToolset(toolsetName)).rejects.toThrow(apiError);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        `Error fetching data from ${expectedApiUrl}:`,
+        errorMessage
+      );
+    });
+  });
 });

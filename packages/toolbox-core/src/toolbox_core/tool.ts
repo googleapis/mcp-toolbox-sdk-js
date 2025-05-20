@@ -15,6 +15,21 @@
 import {ZodObject, ZodError} from 'zod';
 import {AxiosInstance, AxiosResponse} from 'axios';
 
+/**
+ * Creates a callable tool function representing a specific tool on a remote
+ * Toolbox server.
+ *
+ * @param {AxiosInstance} session - The Axios session for making HTTP requests.
+ * @param {string} baseUrl - The base URL of the Toolbox Server API.
+ * @param {string} name - The name of the remote tool.
+ * @param {string} description - A description of the remote tool.
+ * @param {ZodObject<any>} paramSchema - The Zod schema for validating the tool's parameters.
+ * @returns {CallableTool & CallableToolProperties} An async function that, when
+ * called, invokes the tool with the provided arguments. Validates arguments
+ * against the tool's signature, then sends them
+ * as a JSON payload in a POST request to the tool's invoke URL.
+ */
+
 function ToolboxTool(
   session: AxiosInstance,
   baseUrl: string,

@@ -20,12 +20,20 @@ import {
   createZodObjectSchemaFromParameters,
 } from './protocol';
 
+/**
+ * An asynchronous client for interacting with a Toolbox service.
+ * Provides methods to discover and load tools defined by a remote Toolbox
+ * service endpoint. It manages an underlying client session.
+ */
 class ToolboxClient {
   /** @private */ private _baseUrl: string;
   /** @private */ private _session: AxiosInstance;
 
   /**
-   * @param {string} url - The base URL for the Toolbox service API.
+   * Initializes the ToolboxClient.
+   * @param {string} url - The base URL for the Toolbox service API (e.g., "http://localhost:5000").
+   * @param {AxiosInstance} [session] - Optional Axios instance for making HTTP
+   * requests. If not provided, a new one will be created.
    */
   constructor(url: string, session?: AxiosInstance) {
     this._baseUrl = url;
@@ -33,8 +41,15 @@ class ToolboxClient {
   }
 
   /**
-   * @param {string} toolName - Name of the tool.
-   * @returns {ToolboxTool} - A ToolboxTool instance.
+   * Asynchronously loads a tool from the server.
+   * Retrieves the schema for the specified tool from the Toolbox server and  * returns a callable (`ToolboxTool`) that can be used to invoke the
+   * tool remotely.
+   *
+   * @param {string} toolName - The unique name or identifier of the tool to load.
+   * @returns {Promise<ReturnType<typeof ToolboxTool>>} A promise that resolves
+   * to a ToolboxTool instance, ready for execution.
+   * @throws {Error} If the tool is not found in the manifest, the manifest structure is invalid,
+   * or if there's an error fetching data from the API.
    */
   async loadTool(toolName: string): Promise<ReturnType<typeof ToolboxTool>> {
     const url = `${this._baseUrl}/api/tool/${toolName}`;

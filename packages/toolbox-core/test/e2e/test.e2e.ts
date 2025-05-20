@@ -17,20 +17,27 @@ import {ToolboxTool} from '../../src/toolbox_core/tool';
 
 describe('ToolboxClient E2E Tests', () => {
   let commonToolboxClient: ToolboxClient;
+  let getNRowsTool: ReturnType<typeof ToolboxTool>;
 
   beforeAll(async () => {
     commonToolboxClient = new ToolboxClient('http://localhost:5000');
   });
 
-  describe('TestBasicE2E', () => {
-    let getNRowsTool: ReturnType<typeof ToolboxTool>;
+  beforeEach(async () => {
+    getNRowsTool = await commonToolboxClient.loadTool('get-n-rows');
+    expect(getNRowsTool.getName()).toBe('get-n-rows');
+  });
 
-    beforeEach(async () => {
-      getNRowsTool = await commonToolboxClient.loadTool('get-n-rows');
-      expect(getNRowsTool.getName()).toBe('get-n-rows');
+  describe('loadTool', () => {
+    it('should try to load a tool that does not exist', async () => {
+      await expect(commonToolboxClient.loadTool('random-tool')).rejects.toThrow(
+        /random-tool does not exist/
+      );
     });
+  });
 
-    test('run_tool', async () => {
+  describe('invokeTool', () => {
+    it('should invoke the getNRowsTool', async () => {
       const response = await getNRowsTool({num_rows: '2'});
       const result = response['result'];
       expect(typeof result).toBe('string');
@@ -39,13 +46,13 @@ describe('ToolboxClient E2E Tests', () => {
       expect(result).not.toContain('row3');
     });
 
-    test('run_tool_missing_params', async () => {
+    it('should invoke the getNRowsTool with missing params', async () => {
       await expect(getNRowsTool()).rejects.toThrow(
         /Argument validation failed for tool "get-n-rows":\s*- num_rows: Required/
       );
     });
 
-    test('run_tool_wrong_param_type', async () => {
+    it('should invoke the getNRowsTool with wrong param type', async () => {
       await expect(getNRowsTool({num_rows: 2})).rejects.toThrow(
         /Argument validation failed for tool "get-n-rows":\s*- num_rows: Expected string, received number/
       );

@@ -69,10 +69,10 @@ describe('ToolboxClient', () => {
     it('should set baseUrl and create a new session if one is not provided', () => {
       const client = new ToolboxClient(testBaseUrl);
 
-      expect((client as any)._baseUrl).toBe(testBaseUrl);
+      expect(client['_baseUrl']).toBe(testBaseUrl);
       expect(mockedAxios.create).toHaveBeenCalledTimes(1);
       expect(mockedAxios.create).toHaveBeenCalledWith({baseURL: testBaseUrl});
-      expect((client as any)._session.get).toBe(mockSessionGet);
+      expect(client['_session'].get).toBe(mockSessionGet);
     });
 
     it('should set baseUrl and use the provided session if one is given', () => {
@@ -81,8 +81,8 @@ describe('ToolboxClient', () => {
       } as unknown as AxiosInstance;
       const client = new ToolboxClient(testBaseUrl, customMockSession);
 
-      expect((client as any)._baseUrl).toBe(testBaseUrl);
-      expect((client as any)._session).toBe(customMockSession);
+      expect(client['_baseUrl']).toBe(testBaseUrl);
+      expect(client['_session']).toBe(customMockSession);
       expect(mockedAxios.create).not.toHaveBeenCalled();
     });
   });
@@ -152,7 +152,7 @@ describe('ToolboxClient', () => {
         mockToolDefinition.parameters
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
-        (client as any)._session,
+        client['_session'],
         testBaseUrl,
         toolName,
         mockToolDefinition.description,

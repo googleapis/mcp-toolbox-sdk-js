@@ -40,8 +40,10 @@ function ToolboxTool(
 ) {
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
 
-  const callable = async function (callArguments: Record<string, any> = {}) {
-    let validatedPayload: Record<string, any>;
+  const callable = async function (
+    callArguments: Record<string, unknown> = {}
+  ) {
+    let validatedPayload: Record<string, unknown>;
     try {
       validatedPayload = paramSchema.parse(callArguments);
     } catch (error) {

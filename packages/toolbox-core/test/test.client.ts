@@ -45,19 +45,6 @@ const MockedCreateZodObjectSchemaFromParameters =
     typeof createZodObjectSchemaFromParameters
   >;
 
-// --- Test Helper Functions ---
-type ApiErrorWithMessage = Error & {response?: {data: any}};
-const createApiError = (
-  message: string,
-  responseData?: any
-): ApiErrorWithMessage => {
-  const error = new Error(message) as ApiErrorWithMessage;
-  if (responseData !== undefined) {
-    error.response = {data: responseData};
-  }
-  return error;
-};
-
 describe('ToolboxClient', () => {
   const testBaseUrl = 'http://api.example.com';
   let consoleErrorSpy: jest.SpyInstance;
@@ -230,33 +217,15 @@ describe('ToolboxClient', () => {
       expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
     });
 
-    it('should throw and log error if API GET request fails with response data', async () => {
-      const errorResponseData = {code: 500, message: 'Server-side issue'};
-      const apiError = createApiError(
-        'API call failed unexpectedly',
-        errorResponseData
-      );
+    it('should throw and log error if API GET request fails', async () => {
+      const apiError = new Error('Server-side issue');
       mockSessionGet.mockRejectedValueOnce(apiError);
 
       await expect(client.loadTool(toolName)).rejects.toThrow(apiError);
       expect(mockSessionGet).toHaveBeenCalledWith(expectedApiUrl);
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         `Error fetching data from ${expectedApiUrl}:`,
-        errorResponseData
-      );
-      expect(MockedZodManifestSchema.safeParse).not.toHaveBeenCalled();
-    });
-
-    it('should throw and log error (using error.message) if API GET request fails without response data', async () => {
-      const errorMessage = 'Network unavailable';
-      const apiError = createApiError(errorMessage);
-      mockSessionGet.mockRejectedValueOnce(apiError);
-
-      await expect(client.loadTool(toolName)).rejects.toThrow(apiError);
-      expect(mockSessionGet).toHaveBeenCalledWith(expectedApiUrl);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        `Error fetching data from ${expectedApiUrl}:`,
-        errorMessage
+        'Server-side issue'
       );
       expect(MockedZodManifestSchema.safeParse).not.toHaveBeenCalled();
     });

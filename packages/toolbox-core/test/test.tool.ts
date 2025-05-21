@@ -22,19 +22,6 @@ const mockSession = {
   post: mockAxiosPost,
 } as unknown as AxiosInstance;
 
-// Helper to create structured API error objects for testing
-type ApiErrorWithMessage = Error & {response?: {data: unknown}};
-const createApiError = (
-  message: string,
-  responseData?: unknown
-): ApiErrorWithMessage => {
-  const error = new Error(message) as ApiErrorWithMessage;
-  if (responseData !== undefined) {
-    error.response = {data: responseData};
-  }
-  return error;
-};
-
 describe('ToolboxTool', () => {
   // Common constants for the tool
   const baseURL = 'http://api.example.com';
@@ -274,12 +261,8 @@ describe('ToolboxTool', () => {
       expect(result).toEqual(mockApiResponseData);
     });
 
-    it('should re-throw the error and log to console.error if API call fails with response data', async () => {
-      const apiErrorResponseData = {error: 'detail from server'};
-      const apiError = createApiError(
-        'API request failed',
-        apiErrorResponseData
-      );
+    it('should re-throw the error and log to console.error if API call fails', async () => {
+      const apiError = new Error('API request failed',);
       mockAxiosPost.mockRejectedValueOnce(apiError);
 
       try {
@@ -288,32 +271,11 @@ describe('ToolboxTool', () => {
           'Expected tool call to throw an API error with response data, but it did not.'
         );
       } catch (e) {
-        expect(e as ApiErrorWithMessage).toBe(apiError);
+        expect(e as Error).toBe(apiError);
       }
       expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs);
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        `Error posting data to ${expectedUrl}:`,
-        apiErrorResponseData
-      );
-    });
-
-    it('should re-throw the error and log (using error.message) if API call fails without response data', async () => {
-      const apiErrorMessage = 'Network connection refused';
-      const apiError = createApiError(apiErrorMessage); // No responseData
-      mockAxiosPost.mockRejectedValueOnce(apiError);
-
-      try {
-        await tool(validArgs);
-        throw new Error(
-          'Expected tool call to throw an API error without response data, but it did not.'
-        );
-      } catch (e) {
-        expect(e as ApiErrorWithMessage).toBe(apiError);
-      }
-      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        `Error posting data to ${expectedUrl}:`,
-        apiErrorMessage
+        `Error posting data to ${expectedUrl}:`, apiError.message
       );
     });
   });

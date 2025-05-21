@@ -14,11 +14,12 @@
 
 import {ToolboxTool} from './tool';
 import axios from 'axios';
-import type {AxiosInstance, AxiosResponse} from 'axios';
+import {type AxiosInstance, type AxiosResponse} from 'axios';
 import {
   ZodManifestSchema,
   createZodObjectSchemaFromParameters,
 } from './protocol';
+import {logApiError} from './errorUtils'; // Import the new utility
 
 /**
  * An asynchronous client for interacting with a Toolbox service.
@@ -84,10 +85,7 @@ class ToolboxClient {
         );
       }
     } catch (error) {
-      console.error(
-        `Error fetching data from ${url}:`,
-        (error as any).response?.data || (error as any).message
-      );
+      logApiError(`Error fetching data from ${url}:`, error);
       throw error;
     }
   }

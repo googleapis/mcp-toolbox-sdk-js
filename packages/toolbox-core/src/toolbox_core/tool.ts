@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ZodObject, ZodError} from 'zod';
-import {AxiosInstance, AxiosResponse} from 'axios';
+import {ZodObject, ZodError, ZodRawShape} from 'zod';
+import {AxiosInstance, AxiosResponse, isAxiosError} from 'axios';
+import {logApiError} from './errorUtils';
 
 /**
  * Creates a callable tool function representing a specific tool on a remote
@@ -35,7 +36,7 @@ function ToolboxTool(
   baseUrl: string,
   name: string,
   description: string,
-  paramSchema: ZodObject<any>
+  paramSchema: ZodObject<ZodRawShape>
 ) {
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
 
@@ -54,7 +55,6 @@ function ToolboxTool(
       }
       throw new Error(`Argument validation failed: ${String(error)}`);
     }
-
     try {
       const response: AxiosResponse = await session.post(
         toolUrl,
@@ -62,10 +62,7 @@ function ToolboxTool(
       );
       return response.data;
     } catch (error) {
-      console.error(
-        `Error posting data to ${toolUrl}:`,
-        (error as any).response?.data || (error as any).message
-      );
+      logApiError(`Error posting data to ${toolUrl}:`, error);
       throw error;
     }
   };

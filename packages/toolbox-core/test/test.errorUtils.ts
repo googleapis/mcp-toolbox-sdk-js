@@ -38,7 +38,9 @@ describe('logApiError', () => {
   });
 
   it('should log error.response.data if error is AxiosError with response data', () => {
-    (isAxiosError as jest.MockedFunction<typeof isAxiosError>).mockReturnValue(true);
+    (isAxiosError as jest.MockedFunction<typeof isAxiosError>).mockReturnValue(
+      true
+    );
     const errorResponseData = {detail: 'API returned an error'};
     const mockError = {
       isAxiosError: true,
@@ -52,11 +54,16 @@ describe('logApiError', () => {
     logApiError(baseMessage, mockError);
 
     expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
-    expect(consoleErrorSpy).toHaveBeenCalledWith(baseMessage, errorResponseData);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      baseMessage,
+      errorResponseData
+    );
   });
 
   it('should log error.message if error is AxiosError without response data', () => {
-    (isAxiosError as jest.MockedFunction<typeof isAxiosError>).mockReturnValue(true);
+    (isAxiosError as jest.MockedFunction<typeof isAxiosError>).mockReturnValue(
+      true
+    );
     const errorMessage = 'Network Error';
     const mockError = {
       isAxiosError: true,
@@ -73,7 +80,9 @@ describe('logApiError', () => {
   });
 
   it('should log error.message if error is a standard Error instance', () => {
-    (isAxiosError as jest.MockedFunction<typeof isAxiosError>).mockReturnValue(false);
+    (isAxiosError as jest.MockedFunction<typeof isAxiosError>).mockReturnValue(
+      false
+    );
     const errorMessage = 'This is a standard error';
     const mockError = new Error(errorMessage);
 
@@ -84,7 +93,9 @@ describe('logApiError', () => {
   });
 
   it('should log the error itself if it is a string', () => {
-    (isAxiosError as jest.MockedFunction<typeof isAxiosError>).mockReturnValue(false);
+    (isAxiosError as jest.MockedFunction<typeof isAxiosError>).mockReturnValue(
+      false
+    );
     const mockError = 'A simple string error';
 
     logApiError(baseMessage, mockError);
@@ -94,7 +105,9 @@ describe('logApiError', () => {
   });
 
   it('should log the error itself if it is a plain object (not Error or AxiosError)', () => {
-    (isAxiosError as jest.MockedFunction<typeof isAxiosError>).mockReturnValue(false);
+    (isAxiosError as jest.MockedFunction<typeof isAxiosError>).mockReturnValue(
+      false
+    );
     const mockError = {customError: 'Some custom error object'};
 
     logApiError(baseMessage, mockError);

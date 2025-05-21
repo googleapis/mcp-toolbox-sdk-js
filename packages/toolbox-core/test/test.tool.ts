@@ -262,7 +262,7 @@ describe('ToolboxTool', () => {
     });
 
     it('should re-throw the error and log to console.error if API call fails', async () => {
-      const apiError = new Error('API request failed',);
+      const apiError = new Error('API request failed');
       mockAxiosPost.mockRejectedValueOnce(apiError);
 
       try {
@@ -275,7 +275,8 @@ describe('ToolboxTool', () => {
       }
       expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs);
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        `Error posting data to ${expectedUrl}:`, apiError.message
+        `Error posting data to ${expectedUrl}:`,
+        apiError.message
       );
     });
   });

@@ -13,20 +13,17 @@
 // limitations under the License.
 
 import * as fs from 'fs-extra';
-import {ChildProcess} from 'child_process';
+import {CustomGlobal} from './types';
 
 const SERVER_TERMINATE_TIMEOUT_MS = 10000; // 10 seconds
 
 export default async function globalTeardown(): Promise<void> {
   console.log('\nJest Global Teardown: Starting...');
-  (globalThis as any).__SERVER_TEARDOWN_INITIATED__ = true;
+  (globalThis as CustomGlobal).__SERVER_TEARDOWN_INITIATED__ = true;
 
-  const serverProcess = (globalThis as any).__TOOLBOX_SERVER_PROCESS__ as
-    | ChildProcess
-    | undefined;
-  const toolsFilePath = (globalThis as any).__TOOLS_FILE_PATH__ as
-    | string
-    | undefined;
+  const customGlobal = globalThis as CustomGlobal;
+  const serverProcess = customGlobal.__TOOLBOX_SERVER_PROCESS__;
+  const toolsFilePath = customGlobal.__TOOLS_FILE_PATH__;
 
   if (serverProcess && !serverProcess.killed) {
     console.log('Stopping toolbox server process...');
@@ -81,8 +78,8 @@ export default async function globalTeardown(): Promise<void> {
       );
     }
   }
-  (globalThis as any).__TOOLBOX_SERVER_PROCESS__ = undefined;
-  (globalThis as any).__TOOLS_FILE_PATH__ = undefined;
+  customGlobal.__TOOLBOX_SERVER_PROCESS__ = undefined;
+  customGlobal.__TOOLS_FILE_PATH__ = undefined;
 
   console.log('Jest Global Teardown: Completed.');
 }

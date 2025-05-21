@@ -14,7 +14,7 @@
 
 import * as path from 'path';
 import * as fs from 'fs-extra';
-import {spawn, ChildProcess} from 'child_process';
+import {spawn} from 'child_process';
 import {
   getEnvVar,
   accessSecretVersion,
@@ -23,6 +23,7 @@ import {
   getToolboxBinaryGcsPath,
   delay,
 } from './utils';
+import {CustomGlobal} from './types';
 
 const TOOLBOX_BINARY_NAME = 'toolbox';
 const SERVER_READY_TIMEOUT_MS = 30000; // 30 seconds
@@ -41,7 +42,7 @@ export default async function globalSetup(): Promise<void> {
       'sdk_testing_tools'
     );
     const toolsFilePath = await createTmpFile(toolsManifest);
-    (globalThis as any).__TOOLS_FILE_PATH__ = toolsFilePath;
+    (globalThis as CustomGlobal).__TOOLS_FILE_PATH__ = toolsFilePath;
     console.log(`Tools manifest stored at: ${toolsFilePath}`);
 
     // Download toolbox binary
@@ -67,7 +68,7 @@ export default async function globalSetup(): Promise<void> {
       }
     );
 
-    (globalThis as any).__TOOLBOX_SERVER_PROCESS__ = serverProcess;
+    (globalThis as CustomGlobal).__TOOLBOX_SERVER_PROCESS__ = serverProcess;
 
     serverProcess.stdout?.on('data', (data: Buffer) => {
       console.log(`[ToolboxServer STDOUT]: ${data.toString().trim()}`);
@@ -87,8 +88,8 @@ export default async function globalSetup(): Promise<void> {
         `Toolbox server process exited with code ${code}, signal ${signal}.`
       );
       if (
-        (globalThis as any).__TOOLBOX_SERVER_PROCESS__ &&
-        !(globalThis as any).__SERVER_TEARDOWN_INITIATED__
+        (globalThis as CustomGlobal).__TOOLBOX_SERVER_PROCESS__ &&
+        !(globalThis as CustomGlobal).__SERVER_TEARDOWN_INITIATED__
       ) {
         console.error('Toolbox server exited prematurely during setup.');
       }
@@ -135,17 +136,14 @@ export default async function globalSetup(): Promise<void> {
   } catch (error) {
     console.error('Jest Global Setup Failed:', error);
     // Attempt to kill server if it started partially
-    const serverProcess = (globalThis as any).__TOOLBOX_SERVER_PROCESS__ as
-      | ChildProcess
-      | undefined;
+    const serverProcess = (globalThis as CustomGlobal)
+      .__TOOLBOX_SERVER_PROCESS__;
     if (serverProcess && !serverProcess.killed) {
       console.log('Attempting to terminate partially started server...');
       serverProcess.kill('SIGKILL');
     }
     // Clean up temp file if created
-    const toolsFilePath = (globalThis as any).__TOOLS_FILE_PATH__ as
-      | string
-      | undefined;
+    const toolsFilePath = (globalThis as CustomGlobal).__TOOLS_FILE_PATH__;
     if (toolsFilePath) {
       try {
         await fs.remove(toolsFilePath);

@@ -381,7 +381,7 @@ describe('ToolboxClient', () => {
       const toolsetName = 'api-error-set';
       const expectedApiUrl = `${testBaseUrl}/api/toolset/${toolsetName}`;
       const errorMessage = 'Toolset API unavailable';
-      const apiError = createApiError(errorMessage);
+      const apiError = new Error(errorMessage);
       mockSessionGet.mockRejectedValueOnce(apiError);
 
       await expect(client.loadToolset(toolsetName)).rejects.toThrow(apiError);

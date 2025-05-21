@@ -62,10 +62,7 @@ function ToolboxTool(
       );
       return response.data;
     } catch (error) {
-      console.error(
-        `Error posting data to ${toolUrl}:`,
-        (error as any).response?.data || (error as any).message
-      );
+      console.error(`Error posting data to ${toolUrl}:`, error);
       throw error;
     }
   };

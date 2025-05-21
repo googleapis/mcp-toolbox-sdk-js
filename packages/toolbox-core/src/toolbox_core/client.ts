@@ -84,10 +84,7 @@ class ToolboxClient {
         );
       }
     } catch (error) {
-      console.error(
-        `Error fetching data from ${url}:`,
-        (error as any).response?.data || (error as any).message
-      );
+      console.error(`Error fetching data from ${url}:`, error);
       throw error;
     }
   }

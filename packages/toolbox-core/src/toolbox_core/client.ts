@@ -19,7 +19,7 @@ import {
   ZodManifestSchema,
   createZodObjectSchemaFromParameters,
 } from './protocol';
-import {logApiError} from './errorUtils'; // Import the new utility
+import {logApiError} from './errorUtils';
 
 /**
  * An asynchronous client for interacting with a Toolbox service.

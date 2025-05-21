@@ -55,7 +55,6 @@
     },
     "dependencies": {
         "axios": "^1.9.0",
-        "axois": "^0.0.1-security",
         "zod": "^3.24.4"
     }
 }

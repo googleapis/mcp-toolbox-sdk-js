@@ -33,7 +33,6 @@
         "lint": "gts check",
         "compile": "tsc -p .",
         "prepare": "npm run compile",
-        "webpack": "webpack",
         "test:unit": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json",
         "coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json --coverage"
     },

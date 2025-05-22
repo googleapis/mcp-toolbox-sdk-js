@@ -45,7 +45,7 @@ function ToolboxTool(
   ) {
     let validatedPayload: Record<string, unknown>;
     try {
-      validatedPayload = paramSchema.safeParse(callArguments);
+      validatedPayload = paramSchema.parse(callArguments);
     } catch (error) {
       if (error instanceof ZodError) {
         const errorMessages = error.errors.map(

@@ -324,7 +324,7 @@ describe('ToolboxClient', () => {
       } as any);
 
       Object.keys(toolDefinitions).forEach(toolName => {
-        MockedCreateZodObjectSchemaFromParameters.mockReturnValueOnce(
+        MockedCreateZodSchemaFromParams.mockReturnValueOnce(
           zodParamsSchemas[toolName]
         );
         MockedToolboxToolFactory.mockImplementationOnce(
@@ -357,10 +357,10 @@ describe('ToolboxClient', () => {
       expect(MockedZodManifestSchema.safeParse).toHaveBeenCalledWith(
         manifestData
       );
-      expect(MockedCreateZodObjectSchemaFromParameters).toHaveBeenCalledWith(
+      expect(MockedCreateZodSchemaFromParams).toHaveBeenCalledWith(
         mockToolDefinitions.toolA.parameters
       );
-      expect(MockedCreateZodObjectSchemaFromParameters).toHaveBeenCalledWith(
+      expect(MockedCreateZodSchemaFromParams).toHaveBeenCalledWith(
         mockToolDefinitions.toolB.parameters
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledTimes(2);
@@ -402,7 +402,7 @@ describe('ToolboxClient', () => {
       const loadedTools = await client.loadToolset(toolsetName);
 
       expect(loadedTools).toEqual([]);
-      expect(MockedCreateZodObjectSchemaFromParameters).not.toHaveBeenCalled();
+      expect(MockedCreateZodSchemaFromParams).not.toHaveBeenCalled();
       expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
     });
 

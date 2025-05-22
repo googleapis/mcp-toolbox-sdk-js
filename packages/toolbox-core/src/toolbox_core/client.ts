@@ -99,15 +99,14 @@ class ToolboxClient {
    * @throws {Error} If the manifest structure is invalid or if there's an error fetching data from the API.
    */
   async loadToolset(
-    name?: string
+    name?: string | null
   ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
     const url = `${this._baseUrl}/api/toolset/${name || ''}`;
     try {
       const response: AxiosResponse = await this._session.get(url);
       const responseData = response.data;
-      const manifestResponse = ZodManifestSchema.safeParse(responseData);
-      if (manifestResponse.success) {
-        const manifest = manifestResponse.data;
+      try {
+        const manifest = ZodManifestSchema.parse(responseData);
         const tools: Array<ReturnType<typeof ToolboxTool>> = [];
 
         for (const [toolName, toolSchema] of Object.entries(manifest.tools)) {
@@ -124,9 +123,14 @@ class ToolboxClient {
           tools.push(toolInstance);
         }
         return tools;
-      } else {
+      } catch (validationError) {
+        if (validationError instanceof Error) {
+          throw new Error(
+            `Invalid manifest structure received: ${validationError.message}`
+          );
+        }
         throw new Error(
-          `Invalid manifest structure received: ${manifestResponse.error.message}`
+          'Invalid manifest structure received: Unknown validation error.'
         );
       }
     } catch (error) {

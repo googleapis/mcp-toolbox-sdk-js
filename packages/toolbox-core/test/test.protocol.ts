@@ -384,8 +384,8 @@ describe('createZodObjectSchemaFromParameters', () => {
         type: 'someUnrecognizedType',
       } as unknown as ParameterSchema,
     ];
-    expect(() =>
-      createZodSchemaFromParams(paramsWithUnknownType)
-    ).toThrow('Unknown parameter type: someUnrecognizedType');
+    expect(() => createZodSchemaFromParams(paramsWithUnknownType)).toThrow(
+      'Unknown parameter type: someUnrecognizedType'
+    );
   });
 });

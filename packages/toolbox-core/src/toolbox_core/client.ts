@@ -15,20 +15,15 @@
 import {ToolboxTool} from './tool';
 import axios from 'axios';
 import {type AxiosInstance, type AxiosResponse} from 'axios';
-import {
-  ZodManifestSchema,
-  createZodObjectSchemaFromParameters,
-} from './protocol';
+import {ZodManifestSchema, createZodSchemaFromParams} from './protocol';
 import {logApiError} from './errorUtils';
 
 /**
  * An asynchronous client for interacting with a Toolbox service.
- * Provides methods to discover and load tools defined by a remote Toolbox
- * service endpoint. It manages an underlying client session.
  */
 class ToolboxClient {
-  /** @private */ private _baseUrl: string;
-  /** @private */ private _session: AxiosInstance;
+  private _baseUrl: string;
+  private _session: AxiosInstance;
 
   /**
    * Initializes the ToolboxClient.
@@ -43,7 +38,8 @@ class ToolboxClient {
 
   /**
    * Asynchronously loads a tool from the server.
-   * Retrieves the schema for the specified tool from the Toolbox server and  * returns a callable (`ToolboxTool`) that can be used to invoke the
+   * Retrieves the schema for the specified tool from the Toolbox server and
+   * returns a callable (`ToolboxTool`) that can be used to invoke the
    * tool remotely.
    *
    * @param {string} name - The unique name or identifier of the tool to load.
@@ -58,15 +54,14 @@ class ToolboxClient {
       const response: AxiosResponse = await this._session.get(url);
       const responseData = response.data;
 
-      const manifestResponse = ZodManifestSchema.safeParse(responseData);
-      if (manifestResponse.success) {
-        const manifest = manifestResponse.data;
+      try {
+        const manifest = ZodManifestSchema.parse(responseData);
         if (
           manifest.tools &&
           Object.prototype.hasOwnProperty.call(manifest.tools, name)
         ) {
           const specificToolSchema = manifest.tools[name];
-          const paramZodSchema = createZodObjectSchemaFromParameters(
+          const paramZodSchema = createZodSchemaFromParams(
             specificToolSchema.parameters
           );
           return ToolboxTool(
@@ -79,9 +74,14 @@ class ToolboxClient {
         } else {
           throw new Error(`Tool "${name}" not found in manifest.`);
         }
-      } else {
+      } catch (validationError) {
+        if (validationError instanceof Error) {
+          throw new Error(
+            `Invalid manifest structure received: ${validationError.message}`
+          );
+        }
         throw new Error(
-          `Invalid manifest structure received: ${manifestResponse.error.message}`
+          'Invalid manifest structure received: Unknown validation error.'
         );
       }
     } catch (error) {

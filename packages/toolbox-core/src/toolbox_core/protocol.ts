@@ -93,12 +93,14 @@ export const ZodManifestSchema = z.object({
   ),
 });
 
+export type ZodManifest = z.infer<typeof ZodManifestSchema>;
+
 /**
  * Recursively builds a Zod schema for a single parameter based on its TypeScript definition.
  * @param param The ParameterSchema (TypeScript type) to convert.
  * @returns A ZodTypeAny representing the schema for this parameter.
  */
-function buildZodShapeFromParameter(param: ParameterSchema): ZodTypeAny {
+function buildZodShapeFromParam(param: ParameterSchema): ZodTypeAny {
   switch (param.type) {
     case 'string':
       return z.string();
@@ -110,7 +112,7 @@ function buildZodShapeFromParameter(param: ParameterSchema): ZodTypeAny {
       return z.boolean();
     case 'array':
       // Recursively build the schema for array items
-      return z.array(buildZodShapeFromParameter(param.items));
+      return z.array(buildZodShapeFromParam(param.items));
     default: {
       // This ensures exhaustiveness at compile time if ParameterSchema is a discriminated union
       const _exhaustiveCheck: never = param;
@@ -125,12 +127,12 @@ function buildZodShapeFromParameter(param: ParameterSchema): ZodTypeAny {
  * @param params Array of ParameterSchema objects.
  * @returns A ZodObject schema.
  */
-export function createZodObjectSchemaFromParameters(
+export function createZodSchemaFromParams(
   params: ParameterSchema[]
 ): ZodObject<ZodRawShape> {
   const shape: ZodRawShape = {};
   for (const param of params) {
-    shape[param.name] = buildZodShapeFromParameter(param);
+    shape[param.name] = buildZodShapeFromParam(param);
   }
   return z.object(shape).strict();
 }

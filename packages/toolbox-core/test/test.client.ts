@@ -16,9 +16,33 @@ import {ToolboxClient} from '../src/toolbox_core/client';
 import {ToolboxTool} from '../src/toolbox_core/tool';
 import {
   ZodManifestSchema,
-  createZodObjectSchemaFromParameters,
+  createZodSchemaFromParams,
+  type ZodManifest,
 } from '../src/toolbox_core/protocol';
 import axios, {AxiosInstance, AxiosResponse} from 'axios';
+import {ZodRawShape, ZodObject, ZodTypeAny} from 'zod';
+
+// --- Helper Types ---
+type OriginalToolboxToolType =
+  typeof import('../src/toolbox_core/tool').ToolboxTool;
+
+type CallableToolReturnedByFactory = ReturnType<OriginalToolboxToolType>;
+
+const createMockZodObject = (
+  shape: ZodRawShape = {}
+): ZodObject<ZodRawShape, 'strip', ZodTypeAny> =>
+  ({
+    parse: jest.fn(args => args), // Simple pass-through
+    safeParse: jest.fn(args => ({success: true, data: args})),
+    _def: {
+      typeName: 'ZodObject',
+      shape: () => shape,
+    },
+    shape: shape,
+    pick: jest.fn().mockReturnThis(),
+    omit: jest.fn().mockReturnThis(),
+    extend: jest.fn().mockReturnThis(),
+  }) as unknown as ZodObject<ZodRawShape, 'strip', ZodTypeAny>;
 
 // --- Mocking External Dependencies ---
 jest.mock('axios');
@@ -27,22 +51,22 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 jest.mock('../src/toolbox_core/tool', () => ({
   ToolboxTool: jest.fn(),
 }));
-const MockedToolboxToolFactory = ToolboxTool as jest.MockedFunction<
-  typeof ToolboxTool
->;
+
+const MockedToolboxToolFactory =
+  ToolboxTool as jest.MockedFunction<OriginalToolboxToolType>;
 
 jest.mock('../src/toolbox_core/protocol', () => ({
   ZodManifestSchema: {
-    safeParse: jest.fn(),
+    parse: jest.fn(),
   },
-  createZodObjectSchemaFromParameters: jest.fn(),
+  createZodSchemaFromParams: jest.fn(),
 }));
 const MockedZodManifestSchema = ZodManifestSchema as jest.Mocked<
   typeof ZodManifestSchema
 >;
-const MockedCreateZodObjectSchemaFromParameters =
-  createZodObjectSchemaFromParameters as jest.MockedFunction<
-    typeof createZodObjectSchemaFromParameters
+const MockedCreateZodSchemaFromParams =
+  createZodSchemaFromParams as jest.MockedFunction<
+    typeof createZodSchemaFromParams
   >;
 
 describe('ToolboxClient', () => {
@@ -97,37 +121,64 @@ describe('ToolboxClient', () => {
     });
 
     const setupMocksForSuccessfulLoad = (
-      toolDefinition: object,
-      overrides: Partial<{
-        manifestData: object;
-        zodParamsSchema: object;
-        toolInstance: object;
-      }> = {}
+      toolDefinition: {
+        description: string;
+        parameters: {name: string; type: string; description: string}[];
+      },
+      overrides: {
+        manifestData?: Partial<ZodManifest>;
+        zodParamsSchema?: ZodObject<ZodRawShape, 'strip', ZodTypeAny>;
+        toolInstance?: Partial<CallableToolReturnedByFactory>;
+      } = {}
     ) => {
-      const manifestData = overrides.manifestData || {
+      const manifestData: ZodManifest = {
         serverVersion: '1.0.0',
         tools: {[toolName]: toolDefinition},
-      };
-      const zodParamsSchema = overrides.zodParamsSchema || {
-        _isMockZodParamSchema: true,
-        forTool: toolName,
-      };
-      const toolInstance = overrides.toolInstance || {
-        _isMockTool: true,
-        loadedName: toolName,
-      };
+        ...overrides.manifestData,
+      } as ZodManifest;
+
+      const zodParamsSchema =
+        overrides.zodParamsSchema ||
+        createMockZodObject(
+          toolDefinition.parameters.reduce(
+            (shapeAccumulator: ZodRawShape, param) => {
+              shapeAccumulator[param.name] = {
+                _def: {typeName: 'ZodString'},
+              } as unknown as ZodTypeAny;
+              return shapeAccumulator;
+            },
+            {} as ZodRawShape
+          )
+        );
+
+      const defaultMockCallable = jest
+        .fn()
+        .mockResolvedValue({result: 'mock tool execution'});
+      const defaultToolInstance: CallableToolReturnedByFactory = Object.assign(
+        defaultMockCallable,
+        {
+          toolName: toolName,
+          description: toolDefinition.description,
+          params: zodParamsSchema,
+          getName: jest.fn().mockReturnValue(toolName),
+          getDescription: jest.fn().mockReturnValue(toolDefinition.description),
+          getParamSchema: jest.fn().mockReturnValue(zodParamsSchema),
+        }
+      );
+
+      const toolInstance = overrides.toolInstance
+        ? {...defaultToolInstance, ...overrides.toolInstance}
+        : defaultToolInstance;
 
       mockSessionGet.mockResolvedValueOnce({
         data: manifestData,
       } as AxiosResponse);
-      MockedZodManifestSchema.safeParse.mockReturnValueOnce({
-        success: true,
-        data: manifestData,
-      } as any);
-      MockedCreateZodObjectSchemaFromParameters.mockReturnValueOnce(
-        zodParamsSchema as any
+      MockedZodManifestSchema.parse.mockReturnValueOnce(manifestData);
+      MockedCreateZodSchemaFromParams.mockReturnValueOnce(zodParamsSchema);
+
+      MockedToolboxToolFactory.mockReturnValueOnce(
+        toolInstance as CallableToolReturnedByFactory
       );
-      MockedToolboxToolFactory.mockReturnValueOnce(toolInstance as any);
 
       return {manifestData, zodParamsSchema, toolInstance};
     };
@@ -145,10 +196,8 @@ describe('ToolboxClient', () => {
       const loadedTool = await client.loadTool(toolName);
 
       expect(mockSessionGet).toHaveBeenCalledWith(expectedApiUrl);
-      expect(MockedZodManifestSchema.safeParse).toHaveBeenCalledWith(
-        manifestData
-      );
-      expect(MockedCreateZodObjectSchemaFromParameters).toHaveBeenCalledWith(
+      expect(MockedZodManifestSchema.parse).toHaveBeenCalledWith(manifestData);
+      expect(MockedCreateZodSchemaFromParams).toHaveBeenCalledWith(
         mockToolDefinition.parameters
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
@@ -163,37 +212,36 @@ describe('ToolboxClient', () => {
 
     it('should throw an error if manifest parsing fails', async () => {
       const mockApiResponseData = {invalid: 'manifest structure'};
-      const mockZodErrorDetail = {message: 'Zod validation failed on manifest'};
+      const mockZodError = new Error('Zod validation failed on manifest');
+
       mockSessionGet.mockResolvedValueOnce({
         data: mockApiResponseData,
       } as AxiosResponse);
-      MockedZodManifestSchema.safeParse.mockReturnValueOnce({
-        success: false,
-        error: mockZodErrorDetail,
-      } as any);
+      MockedZodManifestSchema.parse.mockImplementationOnce(() => {
+        throw mockZodError;
+      });
 
       await expect(client.loadTool(toolName)).rejects.toThrow(
-        `Invalid manifest structure received: ${mockZodErrorDetail.message}`
+        `Invalid manifest structure received: ${mockZodError.message}`
       );
-      expect(MockedCreateZodObjectSchemaFromParameters).not.toHaveBeenCalled();
+      expect(MockedCreateZodSchemaFromParams).not.toHaveBeenCalled();
       expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
     });
 
     it('should throw an error if manifest.tools key is missing', async () => {
       const mockManifestWithoutTools = {serverVersion: '1.0.0'}; // 'tools' key absent
-      setupMocksForSuccessfulLoad(
-        {description: '', parameters: []},
-        {manifestData: mockManifestWithoutTools}
-      );
-      MockedZodManifestSchema.safeParse.mockReturnValueOnce({
-        success: true,
+
+      mockSessionGet.mockResolvedValueOnce({
         data: mockManifestWithoutTools,
-      } as any);
+      } as AxiosResponse);
+      MockedZodManifestSchema.parse.mockReturnValueOnce(
+        mockManifestWithoutTools as unknown as ZodManifest
+      );
 
       await expect(client.loadTool(toolName)).rejects.toThrow(
         `Tool "${toolName}" not found in manifest.`
       );
-      expect(MockedCreateZodObjectSchemaFromParameters).not.toHaveBeenCalled();
+      expect(MockedCreateZodSchemaFromParams).not.toHaveBeenCalled();
       expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
     });
 
@@ -201,19 +249,17 @@ describe('ToolboxClient', () => {
       const mockManifestWithOtherTools = {
         serverVersion: '1.0.0',
         tools: {anotherTool: {description: 'A different tool', parameters: []}},
-      };
+      } as ZodManifest;
       mockSessionGet.mockResolvedValueOnce({
         data: mockManifestWithOtherTools,
       } as AxiosResponse);
-      MockedZodManifestSchema.safeParse.mockReturnValueOnce({
-        success: true,
-        data: mockManifestWithOtherTools,
-      } as any);
-
+      MockedZodManifestSchema.parse.mockReturnValueOnce(
+        mockManifestWithOtherTools as ZodManifest
+      );
       await expect(client.loadTool(toolName)).rejects.toThrow(
         `Tool "${toolName}" not found in manifest.`
       );
-      expect(MockedCreateZodObjectSchemaFromParameters).not.toHaveBeenCalled();
+      expect(MockedCreateZodSchemaFromParams).not.toHaveBeenCalled();
       expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
     });
 
@@ -227,7 +273,7 @@ describe('ToolboxClient', () => {
         `Error fetching data from ${expectedApiUrl}:`,
         'Server-side issue'
       );
-      expect(MockedZodManifestSchema.safeParse).not.toHaveBeenCalled();
+      expect(MockedZodManifestSchema.parse).not.toHaveBeenCalled();
     });
   });
 

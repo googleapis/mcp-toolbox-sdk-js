@@ -18,7 +18,7 @@ import {
   ZodToolSchema,
   ZodManifestSchema,
   ParameterSchema,
-  createZodObjectSchemaFromParameters,
+  createZodSchemaFromParams,
 } from '../src/toolbox_core/protocol';
 
 // HELPER FUNCTIONS
@@ -275,7 +275,7 @@ describe('ZodManifestSchema', () => {
 describe('createZodObjectSchemaFromParameters', () => {
   it('should create an empty Zod object for an empty parameters array (and be strict)', () => {
     const params: ParameterSchema[] = [];
-    const schema = createZodObjectSchemaFromParameters(params);
+    const schema = createZodSchemaFromParams(params);
 
     expectParseSuccess(schema, {});
     expectParseFailure(schema, {anyKey: 'anyValue'}, errors => {
@@ -295,7 +295,7 @@ describe('createZodObjectSchemaFromParameters', () => {
       {name: 'age', description: 'User age', type: 'integer' as const},
       {name: 'isActive', description: 'User status', type: 'boolean' as const},
     ];
-    const schema = createZodObjectSchemaFromParameters(params);
+    const schema = createZodSchemaFromParams(params);
 
     expectParseSuccess(schema, {username: 'john_doe', age: 30, isActive: true});
 
@@ -324,7 +324,7 @@ describe('createZodObjectSchemaFromParameters', () => {
       },
       {name: 'id', description: 'An identifier', type: 'integer' as const},
     ];
-    const schema = createZodObjectSchemaFromParameters(params);
+    const schema = createZodSchemaFromParams(params);
 
     expectParseSuccess(schema, {tags: ['news', 'tech'], id: 1});
 
@@ -351,7 +351,7 @@ describe('createZodObjectSchemaFromParameters', () => {
         },
       },
     ];
-    const schema = createZodObjectSchemaFromParameters(params);
+    const schema = createZodSchemaFromParams(params);
 
     expectParseSuccess(schema, {
       matrix: [
@@ -385,7 +385,7 @@ describe('createZodObjectSchemaFromParameters', () => {
       } as unknown as ParameterSchema,
     ];
     expect(() =>
-      createZodObjectSchemaFromParameters(paramsWithUnknownType)
+      createZodSchemaFromParams(paramsWithUnknownType)
     ).toThrow('Unknown parameter type: someUnrecognizedType');
   });
 });

@@ -137,7 +137,7 @@ class ToolboxClient {
    * @throws {Error} If the manifest structure is invalid or if there's an error fetching data from the API.
    */
   async loadToolset(
-    name?: string | null
+    name?: string
   ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
     const toolsetName = name || '';
     const apiPath = `/api/toolset/${toolsetName}`;

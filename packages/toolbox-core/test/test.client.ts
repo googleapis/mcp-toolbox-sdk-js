@@ -441,7 +441,7 @@ describe('ToolboxClient', () => {
       MockedToolboxToolFactory.mockReset();
 
       setupMocksForSuccessfulToolsetLoad({});
-      await client.loadToolset(null);
+      await client.loadToolset();
       expect(mockSessionGet).toHaveBeenLastCalledWith(expectedApiUrl);
     });
 

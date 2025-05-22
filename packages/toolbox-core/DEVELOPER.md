@@ -30,17 +30,26 @@ These steps will guide you through setting up the monorepo and this specific pac
     npm install
     ```
 
-## Development Workflow
+4. Local Testing
+    If you need to test changes in `@toolbox/core` against another local project
+    or another package that consumes `@toolbox/core`, you can use npm link
 
-1. **Make Code Changes:**
-    Implement your features or bug fixes within the `packages/toolbox-core/src` directory (or relevant source folder).
+    * In packages/toolbox-core
 
-2. **Build (if applicable):**
-    If this package uses TypeScript or another compilation step, you'll need to build it. Check the `package.json` for a build script.
+        ```bash
+        npm link
+        ```
 
-    ```bash
-    npm run build
-    ```
+    * In your consuming project
+
+        ```bash
+        npm link @toolbox/core
+        ```  
+
+    This creates a symbolic link, allowing changes in `@toolbox/core` to be
+    immediately reflected in the consuming project without reinstallation.
+
+    Don't forget to npm unlink / yarn unlink when done!
 
 ## Testing
 

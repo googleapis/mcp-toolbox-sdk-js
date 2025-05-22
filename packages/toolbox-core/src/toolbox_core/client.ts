@@ -93,13 +93,13 @@ class ToolboxClient {
   /**
    * Asynchronously fetches a toolset and loads all tools defined within it.
    *
-   * @param {string} name - Name of the toolset to load. If None, loads the default toolset.
+   * @param {string | null} name - Name of the toolset to load. If None, loads the default toolset.
    * @returns {Promise<ReturnType<typeof ToolboxTool>>} A promise that resolves
    * to a list of ToolboxTool functions, ready for execution.
    * @throws {Error} If the manifest structure is invalid or if there's an error fetching data from the API.
    */
   async loadToolset(
-    name?: string | null
+    name?: string
   ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
     const url = `${this._baseUrl}/api/toolset/${name || ''}`;
     try {
@@ -111,7 +111,7 @@ class ToolboxClient {
         const tools: Array<ReturnType<typeof ToolboxTool>> = [];
 
         for (const [toolName, toolSchema] of Object.entries(manifest.tools)) {
-          const paramZodSchema = createZodObjectSchemaFromParameters(
+          const paramZodSchema = createZodSchemaFromParams(
             toolSchema.parameters
           );
           const toolInstance = ToolboxTool(

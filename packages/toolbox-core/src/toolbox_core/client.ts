@@ -18,6 +18,9 @@ import {type AxiosInstance, type AxiosResponse} from 'axios';
 import {ZodManifestSchema, createZodSchemaFromParams} from './protocol';
 import {logApiError} from './errorUtils';
 
+type Manifest = import('zod').infer<typeof ZodManifestSchema>;
+type ToolSchemaFromManifest = Manifest['tools'][string];
+
 /**
  * An asynchronous client for interacting with a Toolbox service.
  */
@@ -33,7 +36,66 @@ class ToolboxClient {
    */
   constructor(url: string, session?: AxiosInstance) {
     this._baseUrl = url;
-    this._session = session || axios.create({baseURL: url});
+    this._session = session || axios.create({baseURL: this._baseUrl});
+  }
+
+  /**
+   * Fetches and parses the manifest from a given API path.
+   * @param {string} apiPath - The API path to fetch the manifest from (e.g., "/api/tool/mytool").
+   * @returns {Promise<Manifest>} A promise that resolves to the parsed manifest.
+   * @throws {Error} If there's an error fetching data or if the manifest structure is invalid.
+   * @private
+   */
+  private async _fetchAndParseManifest(apiPath: string): Promise<Manifest> {
+    const url = `${this._baseUrl}${apiPath}`;
+    try {
+      const response: AxiosResponse = await this._session.get(url);
+      const responseData = response.data;
+
+      try {
+        const manifest = ZodManifestSchema.parse(responseData);
+        return manifest;
+      } catch (validationError) {
+        if (validationError instanceof Error) {
+          throw new Error(
+            `Invalid manifest structure received from ${url}: ${validationError.message}`
+          );
+        }
+        throw new Error(
+          `Invalid manifest structure received from ${url}: Unknown validation error.`
+        );
+      }
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.startsWith('Invalid manifest structure received from')
+      ) {
+        throw error;
+      }
+      logApiError(`Error fetching data from ${url}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Creates a ToolboxTool instance from its schema.
+   * @param {string} toolName - The name of the tool.
+   * @param {ToolSchemaFromManifest} toolSchema - The schema definition of the tool from the manifest.
+   * @returns {ReturnType<typeof ToolboxTool>} A ToolboxTool function.
+   * @private
+   */
+  private _createToolInstance(
+    toolName: string,
+    toolSchema: ToolSchemaFromManifest
+  ): ReturnType<typeof ToolboxTool> {
+    const paramZodSchema = createZodSchemaFromParams(toolSchema.parameters);
+    return ToolboxTool(
+      this._session,
+      this._baseUrl,
+      toolName,
+      toolSchema.description,
+      paramZodSchema
+    );
   }
 
   /**
@@ -49,94 +111,41 @@ class ToolboxClient {
    * or if there's an error fetching data from the API.
    */
   async loadTool(name: string): Promise<ReturnType<typeof ToolboxTool>> {
-    const url = `${this._baseUrl}/api/tool/${name}`;
-    try {
-      const response: AxiosResponse = await this._session.get(url);
-      const responseData = response.data;
+    const apiPath = `/api/tool/${name}`;
+    const manifest = await this._fetchAndParseManifest(apiPath);
 
-      try {
-        const manifest = ZodManifestSchema.parse(responseData);
-        if (
-          manifest.tools &&
-          Object.prototype.hasOwnProperty.call(manifest.tools, name)
-        ) {
-          const specificToolSchema = manifest.tools[name];
-          const paramZodSchema = createZodSchemaFromParams(
-            specificToolSchema.parameters
-          );
-          return ToolboxTool(
-            this._session,
-            this._baseUrl,
-            name,
-            specificToolSchema.description,
-            paramZodSchema
-          );
-        } else {
-          throw new Error(`Tool "${name}" not found in manifest.`);
-        }
-      } catch (validationError) {
-        if (validationError instanceof Error) {
-          throw new Error(
-            `Invalid manifest structure received: ${validationError.message}`
-          );
-        }
-        throw new Error(
-          'Invalid manifest structure received: Unknown validation error.'
-        );
-      }
-    } catch (error) {
-      logApiError(`Error fetching data from ${url}:`, error);
-      throw error;
+    if (
+      manifest.tools && // Zod ensures manifest.tools exists if schema requires it
+      Object.prototype.hasOwnProperty.call(manifest.tools, name)
+    ) {
+      const specificToolSchema = manifest.tools[name];
+      return this._createToolInstance(name, specificToolSchema);
+    } else {
+      throw new Error(`Tool "${name}" not found in manifest from ${apiPath}.`);
     }
   }
 
   /**
    * Asynchronously fetches a toolset and loads all tools defined within it.
    *
-   * @param {string | null} name - Name of the toolset to load. If None, loads the default toolset.
-   * @returns {Promise<ReturnType<typeof ToolboxTool>>} A promise that resolves
+   * @param {string | null} [name] - Name of the toolset to load. If null or undefined, loads the default toolset.
+   * @returns {Promise<Array<ReturnType<typeof ToolboxTool>>>} A promise that resolves
    * to a list of ToolboxTool functions, ready for execution.
    * @throws {Error} If the manifest structure is invalid or if there's an error fetching data from the API.
    */
   async loadToolset(
     name?: string | null
   ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
-    const url = `${this._baseUrl}/api/toolset/${name || ''}`;
-    try {
-      const response: AxiosResponse = await this._session.get(url);
-      const responseData = response.data;
-      try {
-        const manifest = ZodManifestSchema.parse(responseData);
-        const tools: Array<ReturnType<typeof ToolboxTool>> = [];
+    const toolsetName = name || '';
+    const apiPath = `/api/toolset/${toolsetName}`;
+    const manifest = await this._fetchAndParseManifest(apiPath);
+    const tools: Array<ReturnType<typeof ToolboxTool>> = [];
 
-        for (const [toolName, toolSchema] of Object.entries(manifest.tools)) {
-          const paramZodSchema = createZodSchemaFromParams(
-            toolSchema.parameters
-          );
-          const toolInstance = ToolboxTool(
-            this._session,
-            this._baseUrl,
-            toolName,
-            toolSchema.description,
-            paramZodSchema
-          );
-          tools.push(toolInstance);
-        }
-        return tools;
-      } catch (validationError) {
-        if (validationError instanceof Error) {
-          throw new Error(
-            `Invalid manifest structure received: ${validationError.message}`
-          );
-        }
-        throw new Error(
-          'Invalid manifest structure received: Unknown validation error.'
-        );
-      }
-    } catch (error) {
-      logApiError(`Error fetching data from ${url}:`, error);
-      throw error;
+    for (const [toolName, toolSchema] of Object.entries(manifest.tools)) {
+      const toolInstance = this._createToolInstance(toolName, toolSchema);
+      tools.push(toolInstance);
     }
+    return tools;
   }
 }
 

@@ -233,7 +233,7 @@ describe('ToolboxClient', () => {
       });
 
       await expect(client.loadTool(toolName)).rejects.toThrow(
-        `Invalid manifest structure received: ${mockZodError.message}`
+        `Invalid manifest structure received from ${expectedApiUrl}: ${mockZodError.message}`
       );
       expect(MockedCreateZodSchemaFromParams).not.toHaveBeenCalled();
       expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
@@ -250,7 +250,7 @@ describe('ToolboxClient', () => {
       );
 
       await expect(client.loadTool(toolName)).rejects.toThrow(
-        `Tool "${toolName}" not found in manifest.`
+        `Tool "${toolName}" not found in manifest from /api/tool/${toolName}.`
       );
       expect(MockedCreateZodSchemaFromParams).not.toHaveBeenCalled();
       expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
@@ -268,7 +268,7 @@ describe('ToolboxClient', () => {
         mockManifestWithOtherTools
       );
       await expect(client.loadTool(toolName)).rejects.toThrow(
-        `Tool "${toolName}" not found in manifest.`
+        `Tool "${toolName}" not found in manifest from /api/tool/${toolName}.`
       );
       expect(MockedCreateZodSchemaFromParams).not.toHaveBeenCalled();
       expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
@@ -462,6 +462,7 @@ describe('ToolboxClient', () => {
 
     it('should throw an error if manifest parsing fails for toolset', async () => {
       const toolsetName = 'bad-manifest-set';
+      const expectedApiUrlForToolset = `${testBaseUrl}/api/toolset/${toolsetName}`;
       const mockApiResponseData = {invalid: 'toolset structure'};
       const mockZodError = new ZodError([
         {
@@ -479,7 +480,7 @@ describe('ToolboxClient', () => {
       });
 
       await expect(client.loadToolset(toolsetName)).rejects.toThrow(
-        `Invalid manifest structure received: ${mockZodError.message}`
+        `Invalid manifest structure received from ${expectedApiUrlForToolset}: ${mockZodError.message}`
       );
     });
 

@@ -17,6 +17,7 @@ import axios from 'axios';
 import {type AxiosInstance, type AxiosResponse} from 'axios';
 import {ZodManifestSchema, createZodSchemaFromParams} from './protocol';
 import {logApiError} from './errorUtils';
+import {ZodError} from 'zod';
 
 type Manifest = import('zod').infer<typeof ZodManifestSchema>;
 type ToolSchemaFromManifest = Manifest['tools'][string];
@@ -56,14 +57,16 @@ class ToolboxClient {
         const manifest = ZodManifestSchema.parse(responseData);
         return manifest;
       } catch (validationError) {
-        if (validationError instanceof Error) {
-          throw new Error(
-            `Invalid manifest structure received from ${url}: ${validationError.message}`
-          );
+        let detailedMessage = `Invalid manifest structure received from ${url}: `;
+        if (validationError instanceof ZodError) {
+          const issueDetails = validationError.issues;
+          detailedMessage += JSON.stringify(issueDetails, null, 2);
+        } else if (validationError instanceof Error) {
+          detailedMessage += validationError.message;
+        } else {
+          detailedMessage += 'Unknown validation error.';
         }
-        throw new Error(
-          `Invalid manifest structure received from ${url}: Unknown validation error.`
-        );
+        throw new Error(detailedMessage);
       }
     } catch (error) {
       if (

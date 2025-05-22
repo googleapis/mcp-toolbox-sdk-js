@@ -17,7 +17,7 @@ import axios from 'axios';
 import {type AxiosInstance, type AxiosResponse} from 'axios';
 import {
   ZodManifestSchema,
-  createZodObjectSchemaFromParameters,
+  createZodSchemaFromParams,
 } from './protocol';
 import {logApiError} from './errorUtils';
 
@@ -66,7 +66,7 @@ class ToolboxClient {
           Object.prototype.hasOwnProperty.call(manifest.tools, name)
         ) {
           const specificToolSchema = manifest.tools[name];
-          const paramZodSchema = createZodObjectSchemaFromParameters(
+          const paramZodSchema = createZodSchemaFromParams(
             specificToolSchema.parameters
           );
           return ToolboxTool(

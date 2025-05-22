@@ -22,8 +22,8 @@ import {logApiError} from './errorUtils';
  * An asynchronous client for interacting with a Toolbox service.
  */
 class ToolboxClient {
-  /** @private */ private _baseUrl: string;
-  /** @private */ private _session: AxiosInstance;
+  private _baseUrl: string;
+  private _session: AxiosInstance;
 
   /**
    * Initializes the ToolboxClient.
@@ -38,7 +38,7 @@ class ToolboxClient {
 
   /**
    * Asynchronously loads a tool from the server.
-   * Retrieves the schema for the specified tool from the Toolbox server and  
+   * Retrieves the schema for the specified tool from the Toolbox server and
    * returns a callable (`ToolboxTool`) that can be used to invoke the
    * tool remotely.
    *

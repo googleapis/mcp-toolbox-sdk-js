@@ -130,7 +130,8 @@ describe('ToolboxClient', () => {
     });
 
     const setupMocksForSuccessfulLoad = (
-      toolDefinition: { // This is the original generic object type for loadTool
+      toolDefinition: {
+        // This is the original generic object type for loadTool
         description: string;
         parameters: {name: string; type: string; description: string}[];
       },
@@ -142,7 +143,7 @@ describe('ToolboxClient', () => {
     ) => {
       const manifestData: ZodManifest = {
         serverVersion: '1.0.0',
-        tools: {[toolName]: toolDefinition as unknown as InferredZodTool }, // Cast here if ZodManifest expects InferredZodTool
+        tools: {[toolName]: toolDefinition as unknown as InferredZodTool}, // Cast here if ZodManifest expects InferredZodTool
         ...overrides.manifestData,
       } as ZodManifest; // Outer cast to ZodManifest
 
@@ -193,7 +194,8 @@ describe('ToolboxClient', () => {
     };
 
     it('should successfully load a tool with valid manifest and API response', async () => {
-      const mockToolDefinition = { // Original generic object
+      const mockToolDefinition = {
+        // Original generic object
         description: 'Performs calculations',
         parameters: [
           {name: 'expression', type: 'string', description: 'Math expression'},
@@ -238,7 +240,7 @@ describe('ToolboxClient', () => {
     });
 
     it('should throw an error if manifest.tools key is missing', async () => {
-      const mockManifestWithoutTools = {serverVersion: '1.0.0'}; 
+      const mockManifestWithoutTools = {serverVersion: '1.0.0'};
 
       mockSessionGet.mockResolvedValueOnce({
         data: mockManifestWithoutTools,
@@ -303,30 +305,37 @@ describe('ToolboxClient', () => {
         tools: toolDefinitions,
       };
 
-      const zodParamsSchemas: Record<string, ZodObject<ZodRawShape, 'strip', ZodTypeAny>> = {};
+      const zodParamsSchemas: Record<
+        string,
+        ZodObject<ZodRawShape, 'strip', ZodTypeAny>
+      > = {};
       const toolInstances: Record<string, CallableToolReturnedByFactory> = {};
       const orderedToolNames = Object.keys(toolDefinitions);
 
       orderedToolNames.forEach(tName => {
         const tDef = toolDefinitions[tName];
         zodParamsSchemas[tName] = createMockZodObject(
-            (tDef.parameters as ParameterSchema[]).reduce(
-              (acc: ZodRawShape, p) => {
-                acc[p.name] = {_def: {typeName: 'ZodString'}} as unknown as ZodTypeAny;
-                return acc;
-              },
-              {}
-            )
-          );
-        
-        const mockCallable = jest.fn().mockResolvedValue({ result: `${tName} executed` });
+          (tDef.parameters as ParameterSchema[]).reduce(
+            (acc: ZodRawShape, p) => {
+              acc[p.name] = {
+                _def: {typeName: 'ZodString'},
+              } as unknown as ZodTypeAny;
+              return acc;
+            },
+            {}
+          )
+        );
+
+        const mockCallable = jest
+          .fn()
+          .mockResolvedValue({result: `${tName} executed`});
         toolInstances[tName] = Object.assign(mockCallable, {
-            toolName: tName,
-            description: tDef.description,
-            params: zodParamsSchemas[tName],
-            getName: jest.fn().mockReturnValue(tName),
-            getDescription: jest.fn().mockReturnValue(tDef.description),
-            getParamSchema: jest.fn().mockReturnValue(zodParamsSchemas[tName]),
+          toolName: tName,
+          description: tDef.description,
+          params: zodParamsSchemas[tName],
+          getName: jest.fn().mockReturnValue(tName),
+          getDescription: jest.fn().mockReturnValue(tDef.description),
+          getParamSchema: jest.fn().mockReturnValue(zodParamsSchemas[tName]),
         });
       });
 
@@ -336,7 +345,9 @@ describe('ToolboxClient', () => {
       MockedZodManifestSchema.parse.mockReturnValueOnce(manifestData);
 
       orderedToolNames.forEach(tName => {
-        MockedCreateZodSchemaFromParams.mockReturnValueOnce(zodParamsSchemas[tName]);
+        MockedCreateZodSchemaFromParams.mockReturnValueOnce(
+          zodParamsSchemas[tName]
+        );
       });
 
       let factoryCallCount = 0;
@@ -347,7 +358,9 @@ describe('ToolboxClient', () => {
           return toolInstances[currentToolName];
         }
         const fallbackCallable = jest.fn();
-        return Object.assign(fallbackCallable, { toolName: "fallback" }) as unknown as CallableToolReturnedByFactory;
+        return Object.assign(fallbackCallable, {
+          toolName: 'fallback',
+        }) as unknown as CallableToolReturnedByFactory;
       });
 
       return {manifestData, zodParamsSchemas, toolInstances};
@@ -359,12 +372,24 @@ describe('ToolboxClient', () => {
       const mockToolDefinitions: Record<string, InferredZodTool> = {
         toolA: {
           description: 'Tool A description',
-          parameters: [{name: 'paramA', type: 'string', description: 'Param A'} as ParameterSchema],
+          parameters: [
+            {
+              name: 'paramA',
+              type: 'string',
+              description: 'Param A',
+            } as ParameterSchema,
+          ],
           authRequired: [], // Assuming InferredZodTool might have this
         },
         toolB: {
           description: 'Tool B description',
-          parameters: [{name: 'paramB', type: 'integer', description: 'Param B'} as ParameterSchema],
+          parameters: [
+            {
+              name: 'paramB',
+              type: 'integer',
+              description: 'Param B',
+            } as ParameterSchema,
+          ],
           authRequired: [], // Assuming InferredZodTool might have this
         },
       };
@@ -405,19 +430,18 @@ describe('ToolboxClient', () => {
 
     it('should request the default toolset if no name is provided', async () => {
       const expectedApiUrl = `${testBaseUrl}/api/toolset/`;
-      
+
       setupMocksForSuccessfulToolsetLoad({});
-      await client.loadToolset(); 
+      await client.loadToolset();
       expect(mockSessionGet).toHaveBeenLastCalledWith(expectedApiUrl);
 
-
-      mockSessionGet.mockReset(); 
+      mockSessionGet.mockReset();
       MockedZodManifestSchema.parse.mockReset();
       MockedCreateZodSchemaFromParams.mockReset();
       MockedToolboxToolFactory.mockReset();
 
       setupMocksForSuccessfulToolsetLoad({});
-      await client.loadToolset(null); 
+      await client.loadToolset(null);
       expect(mockSessionGet).toHaveBeenLastCalledWith(expectedApiUrl);
     });
 
@@ -425,10 +449,10 @@ describe('ToolboxClient', () => {
       const toolsetName = 'empty-set';
       const manifestWithNoTools: ZodManifest = {
         serverVersion: '1.0.0',
-        tools: {}, 
+        tools: {},
       };
-      setupMocksForSuccessfulToolsetLoad({}, manifestWithNoTools); 
-      
+      setupMocksForSuccessfulToolsetLoad({}, manifestWithNoTools);
+
       const loadedTools = await client.loadToolset(toolsetName);
 
       expect(loadedTools).toEqual([]);
@@ -439,10 +463,14 @@ describe('ToolboxClient', () => {
     it('should throw an error if manifest parsing fails for toolset', async () => {
       const toolsetName = 'bad-manifest-set';
       const mockApiResponseData = {invalid: 'toolset structure'};
-      const mockZodError = new ZodError([ 
-          {path: ['serverVersion'], message: 'Zod validation failed on toolset', code: 'custom'}
+      const mockZodError = new ZodError([
+        {
+          path: ['serverVersion'],
+          message: 'Zod validation failed on toolset',
+          code: 'custom',
+        },
       ]);
-      
+
       mockSessionGet.mockResolvedValueOnce({
         data: mockApiResponseData,
       } as AxiosResponse);

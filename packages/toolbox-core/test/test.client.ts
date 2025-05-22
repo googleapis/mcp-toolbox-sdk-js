@@ -20,6 +20,8 @@ import {
   type ZodManifest,
 } from '../src/toolbox_core/protocol';
 import axios, {AxiosInstance, AxiosResponse} from 'axios';
+import { ZodRawShape, ZodObject} from 'zod';
+
 
 // --- Mocking External Dependencies ---
 jest.mock('axios');
@@ -124,7 +126,7 @@ describe('ToolboxClient', () => {
       } as AxiosResponse);
       MockedZodManifestSchema.parse.mockReturnValueOnce(manifestData);
       MockedCreateZodSchemaFromParams.mockReturnValueOnce(
-        zodParamsSchema as any
+        zodParamsSchema as ZodObject<ZodRawShape>
       );
       MockedToolboxToolFactory.mockReturnValueOnce(toolInstance as any);
 

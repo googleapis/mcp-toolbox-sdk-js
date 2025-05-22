@@ -100,7 +100,7 @@ describe('ToolboxClient', () => {
     const setupMocksForSuccessfulLoad = (
       toolDefinition: object,
       overrides: {
-        manifestData?: Partial<ZodManifest>; // Use a more specific type or Partial
+        manifestData?: Partial<ZodManifest>;
         zodParamsSchema?: object;
         toolInstance?: object;
       } = {}
@@ -109,7 +109,7 @@ describe('ToolboxClient', () => {
         serverVersion: '1.0.0',
         tools: {[toolName]: toolDefinition},
         ...overrides.manifestData, // Allow overriding parts of the manifest
-      } as ZodManifest; // Cast to ensure type compatibility if toolDefinition is generic
+      } as ZodManifest;
       const zodParamsSchema = overrides.zodParamsSchema || {
         _isMockZodParamSchema: true,
         forTool: toolName,
@@ -183,7 +183,7 @@ describe('ToolboxClient', () => {
         data: mockManifestWithoutTools,
       } as AxiosResponse);
       MockedZodManifestSchema.parse.mockReturnValueOnce(
-        mockManifestWithoutTools as any
+        mockManifestWithoutTools as unknown as ZodManifest
       );
 
       await expect(client.loadTool(toolName)).rejects.toThrow(
@@ -197,12 +197,12 @@ describe('ToolboxClient', () => {
       const mockManifestWithOtherTools = {
         serverVersion: '1.0.0',
         tools: {anotherTool: {description: 'A different tool', parameters: []}},
-      } as ZodManifest; // Ensure this mock data conforms to ZodManifest
+      } as ZodManifest;
       mockSessionGet.mockResolvedValueOnce({
         data: mockManifestWithOtherTools,
       } as AxiosResponse);
       MockedZodManifestSchema.parse.mockReturnValueOnce(
-        mockManifestWithOtherTools as any
+        mockManifestWithOtherTools as ZodManifest
       );
       await expect(client.loadTool(toolName)).rejects.toThrow(
         `Tool "${toolName}" not found in manifest.`

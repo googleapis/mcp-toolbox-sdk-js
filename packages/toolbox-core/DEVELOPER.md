@@ -1,6 +1,6 @@
 # Development
 
-This guide provides instructions for setting up your development environment to contribute to the `toolbox-core` package, which is part of the `mcp-toolbox-sdk-js` monorepo.
+This guide provides instructions for setting up your development environment to contribute to the `@toolbox/core` package, which is part of the `mcp-toolbox-sdk-js` monorepo.
 
 ## Prerequisites
 

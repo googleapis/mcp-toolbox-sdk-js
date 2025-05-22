@@ -20,8 +20,6 @@ import {logApiError} from './errorUtils';
 
 /**
  * An asynchronous client for interacting with a Toolbox service.
- * Provides methods to discover and load tools defined by a remote Toolbox
- * service endpoint. It manages an underlying client session.
  */
 class ToolboxClient {
   /** @private */ private _baseUrl: string;
@@ -40,7 +38,8 @@ class ToolboxClient {
 
   /**
    * Asynchronously loads a tool from the server.
-   * Retrieves the schema for the specified tool from the Toolbox server and  * returns a callable (`ToolboxTool`) that can be used to invoke the
+   * Retrieves the schema for the specified tool from the Toolbox server and  
+   * returns a callable (`ToolboxTool`) that can be used to invoke the
    * tool remotely.
    *
    * @param {string} name - The unique name or identifier of the tool to load.

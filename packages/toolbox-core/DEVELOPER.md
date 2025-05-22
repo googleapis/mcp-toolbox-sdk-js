@@ -1,8 +1,16 @@
 # Development
 
-Below are the details to set up a development environment and perform common development tasks for the `toolbox-core` package within the `mcp-toolbox-sdk-js` monorepo.
+This guide provides instructions for setting up your development environment to contribute to the `toolbox-core` package, which is part of the `mcp-toolbox-sdk-js` monorepo.
 
-## Install
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+* Node.js ([LTS version recommended](https://nodejs.org/en/download/))
+
+## Setup
+
+These steps will guide you through setting up the monorepo and this specific package for development.
 
 1. Clone the repository:
 
@@ -10,54 +18,76 @@ Below are the details to set up a development environment and perform common dev
     git clone https://github.com/googleapis/mcp-toolbox-sdk-js.git
     ```
 
-1. Navigate to the package directory:
+2. Navigate to the **package directory**:
 
     ```bash
     cd mcp-toolbox-sdk-js/packages/toolbox-core
     ```
 
-1. Install the dependencies for your package.
+3. Install dependencies for your package:
 
     ```bash
     npm install
     ```
 
-1. Make code changes and contribute to the SDK's development.
+## Development Workflow
 
-## Test
+1. **Make Code Changes:**
+    Implement your features or bug fixes within the `packages/toolbox-core/src` directory (or relevant source folder).
 
-1. Navigate to the package directory if needed:
-
-    ```bash
-    cd mcp-toolbox-sdk-js/packages/toolbox-core
-    ```
-
-1. Install the SDK package
+2. **Build (if applicable):**
+    If this package uses TypeScript or another compilation step, you'll need to build it. Check the `package.json` for a build script.
 
     ```bash
-    npm install
+    npm run build
     ```
 
-1. Run unit and/or integration tests.
+## Testing
+
+Ensure all tests pass before submitting your changes. Tests are typically run from within the `packages/toolbox-core` directory.
+
+> [!IMPORTANT]
+> Dependencies (including testing tools) should have been installed during the initial `npm install` at the monorepo root.
+
+1. **Run Unit Tests:**
 
     ```bash
     npm run test:unit
     ```
 
-    or
+1. **Run End-to-End (E2E) / Integration Tests:**
 
     ```bash
     npm run test:e2e
     ```
 
-1. Run linter
+## Linting and Formatting
 
-   ```bash
+This project uses linters (e.g., ESLint) and formatters (e.g., Prettier) to maintain code quality and consistency.
+
+1. **Run Linter:**
+    Check your code for linting errors:
+
+    ```bash
     npm run lint
     ```
 
-    Fix common lint issues
+2. **Fix Lint/Format Issues:**
+    Automatically fix fixable linting and formatting issues:
 
     ```bash
     npm run fix
     ```
+
+## Committing Changes
+
+* **Branching:** Create a new branch for your feature or bug fix (e.g., `feature/my-new-feature` or `fix/issue-123`).
+* **Commit Messages:** Follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for commit message conventions.
+* **Pre-submit checks:** On any PRs, presubmit checks like linters, unit tests
+  and integration tests etc. are run. Make sure all checks are green before
+  proceeding.
+* **Submitting a PR:** On approval by a repo maintainer, *Squash and Merge* your PR.
+
+## Further Information
+
+* If you encounter issues or have questions, please open an [issue](https://github.com/googleapis/mcp-toolbox-sdk-js/issues) on the GitHub repository.

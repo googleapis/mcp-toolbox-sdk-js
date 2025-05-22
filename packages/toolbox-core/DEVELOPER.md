@@ -1,13 +1,13 @@
 # Development
 
-Below are the details to set up a development environment and run tests.
+Below are the details to set up a development environment and perform common development tasks for the `toolbox-core` package within the `mcp-toolbox-sdk-js` monorepo.
 
 ## Install
 
 1. Clone the repository:
 
     ```bash
-    git clone https://github.com/googleapis/mcp-toolbox-sdk-js
+    git clone https://github.com/googleapis/mcp-toolbox-sdk-js.git
     ```
 
 1. Navigate to the package directory:
@@ -16,7 +16,7 @@ Below are the details to set up a development environment and run tests.
     cd mcp-toolbox-sdk-js/packages/toolbox-core
     ```
 
-1. Install the package
+1. Install the dependencies for your package.
 
     ```bash
     npm install

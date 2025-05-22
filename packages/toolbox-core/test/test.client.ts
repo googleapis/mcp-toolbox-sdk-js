@@ -20,8 +20,29 @@ import {
   type ZodManifest,
 } from '../src/toolbox_core/protocol';
 import axios, {AxiosInstance, AxiosResponse} from 'axios';
-import { ZodRawShape, ZodObject} from 'zod';
+import {ZodRawShape, ZodObject, ZodTypeAny} from 'zod';
 
+// --- Helper Types ---
+type OriginalToolboxToolType =
+  typeof import('../src/toolbox_core/tool').ToolboxTool;
+
+type CallableToolReturnedByFactory = ReturnType<OriginalToolboxToolType>;
+
+const createMockZodObject = (
+  shape: ZodRawShape = {}
+): ZodObject<ZodRawShape, 'strip', ZodTypeAny> =>
+  ({
+    parse: jest.fn(args => args), // Simple pass-through
+    safeParse: jest.fn(args => ({success: true, data: args})),
+    _def: {
+      typeName: 'ZodObject',
+      shape: () => shape,
+    },
+    shape: shape,
+    pick: jest.fn().mockReturnThis(),
+    omit: jest.fn().mockReturnThis(),
+    extend: jest.fn().mockReturnThis(),
+  }) as unknown as ZodObject<ZodRawShape, 'strip', ZodTypeAny>;
 
 // --- Mocking External Dependencies ---
 jest.mock('axios');
@@ -30,9 +51,9 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 jest.mock('../src/toolbox_core/tool', () => ({
   ToolboxTool: jest.fn(),
 }));
-const MockedToolboxToolFactory = ToolboxTool as jest.MockedFunction<
-  typeof ToolboxTool
->;
+
+const MockedToolboxToolFactory =
+  ToolboxTool as jest.MockedFunction<OriginalToolboxToolType>;
 
 jest.mock('../src/toolbox_core/protocol', () => ({
   ZodManifestSchema: {
@@ -100,35 +121,64 @@ describe('ToolboxClient', () => {
     });
 
     const setupMocksForSuccessfulLoad = (
-      toolDefinition: object,
+      toolDefinition: {
+        description: string;
+        parameters: {name: string; type: string; description: string}[];
+      },
       overrides: {
         manifestData?: Partial<ZodManifest>;
-        zodParamsSchema?: object;
-        toolInstance?: object;
+        zodParamsSchema?: ZodObject<ZodRawShape, 'strip', ZodTypeAny>;
+        toolInstance?: Partial<CallableToolReturnedByFactory>;
       } = {}
     ) => {
       const manifestData: ZodManifest = {
         serverVersion: '1.0.0',
         tools: {[toolName]: toolDefinition},
-        ...overrides.manifestData, // Allow overriding parts of the manifest
+        ...overrides.manifestData,
       } as ZodManifest;
-      const zodParamsSchema = overrides.zodParamsSchema || {
-        _isMockZodParamSchema: true,
-        forTool: toolName,
-      };
-      const toolInstance = overrides.toolInstance || {
-        _isMockTool: true,
-        loadedName: toolName,
-      };
+
+      const zodParamsSchema =
+        overrides.zodParamsSchema ||
+        createMockZodObject(
+          toolDefinition.parameters.reduce(
+            (shapeAccumulator: ZodRawShape, param) => {
+              shapeAccumulator[param.name] = {
+                _def: {typeName: 'ZodString'},
+              } as unknown as ZodTypeAny;
+              return shapeAccumulator;
+            },
+            {} as ZodRawShape
+          )
+        );
+
+      const defaultMockCallable = jest
+        .fn()
+        .mockResolvedValue({result: 'mock tool execution'});
+      const defaultToolInstance: CallableToolReturnedByFactory = Object.assign(
+        defaultMockCallable,
+        {
+          toolName: toolName,
+          description: toolDefinition.description,
+          params: zodParamsSchema,
+          getName: jest.fn().mockReturnValue(toolName),
+          getDescription: jest.fn().mockReturnValue(toolDefinition.description),
+          getParamSchema: jest.fn().mockReturnValue(zodParamsSchema),
+        }
+      );
+
+      const toolInstance = overrides.toolInstance
+        ? {...defaultToolInstance, ...overrides.toolInstance}
+        : defaultToolInstance;
 
       mockSessionGet.mockResolvedValueOnce({
         data: manifestData,
       } as AxiosResponse);
       MockedZodManifestSchema.parse.mockReturnValueOnce(manifestData);
-      MockedCreateZodSchemaFromParams.mockReturnValueOnce(
-        zodParamsSchema as ZodObject<ZodRawShape>
+      MockedCreateZodSchemaFromParams.mockReturnValueOnce(zodParamsSchema);
+
+      MockedToolboxToolFactory.mockReturnValueOnce(
+        toolInstance as CallableToolReturnedByFactory
       );
-      MockedToolboxToolFactory.mockReturnValueOnce(toolInstance as any);
 
       return {manifestData, zodParamsSchema, toolInstance};
     };

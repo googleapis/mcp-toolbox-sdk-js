@@ -33,7 +33,6 @@ const createMockZodObject = (
 ): ZodObject<ZodRawShape, 'strip', ZodTypeAny> =>
   ({
     parse: jest.fn(args => args), // Simple pass-through
-    safeParse: jest.fn(args => ({success: true, data: args})),
     _def: {
       typeName: 'ZodObject',
       shape: () => shape,
@@ -318,7 +317,7 @@ describe('ToolboxClient', () => {
       mockSessionGet.mockResolvedValueOnce({
         data: manifestData,
       } as AxiosResponse);
-      MockedZodManifestSchema.safeParse.mockReturnValueOnce({
+      MockedZodManifestSchema.parse.mockReturnValueOnce({
         success: true,
         data: manifestData,
       } as any);
@@ -354,7 +353,7 @@ describe('ToolboxClient', () => {
       const loadedTools = await client.loadToolset(toolsetName);
 
       expect(mockSessionGet).toHaveBeenCalledWith(expectedApiUrl);
-      expect(MockedZodManifestSchema.safeParse).toHaveBeenCalledWith(
+      expect(MockedZodManifestSchema.parse).toHaveBeenCalledWith(
         manifestData
       );
       expect(MockedCreateZodSchemaFromParams).toHaveBeenCalledWith(
@@ -413,7 +412,7 @@ describe('ToolboxClient', () => {
       mockSessionGet.mockResolvedValueOnce({
         data: mockApiResponseData,
       } as AxiosResponse);
-      MockedZodManifestSchema.safeParse.mockReturnValueOnce({
+      MockedZodManifestSchema.parse.mockReturnValueOnce({
         success: false,
         error: mockZodErrorDetail,
       } as any);

@@ -15,10 +15,7 @@
 import {ToolboxTool} from './tool';
 import axios from 'axios';
 import {type AxiosInstance, type AxiosResponse} from 'axios';
-import {
-  ZodManifestSchema,
-  createZodSchemaFromParams,
-} from './protocol';
+import {ZodManifestSchema, createZodSchemaFromParams} from './protocol';
 import {logApiError} from './errorUtils';
 
 /**

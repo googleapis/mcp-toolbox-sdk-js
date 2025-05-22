@@ -16,7 +16,7 @@ import {ToolboxClient} from '../src/toolbox_core/client';
 import {ToolboxTool} from '../src/toolbox_core/tool';
 import {
   ZodManifestSchema,
-  createZodObjectSchemaFromParameters,
+  createZodSchemaFromParams,
 } from '../src/toolbox_core/protocol';
 import axios, {AxiosInstance, AxiosResponse} from 'axios';
 
@@ -35,14 +35,14 @@ jest.mock('../src/toolbox_core/protocol', () => ({
   ZodManifestSchema: {
     safeParse: jest.fn(),
   },
-  createZodObjectSchemaFromParameters: jest.fn(),
+  createZodSchemaFromParams: jest.fn(),
 }));
 const MockedZodManifestSchema = ZodManifestSchema as jest.Mocked<
   typeof ZodManifestSchema
 >;
-const MockedCreateZodObjectSchemaFromParameters =
-  createZodObjectSchemaFromParameters as jest.MockedFunction<
-    typeof createZodObjectSchemaFromParameters
+const MockedCreateZodSchemaFromParams =
+  createZodSchemaFromParams as jest.MockedFunction<
+    typeof createZodSchemaFromParams
   >;
 
 describe('ToolboxClient', () => {
@@ -124,7 +124,7 @@ describe('ToolboxClient', () => {
         success: true,
         data: manifestData,
       } as any);
-      MockedCreateZodObjectSchemaFromParameters.mockReturnValueOnce(
+      MockedCreateZodSchemaFromParams.mockReturnValueOnce(
         zodParamsSchema as any
       );
       MockedToolboxToolFactory.mockReturnValueOnce(toolInstance as any);
@@ -148,7 +148,7 @@ describe('ToolboxClient', () => {
       expect(MockedZodManifestSchema.safeParse).toHaveBeenCalledWith(
         manifestData
       );
-      expect(MockedCreateZodObjectSchemaFromParameters).toHaveBeenCalledWith(
+      expect(MockedCreateZodSchemaFromParams).toHaveBeenCalledWith(
         mockToolDefinition.parameters
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
@@ -175,7 +175,7 @@ describe('ToolboxClient', () => {
       await expect(client.loadTool(toolName)).rejects.toThrow(
         `Invalid manifest structure received: ${mockZodErrorDetail.message}`
       );
-      expect(MockedCreateZodObjectSchemaFromParameters).not.toHaveBeenCalled();
+      expect(MockedCreateZodSchemaFromParams).not.toHaveBeenCalled();
       expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
     });
 
@@ -193,7 +193,7 @@ describe('ToolboxClient', () => {
       await expect(client.loadTool(toolName)).rejects.toThrow(
         `Tool "${toolName}" not found in manifest.`
       );
-      expect(MockedCreateZodObjectSchemaFromParameters).not.toHaveBeenCalled();
+      expect(MockedCreateZodSchemaFromParams).not.toHaveBeenCalled();
       expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
     });
 
@@ -213,7 +213,7 @@ describe('ToolboxClient', () => {
       await expect(client.loadTool(toolName)).rejects.toThrow(
         `Tool "${toolName}" not found in manifest.`
       );
-      expect(MockedCreateZodObjectSchemaFromParameters).not.toHaveBeenCalled();
+      expect(MockedCreateZodSchemaFromParams).not.toHaveBeenCalled();
       expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
     });
 

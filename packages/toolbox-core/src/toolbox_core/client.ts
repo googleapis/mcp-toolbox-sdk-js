@@ -54,9 +54,8 @@ class ToolboxClient {
       const response: AxiosResponse = await this._session.get(url);
       const responseData = response.data;
 
-      const manifestResponse = ZodManifestSchema.safeParse(responseData);
-      if (manifestResponse.success) {
-        const manifest = manifestResponse.data;
+      try {
+        const manifest = ZodManifestSchema.parse(responseData);
         if (
           manifest.tools &&
           Object.prototype.hasOwnProperty.call(manifest.tools, name)
@@ -75,9 +74,14 @@ class ToolboxClient {
         } else {
           throw new Error(`Tool "${name}" not found in manifest.`);
         }
-      } else {
+      } catch (validationError) {
+        if (validationError instanceof Error) {
+          throw new Error(
+            `Invalid manifest structure received: ${validationError.message}`
+          );
+        }
         throw new Error(
-          `Invalid manifest structure received: ${manifestResponse.error.message}`
+          'Invalid manifest structure received: Unknown validation error.'
         );
       }
     } catch (error) {

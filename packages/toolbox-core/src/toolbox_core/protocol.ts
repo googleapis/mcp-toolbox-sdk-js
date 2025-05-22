@@ -93,6 +93,8 @@ export const ZodManifestSchema = z.object({
   ),
 });
 
+export type ZodManifest = z.infer<typeof ZodManifestSchema>;
+
 /**
  * Recursively builds a Zod schema for a single parameter based on its TypeScript definition.
  * @param param The ParameterSchema (TypeScript type) to convert.

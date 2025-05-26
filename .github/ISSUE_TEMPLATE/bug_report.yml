@@ -32,7 +32,7 @@ body:
         - Search the [current open issues](https://github.com/googleapis/mcp-toolbox-sdk-js/issues)
         - Update to the [latest version of
         Toolbox](https://github.com/googleapis/genai-toolbox/releases)
-        - Update to the [latest version of the SDK](https://github.com/googleapis/mcp-toolbox-sdk-js/CHANGELOG.md).
+        - Update to the [latest version of the SDK](https://github.com/googleapis/mcp-toolbox-sdk-js/tree/main/CHANGELOG.md).
       options: 
         - label: "I've searched the current open issues"
           required: true

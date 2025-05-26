@@ -20,6 +20,7 @@ import {logApiError} from './errorUtils';
 
 /**
  * An asynchronous client for interacting with a Toolbox service.
+ * Manages an Axios Client Session, if not provided.
  */
 class ToolboxClient {
   private _baseUrl: string;

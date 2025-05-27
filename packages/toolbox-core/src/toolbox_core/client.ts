@@ -14,7 +14,11 @@
 
 import {ToolboxTool} from './tool';
 import axios from 'axios';
-import {type AxiosInstance, type AxiosResponse} from 'axios';
+import {
+  type AxiosInstance,
+  type AxiosResponse,
+  type InternalAxiosRequestConfig,
+} from 'axios';
 import {ZodManifestSchema, createZodSchemaFromParams} from './protocol';
 import {logApiError} from './errorUtils';
 import {ZodError} from 'zod';
@@ -22,23 +26,74 @@ import {ZodError} from 'zod';
 type Manifest = import('zod').infer<typeof ZodManifestSchema>;
 type ToolSchemaFromManifest = Manifest['tools'][string];
 
+// Types for dynamic headers
+export type HeaderFunction = () => string;
+export type AsyncHeaderFunction = () => Promise<string>;
+export type ClientHeaderProvider = HeaderFunction | AsyncHeaderFunction;
+export type ClientHeadersConfig = Record<string, ClientHeaderProvider>;
+
 /**
  * An asynchronous client for interacting with a Toolbox service.
- * Manages an Axios Client Session, if not provided.
  */
 class ToolboxClient {
   private _baseUrl: string;
   private _session: AxiosInstance;
+  private _clientHeaders: ClientHeadersConfig = {};
+  private _headerInterceptorId: number | null = null;
 
   /**
    * Initializes the ToolboxClient.
    * @param {string} url - The base URL for the Toolbox service API (e.g., "http://localhost:5000").
    * @param {AxiosInstance} [session] - Optional Axios instance for making HTTP
-   * requests. If not provided, a new one will be created.
+   *   requests. If not provided, a new one will be created.
+   * @param {ClientHeadersConfig} [clientHeaders] - Optional initial headers to
+   *   be included in each request.
    */
-  constructor(url: string, session?: AxiosInstance) {
+  constructor(
+    url: string,
+    session?: AxiosInstance | null,
+    clientHeaders?: ClientHeadersConfig | null
+  ) {
     this._baseUrl = url;
     this._session = session || axios.create({baseURL: this._baseUrl});
+    if (clientHeaders) {
+      this._clientHeaders = {...clientHeaders}; // Initialize with a copy
+    }
+    this._applyHeaderInterceptor();
+  }
+
+  /**
+   * Applies an Axios request interceptor to handle dynamic client headers.
+   * The interceptor resolves header provider functions before each request.
+   */
+  private _applyHeaderInterceptor(): void {
+    if (this._headerInterceptorId !== null) {
+      this._session.interceptors.request.eject(this._headerInterceptorId);
+    }
+
+    this._headerInterceptorId = this._session.interceptors.request.use(
+      async (config: InternalAxiosRequestConfig) => {
+        config.headers = config.headers || {};
+        for (const headerName in this._clientHeaders) {
+          if (
+            Object.prototype.hasOwnProperty.call(
+              this._clientHeaders,
+              headerName
+            )
+          ) {
+            const headerProvider = this._clientHeaders[headerName];
+            const result = headerProvider();
+            if (result instanceof Promise) {
+              config.headers[headerName] = await result;
+            } else {
+              config.headers[headerName] = result;
+            }
+          }
+        }
+        return config;
+      },
+      (error: Error) => Promise.reject(error)
+    );
   }
 
   /**
@@ -79,6 +134,30 @@ class ToolboxClient {
       logApiError(`Error fetching data from ${url}:`, error);
       throw error;
     }
+  }
+
+  /**
+   * Add headers to be included in each request sent through this client.
+   *
+   * @param {ClientHeadersConfig} headers - Headers to include in each request.
+   * Keys are header names, and values are functions (sync or async) that return the header string.
+   * @throws {Error} If any of the header names are already registered in the client.
+   */
+  public addHeaders(headers: ClientHeadersConfig): void {
+    const incomingHeaderKeys = Object.keys(headers);
+    const existingHeaderKeys = Object.keys(this._clientHeaders);
+
+    const duplicates = incomingHeaderKeys.filter(key =>
+      existingHeaderKeys.includes(key)
+    );
+
+    if (duplicates.length > 0) {
+      throw new Error(
+        `Client header(s) \`${duplicates.join(', ')}\` already registered in the client.`
+      );
+    }
+
+    this._clientHeaders = {...this._clientHeaders, ...headers};
   }
 
   /**

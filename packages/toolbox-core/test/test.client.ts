@@ -113,7 +113,7 @@ describe('ToolboxClient', () => {
     capturedRequestInterceptorFunction = null;
 
     mockSessionGet = jest.fn();
-    mockRequestInterceptorUse = jest.fn((onFulfilled) => {
+    mockRequestInterceptorUse = jest.fn(onFulfilled => {
       capturedRequestInterceptorFunction = onFulfilled;
       return 1;
     });

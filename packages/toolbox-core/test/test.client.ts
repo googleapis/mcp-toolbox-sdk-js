@@ -27,7 +27,12 @@ import {
 } from '../src/toolbox_core/protocol';
 import {logApiError} from '../src/toolbox_core/errorUtils';
 
-import axios, {AxiosInstance, AxiosResponse} from 'axios';
+import axios, {
+  AxiosInstance,
+  AxiosResponse,
+  type InternalAxiosRequestConfig,
+  AxiosHeaders,
+} from 'axios';
 import {z, ZodRawShape, ZodObject, ZodTypeAny, ZodError} from 'zod';
 
 // --- Helper Types ---
@@ -93,42 +98,129 @@ describe('ToolboxClient', () => {
   const testBaseUrl = 'http://api.example.com';
   let consoleErrorSpy: jest.SpyInstance;
   let mockSessionGet: jest.Mock;
+  let capturedRequestInterceptorFunction:
+    | ((
+        config: InternalAxiosRequestConfig
+      ) => Promise<InternalAxiosRequestConfig> | InternalAxiosRequestConfig)
+    | null;
+
+  // Mocks for the interceptor manager's methods
+  let mockRequestInterceptorUse: jest.Mock;
+  let mockRequestInterceptorEject: jest.Mock;
 
   beforeEach(() => {
     jest.resetAllMocks();
+    capturedRequestInterceptorFunction = null;
 
     mockSessionGet = jest.fn();
-    mockedAxios.create.mockReturnValue({
-      get: mockSessionGet,
- interceptors: {request: {handlers: [], use: jest.fn(), eject: jest.fn()}},
-    } as unknown as AxiosInstance);
+    mockRequestInterceptorUse = jest.fn((onFulfilled) => {
+      capturedRequestInterceptorFunction = onFulfilled;
+      return 1;
+    });
+    mockRequestInterceptorEject = jest.fn();
+
+    mockedAxios.create.mockImplementation((axiosConfig?: any) => {
+      const instanceDefaults = {
+        ...(axiosConfig || {}),
+        headers: axiosConfig?.headers || {},
+      };
+
+      const sessionInstance = {
+        defaults: instanceDefaults,
+        interceptors: {
+          request: {
+            use: mockRequestInterceptorUse,
+            eject: mockRequestInterceptorEject,
+            handlers: [],
+          },
+          response: {use: jest.fn(), eject: jest.fn(), handlers: []},
+        },
+        // Prepare the config Axios would pass to interceptors
+        get: jest.fn(
+          async (url: string, config?: InternalAxiosRequestConfig) => {
+            const currentConfig: InternalAxiosRequestConfig = {
+              ...instanceDefaults,
+              ...(config || {}),
+              headers: {
+                ...(instanceDefaults.headers || {}),
+                ...(config?.headers || {}),
+              },
+              url: url,
+              method: 'get',
+            };
+
+            if (capturedRequestInterceptorFunction) {
+              try {
+                if (
+                  !currentConfig.headers ||
+                  currentConfig.headers === undefined ||
+                  currentConfig.headers === null
+                ) {
+                  currentConfig.headers = new AxiosHeaders();
+                }
+                const processedConfig = await Promise.resolve(
+                  capturedRequestInterceptorFunction(currentConfig)
+                );
+                return mockSessionGet(url, processedConfig);
+              } catch (error) {
+                return Promise.reject(error);
+              }
+            }
+            return mockSessionGet(url, currentConfig);
+          }
+        ),
+      } as unknown as AxiosInstance;
+      return sessionInstance;
+    });
 
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
     consoleErrorSpy.mockRestore();
+    jest.clearAllMocks();
   });
 
   describe('constructor', () => {
     it('should set baseUrl and create a new session if one is not provided', () => {
       const client = new ToolboxClient(testBaseUrl);
-
       expect(client['_baseUrl']).toBe(testBaseUrl);
       expect(mockedAxios.create).toHaveBeenCalledTimes(1);
       expect(mockedAxios.create).toHaveBeenCalledWith({baseURL: testBaseUrl});
-      expect(client['_session'].get).toBe(mockSessionGet);
+      expect(client['_session'].get).toBeDefined();
+      expect(mockRequestInterceptorUse).toHaveBeenCalledTimes(1);
+      expect(mockRequestInterceptorUse).toHaveBeenCalledWith(
+        expect.any(Function),
+        expect.any(Function)
+      );
     });
 
     it('should set baseUrl and use the provided session if one is given', () => {
+      const providedSessionMockUse = jest.fn();
+      const providedSessionMockEject = jest.fn();
       const customMockSession = {
-        get: mockSessionGet,
+        get: jest.fn(),
+        interceptors: {
+          request: {
+            use: providedSessionMockUse,
+            eject: providedSessionMockEject,
+            handlers: [],
+          },
+          response: {use: jest.fn(), eject: jest.fn(), handlers: []},
+        },
+        defaults: {headers: {}},
       } as unknown as AxiosInstance;
+
       const client = new ToolboxClient(testBaseUrl, customMockSession);
 
       expect(client['_baseUrl']).toBe(testBaseUrl);
       expect(client['_session']).toBe(customMockSession);
       expect(mockedAxios.create).not.toHaveBeenCalled();
+      expect(providedSessionMockUse).toHaveBeenCalledTimes(1);
+      expect(providedSessionMockUse).toHaveBeenCalledWith(
+        expect.any(Function),
+        expect.any(Function)
+      );
     });
 
     it('should initialize with clientHeaders if provided', () => {
@@ -141,8 +233,13 @@ describe('ToolboxClient', () => {
 
     it('should apply header interceptor on construction', () => {
       const client = new ToolboxClient(testBaseUrl);
-        expect(client['_session'].interceptors.request.use).toHaveBeenCalledTimes(1);
-        expect(client['_session'].interceptors.request.use).toHaveBeenCalledWith(expect.any(Function), expect.any(Function));
+      expect(client['_session'].interceptors.request.use).toHaveBeenCalledTimes(
+        1
+      );
+      expect(client['_session'].interceptors.request.use).toHaveBeenCalledWith(
+        expect.any(Function),
+        expect.any(Function)
+      );
     });
   });
 
@@ -307,7 +404,10 @@ describe('ToolboxClient', () => {
         setupMocksForSuccessfulLoad(mockToolDefinition);
       const loadedTool = await client.loadTool(toolName);
 
-      expect(mockSessionGet).toHaveBeenCalledWith(expectedApiUrl);
+      expect(mockSessionGet).toHaveBeenCalledWith(
+        expectedApiUrl,
+        expect.anything()
+      );
       expect(MockedZodManifestSchema.parse).toHaveBeenCalledWith(manifestData);
       expect(MockedCreateZodSchemaFromParams).toHaveBeenCalledWith(
         mockToolDefinition.parameters
@@ -386,7 +486,10 @@ describe('ToolboxClient', () => {
       mockSessionGet.mockRejectedValueOnce(apiError);
 
       await expect(client.loadTool(toolName)).rejects.toThrow(apiError);
-      expect(mockSessionGet).toHaveBeenCalledWith(expectedApiUrl);
+      expect(mockSessionGet).toHaveBeenCalledWith(
+        expectedApiUrl,
+        expect.anything()
+      );
       expect(MockedLogApiError).toHaveBeenCalledWith(
         `Error fetching data from ${expectedApiUrl}:`,
         apiError
@@ -502,7 +605,10 @@ describe('ToolboxClient', () => {
         setupMocksForSuccessfulToolsetLoad(mockToolDefinitions);
       const loadedTools = await client.loadToolset(toolsetName);
 
-      expect(mockSessionGet).toHaveBeenCalledWith(expectedApiUrl);
+      expect(mockSessionGet).toHaveBeenCalledWith(
+        expectedApiUrl,
+        expect.anything()
+      );
       expect(MockedZodManifestSchema.parse).toHaveBeenCalledWith(manifestData);
 
       expect(MockedCreateZodSchemaFromParams).toHaveBeenCalledWith(
@@ -537,7 +643,10 @@ describe('ToolboxClient', () => {
 
       setupMocksForSuccessfulToolsetLoad({});
       await client.loadToolset();
-      expect(mockSessionGet).toHaveBeenLastCalledWith(expectedApiUrl);
+      expect(mockSessionGet).toHaveBeenLastCalledWith(
+        expectedApiUrl,
+        expect.anything()
+      );
 
       mockSessionGet.mockReset();
       MockedZodManifestSchema.parse.mockReset();
@@ -546,7 +655,10 @@ describe('ToolboxClient', () => {
 
       setupMocksForSuccessfulToolsetLoad({});
       await client.loadToolset();
-      expect(mockSessionGet).toHaveBeenLastCalledWith(expectedApiUrl);
+      expect(mockSessionGet).toHaveBeenLastCalledWith(
+        expectedApiUrl,
+        expect.anything()
+      );
     });
 
     it('should return an empty array if the manifest contains no tools', async () => {

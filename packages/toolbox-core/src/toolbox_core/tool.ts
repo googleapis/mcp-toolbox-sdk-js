@@ -21,7 +21,7 @@ export interface CallableTool {
   (callArguments?: Record<string, unknown>): Promise<any>;
   toolName: string;
   description: string;
-  paramSchema: ZodObject<ZodRawShape>;
+  params: ZodObject<ZodRawShape>;
   boundParams: Readonly<BoundParams>;
   getName(): string;
   getDescription(): string;
@@ -113,7 +113,7 @@ function ToolboxTool(
 
   tool.toolName = name;
   tool.description = description;
-  tool.paramSchema = originalParamSchema;
+  tool.params = originalParamSchema;
   tool.boundParams = Object.freeze({...boundParams});
 
   tool.getName = function () {
@@ -123,11 +123,11 @@ function ToolboxTool(
     return this.description;
   };
   tool.getParamSchema = function () {
-    return this.paramSchema;
+    return this.params;
   };
 
   tool.bindParams = function (paramsToBind: BoundParams): CallableTool {
-    const originalParamKeys = Object.keys(this.paramSchema.shape);
+    const originalParamKeys = Object.keys(this.params.shape);
     for (const paramName of Object.keys(paramsToBind)) {
       if (paramName in this.boundParams) {
         throw new Error(
@@ -147,7 +147,7 @@ function ToolboxTool(
       baseUrl,
       this.toolName,
       this.description,
-      this.paramSchema,
+      this.params,
       newBoundParams
     );
   };

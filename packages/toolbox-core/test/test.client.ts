@@ -119,6 +119,7 @@ describe('ToolboxClient', () => {
     });
     mockRequestInterceptorEject = jest.fn();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockedAxios.create.mockImplementation((axiosConfig?: any) => {
       const instanceDefaults = {
         ...(axiosConfig || {}),

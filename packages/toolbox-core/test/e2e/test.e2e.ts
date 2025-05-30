@@ -13,11 +13,11 @@
 // limitations under the License.
 
 import {ToolboxClient} from '../../src/toolbox_core/client';
-import {ToolboxTool} from '../../src/toolbox_core/tool';
+import {CallableTool} from '../../src/toolbox_core/tool';
 
 describe('ToolboxClient E2E Tests', () => {
   let commonToolboxClient: ToolboxClient;
-  let getNRowsTool: ReturnType<typeof ToolboxTool>;
+  let getNRowsTool: CallableTool;
   const testBaseUrl = 'http://localhost:5000';
 
   beforeAll(async () => {
@@ -125,6 +125,77 @@ describe('ToolboxClient E2E Tests', () => {
       await expect(
         commonToolboxClient.loadToolset('non-existent-toolset')
       ).rejects.toThrow('Request failed with status code 404');
+    });
+  });
+
+  describe('bindParams', () => {
+    it('should successfully bind a parameter with bindParam and invoke', async () => {
+      const newTool = getNRowsTool.bindParam('num_rows', '3');
+      const response = await newTool(); // Invoke with no args
+      const result = response['result'];
+      expect(result).toContain('row1');
+      expect(result).toContain('row2');
+      expect(result).toContain('row3');
+      expect(result).not.toContain('row4');
+    });
+
+    it('should successfully bind parameters with bindParams and invoke', async () => {
+      const newTool = getNRowsTool.bindParams({num_rows: '3'});
+      const response = await newTool(); // Invoke with no args
+      const result = response['result'];
+      expect(result).toContain('row1');
+      expect(result).toContain('row2');
+      expect(result).toContain('row3');
+      expect(result).not.toContain('row4');
+    });
+
+    it('should successfully bind a synchronous function value', async () => {
+      const newTool = getNRowsTool.bindParams({num_rows: () => '1'});
+      const response = await newTool();
+      const result = response['result'];
+      expect(result).toContain('row1');
+      expect(result).not.toContain('row2');
+    });
+
+    it('should successfully bind an asynchronous function value', async () => {
+      const asyncNumProvider = async () => {
+        await new Promise(resolve => setTimeout(resolve, 10));
+        return '1';
+      };
+      const newTool = getNRowsTool.bindParams({num_rows: asyncNumProvider});
+      const response = await newTool();
+      const result = response['result'];
+      expect(result).toContain('row1');
+      expect(result).not.toContain('row2');
+    });
+
+    it('should successfully bind parameters at load time', async () => {
+      const tool = await commonToolboxClient.loadTool('get-n-rows', {
+        num_rows: '3',
+      });
+      const response = await tool();
+      const result = response['result'];
+      expect(result).toContain('row1');
+      expect(result).toContain('row2');
+      expect(result).toContain('row3');
+      expect(result).not.toContain('row4');
+    });
+
+    it('should throw an error when re-binding an existing parameter', () => {
+      const newTool = getNRowsTool.bindParam('num_rows', '1');
+      expect(() => {
+        newTool.bindParam('num_rows', '2');
+      }).toThrow(
+        "Cannot re-bind parameter: parameter 'num_rows' is already bound in tool 'get-n-rows'."
+      );
+    });
+
+    it('should throw an error when binding a non-existent parameter', () => {
+      expect(() => {
+        getNRowsTool.bindParam('non_existent_param', '2');
+      }).toThrow(
+        "Unable to bind parameter: no parameter named 'non_existent_param' in tool 'get-n-rows'."
+      );
     });
   });
 });

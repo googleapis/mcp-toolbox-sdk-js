@@ -12,10 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ToolboxTool} from './tool';
+import {ToolboxTool, CallableTool} from './tool';
 import axios from 'axios';
 import {type AxiosInstance, type AxiosResponse} from 'axios';
-import {ZodManifestSchema, createZodSchemaFromParams} from './protocol';
+import {
+  ZodManifestSchema,
+  createZodSchemaFromParams,
+  ParameterSchema,
+} from './protocol';
 import {logApiError} from './errorUtils';
 import {ZodError} from 'zod';
 
@@ -82,24 +86,48 @@ class ToolboxClient {
   }
 
   /**
-   * Creates a ToolboxTool instance from its schema.
+   * Creates a ToolboxTool instance from its schema, applying only the relevant bound parameters.
    * @param {string} toolName - The name of the tool.
-   * @param {ToolSchemaFromManifest} toolSchema - The schema definition of the tool from the manifest.
-   * @returns {ReturnType<typeof ToolboxTool>} A ToolboxTool function.
+   * @param {ToolSchemaFromManifest} toolSchema - The schema definition of the tool.
+   * @param {Record<string, unknown>} [allBoundParams] - A map of all candidate parameters to bind.
+   * @returns {{tool: CallableTool, usedBoundKeys: Set<string>}} An object containing the
+   * configured tool and a set of the bound parameter keys that were used.
    * @private
    */
   private _createToolInstance(
     toolName: string,
-    toolSchema: ToolSchemaFromManifest
-  ): ReturnType<typeof ToolboxTool> {
+    toolSchema: ToolSchemaFromManifest,
+    allBoundParams?: Record<string, unknown>
+  ): {tool: CallableTool; usedBoundKeys: Set<string>} {
+    const toolParamNames = new Set(
+      toolSchema.parameters.map((p: ParameterSchema) => p.name)
+    );
+    const applicableBoundParams: Record<string, unknown> = {};
+    const usedBoundKeys = new Set<string>();
+
+    if (allBoundParams) {
+      for (const key in allBoundParams) {
+        if (
+          Object.prototype.hasOwnProperty.call(allBoundParams, key) &&
+          toolParamNames.has(key)
+        ) {
+          applicableBoundParams[key] = allBoundParams[key];
+          usedBoundKeys.add(key);
+        }
+      }
+    }
+
     const paramZodSchema = createZodSchemaFromParams(toolSchema.parameters);
-    return ToolboxTool(
+    const tool = ToolboxTool(
       this._session,
       this._baseUrl,
       toolName,
       toolSchema.description,
-      paramZodSchema
+      paramZodSchema,
+      applicableBoundParams
     );
+
+    return {tool, usedBoundKeys};
   }
 
   /**
@@ -109,21 +137,41 @@ class ToolboxClient {
    * tool remotely.
    *
    * @param {string} name - The unique name or identifier of the tool to load.
-   * @returns {Promise<ReturnType<typeof ToolboxTool>>} A promise that resolves
+   * @param {Record<string, unknown>} [boundParams] - An optional mapping of parameter names to bind to specific values.
+   * @returns {Promise<CallableTool>} A promise that resolves
    * to a ToolboxTool function, ready for execution.
-   * @throws {Error} If the tool is not found in the manifest, the manifest structure is invalid,
-   * or if there's an error fetching data from the API.
+   * @throws {Error} If the tool is not found, validation fails, or the API request fails.
    */
-  async loadTool(name: string): Promise<ReturnType<typeof ToolboxTool>> {
+  async loadTool(
+    name: string,
+    boundParams?: Record<string, unknown>
+  ): Promise<CallableTool> {
+    const finalBoundParams = boundParams || {};
     const apiPath = `/api/tool/${name}`;
     const manifest = await this._fetchAndParseManifest(apiPath);
 
     if (
-      manifest.tools && // Zod ensures manifest.tools exists if schema requires it
+      manifest.tools &&
       Object.prototype.hasOwnProperty.call(manifest.tools, name)
     ) {
       const specificToolSchema = manifest.tools[name];
-      return this._createToolInstance(name, specificToolSchema);
+      const {tool, usedBoundKeys} = this._createToolInstance(
+        name,
+        specificToolSchema,
+        finalBoundParams
+      );
+
+      const providedBoundKeys = Object.keys(finalBoundParams);
+      const unusedBound = providedBoundKeys.filter(
+        key => !usedBoundKeys.has(key)
+      );
+
+      if (unusedBound.length > 0) {
+        throw new Error(
+          `Validation failed for tool '${name}': unused bound parameters: ${unusedBound.join(', ')}.`
+        );
+      }
+      return tool;
     } else {
       throw new Error(`Tool "${name}" not found in manifest from ${apiPath}.`);
     }
@@ -132,23 +180,47 @@ class ToolboxClient {
   /**
    * Asynchronously fetches a toolset and loads all tools defined within it.
    *
-   * @param {string | null} [name] - Name of the toolset to load. If null or undefined, loads the default toolset.
-   * @returns {Promise<Array<ReturnType<typeof ToolboxTool>>>} A promise that resolves
+   * @param {string} [name] - Name of the toolset to load. If null or undefined, loads the default toolset.
+   * @param {Record<string, unknown>} [boundParams] - An optional mapping of parameter names to bind to specific values.
+   * These parameters will be bound to any tool in the set that defines them.
+   * @returns {Promise<Array<CallableTool>>} A promise that resolves
    * to a list of ToolboxTool functions, ready for execution.
-   * @throws {Error} If the manifest structure is invalid or if there's an error fetching data from the API.
+   * @throws {Error} If validation fails or the API request fails.
    */
   async loadToolset(
-    name?: string
-  ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
+    name?: string,
+    boundParams?: Record<string, unknown>
+  ): Promise<Array<CallableTool>> {
+    const finalBoundParams = boundParams || {};
     const toolsetName = name || '';
     const apiPath = `/api/toolset/${toolsetName}`;
     const manifest = await this._fetchAndParseManifest(apiPath);
-    const tools: Array<ReturnType<typeof ToolboxTool>> = [];
+    const tools: Array<CallableTool> = [];
+
+    const providedBoundKeys = new Set(Object.keys(finalBoundParams));
+    const overallUsedBoundParams: Set<string> = new Set();
 
     for (const [toolName, toolSchema] of Object.entries(manifest.tools)) {
-      const toolInstance = this._createToolInstance(toolName, toolSchema);
-      tools.push(toolInstance);
+      const {tool, usedBoundKeys} = this._createToolInstance(
+        toolName,
+        toolSchema,
+        finalBoundParams
+      );
+      tools.push(tool);
+      usedBoundKeys.forEach(key => overallUsedBoundParams.add(key));
     }
+
+    const unusedBound = [...providedBoundKeys].filter(
+      k => !overallUsedBoundParams.has(k)
+    );
+    if (unusedBound.length > 0) {
+      throw new Error(
+        `Validation failed for toolset '${
+          name || 'default'
+        }': unused bound parameters could not be applied to any tool: ${unusedBound.join(', ')}.`
+      );
+    }
+
     return tools;
   }
 }

@@ -75,19 +75,12 @@ class ToolboxClient {
       async (config: InternalAxiosRequestConfig) => {
         config.headers = config.headers || {};
         for (const headerName in this._clientHeaders) {
-          if (
-            Object.prototype.hasOwnProperty.call(
-              this._clientHeaders,
-              headerName
-            )
-          ) {
-            const headerProvider = this._clientHeaders[headerName];
-            const result = headerProvider();
-            if (result instanceof Promise) {
-              config.headers[headerName] = await result;
-            } else {
-              config.headers[headerName] = result;
-            }
+          const headerProvider = this._clientHeaders[headerName];
+          const result = headerProvider();
+          if (result instanceof Promise) {
+            config.headers[headerName] = await result;
+          } else {
+            config.headers[headerName] = result;
           }
         }
         return config;

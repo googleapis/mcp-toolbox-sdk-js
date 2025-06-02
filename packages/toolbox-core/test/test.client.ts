@@ -362,7 +362,10 @@ describe('ToolboxClient', () => {
         if (currentToolName && toolInstances[currentToolName]) {
           return toolInstances[currentToolName];
         }
-        const fallbackCallable = jest.fn() as unknown as CallableToolReturnedByFactory & {toolName: string};
+        const fallbackCallable =
+          jest.fn() as unknown as CallableToolReturnedByFactory & {
+            toolName: string;
+          };
         fallbackCallable.toolName = 'fallback';
         return fallbackCallable;
       });

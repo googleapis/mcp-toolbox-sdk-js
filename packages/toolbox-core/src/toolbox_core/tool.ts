@@ -15,6 +15,7 @@
 import {ZodObject, ZodError, ZodRawShape} from 'zod';
 import {AxiosInstance, AxiosResponse} from 'axios';
 import {logApiError} from './errorUtils';
+import {resolveValue} from './utils';
 
 /**
  * Creates a callable tool function representing a specific tool on a remote
@@ -36,16 +37,21 @@ function ToolboxTool(
   baseUrl: string,
   name: string,
   description: string,
-  paramSchema: ZodObject<ZodRawShape>
+  paramSchema: ZodObject<ZodRawShape>,
+  boundParams?: any
 ) {
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
+  const boundKeys = Object.keys(boundParams);
+  const userParamSchema = paramSchema.omit(
+    Object.fromEntries(boundKeys.map(k => [k, true]))
+  );
 
   const callable = async function (
     callArguments: Record<string, unknown> = {}
   ) {
-    let validatedPayload: Record<string, unknown>;
+    let validatedUserArgs: Record<string, unknown>;
     try {
-      validatedPayload = paramSchema.parse(callArguments);
+      validatedUserArgs = userParamSchema.parse(callArguments);
     } catch (error) {
       if (error instanceof ZodError) {
         const errorMessages = error.errors.map(
@@ -57,11 +63,18 @@ function ToolboxTool(
       }
       throw new Error(`Argument validation failed: ${String(error)}`);
     }
+
+    // Resolve any bound parameters that are functions.
+    const resolvedEntries = await Promise.all(
+      Object.entries(boundParams).map(async ([key, value]) => {
+        const resolved = await resolveValue(value);
+        return [key, resolved];
+      })
+    );
+    const resolvedBoundParams = Object.fromEntries(resolvedEntries);
+    const payload = {...validatedUserArgs, ...resolvedBoundParams};
     try {
-      const response: AxiosResponse = await session.post(
-        toolUrl,
-        validatedPayload
-      );
+      const response: AxiosResponse = await session.post(toolUrl, payload);
       return response.data;
     } catch (error) {
       logApiError(`Error posting data to ${toolUrl}:`, error);
@@ -71,6 +84,8 @@ function ToolboxTool(
   callable.toolName = name;
   callable.description = description;
   callable.params = paramSchema;
+  callable.boundParams = boundParams;
+
   callable.getName = function () {
     return this.toolName;
   };
@@ -79,6 +94,36 @@ function ToolboxTool(
   };
   callable.getParamSchema = function () {
     return this.params;
+  };
+
+  callable.bindParams = function (paramsToBind: any) {
+    const originalParamKeys = Object.keys(this.params.shape);
+    for (const paramName of Object.keys(paramsToBind)) {
+      if (paramName in this.boundParams) {
+        throw new Error(
+          `Cannot re-bind parameter: parameter '${paramName}' is already bound in tool '${this.toolName}'.`
+        );
+      }
+      if (!originalParamKeys.includes(paramName)) {
+        throw new Error(
+          `Unable to bind parameter: no parameter named '${paramName}' in tool '${this.toolName}'.`
+        );
+      }
+    }
+
+    const newBoundParams = {...this.boundParams, ...paramsToBind};
+    return ToolboxTool(
+      session,
+      baseUrl,
+      this.toolName,
+      this.description,
+      this.params,
+      newBoundParams
+    );
+  };
+
+  callable.bindParam = function (paramName: string, paramValue: any) {
+    return this.bindParams({[paramName]: paramValue});
   };
   return callable;
 }

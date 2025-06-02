@@ -126,14 +126,14 @@ describe('ToolboxClient E2E Tests', () => {
     });
 
     it('should throw an error when trying to load a non-existent toolset', async () => {
-      // Spy on console.error to prevent logging for this specific, expected error.
+      expect.assertions(2);
+
       const consoleErrorSpy = jest
         .spyOn(console, 'error')
         .mockImplementation(() => {});
 
       try {
         await commonToolboxClient.loadToolset('non-existent-toolset');
-        fail('Expected loadToolset to throw, but it did not.');
       } catch (error) {
         expect(error).toBeInstanceOf(AxiosError);
         const axiosError = error as AxiosError;
@@ -229,6 +229,8 @@ describe('ToolboxClient E2E Tests', () => {
     });
 
     it('should fail when a tool with a param requiring auth is run with insufficient auth claims', async () => {
+      expect.assertions(2);
+
       const tool = await commonToolboxClient.loadTool(
         'get-row-by-content-auth',
         {
@@ -237,7 +239,6 @@ describe('ToolboxClient E2E Tests', () => {
       );
       try {
         await tool();
-        fail('Expected tool to throw, but it did not.');
       } catch (error) {
         expect(error).toBeInstanceOf(AxiosError);
         const axiosError = error as AxiosError;

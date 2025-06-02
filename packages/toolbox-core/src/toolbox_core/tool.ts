@@ -15,6 +15,11 @@
 import {ZodObject, ZodError, ZodRawShape} from 'zod';
 import {AxiosInstance, AxiosResponse} from 'axios';
 import {logApiError} from './errorUtils';
+import {identifyAuthRequirements, resolveValue} from './utils';
+
+type AuthTokenGetter = () => string | Promise<string>;
+type AuthTokenGetters = Record<string, AuthTokenGetter>;
+type RequiredAuthnParams = Record<string, string[]>;
 
 /**
  * Creates a callable tool function representing a specific tool on a remote
@@ -25,24 +30,45 @@ import {logApiError} from './errorUtils';
  * @param {string} name - The name of the remote tool.
  * @param {string} description - A description of the remote tool.
  * @param {ZodObject<any>} paramSchema - The Zod schema for validating the tool's parameters.
+ * @param {RequiredAuthnParams} requiredAuthnParams - A map of required authenticated parameters.
+ * @param {string[]} requiredAuthzTokens - A sequence of alternative services for authorization.
+ * @param {AuthTokenGetters} authServiceTokenGetters - A dict of authService to token getters.
  * @returns {CallableTool & CallableToolProperties} An async function that, when
- * called, invokes the tool with the provided arguments. Validates arguments
- * against the tool's signature, then sends them
- * as a JSON payload in a POST request to the tool's invoke URL.
+ * called, invokes the tool with the provided arguments.
  */
-
 function ToolboxTool(
   session: AxiosInstance,
   baseUrl: string,
   name: string,
   description: string,
-  paramSchema: ZodObject<ZodRawShape>
+  paramSchema: ZodObject<ZodRawShape>,
+  requiredAuthnParams: RequiredAuthnParams,
+  requiredAuthzTokens: string[],
+  authServiceTokenGetters: AuthTokenGetters
 ) {
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
+
+  const getAuthHeader = (authTokenName: string) => `${authTokenName}_token`;
 
   const callable = async function (
     callArguments: Record<string, unknown> = {}
   ) {
+    if (
+      Object.keys(requiredAuthnParams).length > 0 ||
+      requiredAuthzTokens.length > 0
+    ) {
+      const reqAuthServices = new Set<string>();
+      for (const services of Object.values(requiredAuthnParams)) {
+        services.forEach(s => reqAuthServices.add(s));
+      }
+      requiredAuthzTokens.forEach(s => reqAuthServices.add(s));
+      throw new Error(
+        `One or more of the following authn services are required to invoke this tool: ${Array.from(
+          reqAuthServices
+        ).join(',')}`
+      );
+    }
+
     let validatedPayload: Record<string, unknown>;
     try {
       validatedPayload = paramSchema.parse(callArguments);
@@ -57,10 +83,20 @@ function ToolboxTool(
       }
       throw new Error(`Argument validation failed: ${String(error)}`);
     }
+
     try {
+      const headers: Record<string, string> = {};
+      for (const [
+        authService,
+        tokenGetter,
+      ] of Object.entries(authServiceTokenGetters)) {
+        headers[getAuthHeader(authService)] = await resolveValue(tokenGetter);
+      }
+
       const response: AxiosResponse = await session.post(
         toolUrl,
-        validatedPayload
+        validatedPayload,
+        {headers}
       );
       return response.data;
     } catch (error) {
@@ -68,6 +104,7 @@ function ToolboxTool(
       throw error;
     }
   };
+
   callable.toolName = name;
   callable.description = description;
   callable.params = paramSchema;
@@ -80,6 +117,53 @@ function ToolboxTool(
   callable.getParamSchema = function () {
     return this.params;
   };
+  callable.addAuthTokenGetters = (
+    newAuthTokenGetters: AuthTokenGetters
+  ): ReturnType<typeof ToolboxTool> => {
+    const existingServices = Object.keys(authServiceTokenGetters);
+    const incomingServices = Object.keys(newAuthTokenGetters);
+    const duplicates = existingServices.filter(s => incomingServices.includes(s));
+    if (duplicates.length > 0) {
+      throw new Error(
+        `Authentication source(s) \`${duplicates.join(
+          ', '
+        )}\` already registered in tool \`${name}\`.`
+      );
+    }
+
+    const allGetters = {...authServiceTokenGetters, ...newAuthTokenGetters};
+    const [
+      newRequiredAuthnParams,
+      newRequiredAuthzTokens,
+      usedAuthTokenGetters,
+    ] = identifyAuthRequirements(
+      requiredAuthnParams,
+      requiredAuthzTokens,
+      Object.keys(newAuthTokenGetters)
+    );
+
+    const unusedAuth = incomingServices.filter(
+      s => !usedAuthTokenGetters.has(s)
+    );
+    if (unusedAuth.length > 0) {
+      throw new Error(
+        `Authentication source(s) \`${unusedAuth.join(
+          ', '
+        )}\` unused by tool \`${name}\`.`
+      );
+    }
+    return ToolboxTool(
+      session,
+      baseUrl,
+      name,
+      description,
+      paramSchema,
+      newRequiredAuthnParams,
+      newRequiredAuthzTokens,
+      allGetters
+    );
+  };
+
   return callable;
 }
 

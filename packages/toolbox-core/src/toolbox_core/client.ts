@@ -15,12 +15,19 @@
 import {ToolboxTool} from './tool';
 import axios from 'axios';
 import {type AxiosInstance, type AxiosResponse} from 'axios';
-import {ZodManifestSchema, createZodSchemaFromParams} from './protocol';
+import {
+  ZodManifestSchema,
+  createZodSchemaFromParams,
+  ParameterSchema,
+} from './protocol';
 import {logApiError} from './errorUtils';
 import {ZodError} from 'zod';
+import {identifyAuthRequirements} from './utils';
 
 type Manifest = import('zod').infer<typeof ZodManifestSchema>;
 type ToolSchemaFromManifest = Manifest['tools'][string];
+type AuthTokenGetter = () => string | Promise<string>;
+type AuthTokenGetters = Record<string, AuthTokenGetter>;
 
 /**
  * An asynchronous client for interacting with a Toolbox service.
@@ -85,69 +92,125 @@ class ToolboxClient {
    * Creates a ToolboxTool instance from its schema.
    * @param {string} toolName - The name of the tool.
    * @param {ToolSchemaFromManifest} toolSchema - The schema definition of the tool from the manifest.
+   * @param {AuthTokenGetters} [authTokenGetters] - Optional map of auth token getters.
    * @returns {ReturnType<typeof ToolboxTool>} A ToolboxTool function.
    * @private
    */
   private _createToolInstance(
     toolName: string,
-    toolSchema: ToolSchemaFromManifest
-  ): ReturnType<typeof ToolboxTool> {
-    const paramZodSchema = createZodSchemaFromParams(toolSchema.parameters);
-    return ToolboxTool(
+    toolSchema: ToolSchemaFromManifest,
+    authTokenGetters: AuthTokenGetters = {}
+  ): [ReturnType<typeof ToolboxTool>, Set<string>] {
+    const params: ParameterSchema[] = [];
+    const authnParams: Record<string, string[]> = {};
+    for (const p of toolSchema.parameters) {
+      if (p.authSources) {
+        authnParams[p.name] = p.authSources;
+      } else {
+        params.push(p);
+      }
+    }
+
+    const [requiredAuthnParams, requiredAuthzTokens, usedAuthKeys] =
+      identifyAuthRequirements(
+        authnParams,
+        toolSchema.authRequired || [],
+        Object.keys(authTokenGetters)
+      );
+
+    const paramZodSchema = createZodSchemaFromParams(params);
+    const tool = ToolboxTool(
       this._session,
       this._baseUrl,
       toolName,
       toolSchema.description,
-      paramZodSchema
+      paramZodSchema,
+      requiredAuthnParams,
+      requiredAuthzTokens,
+      authTokenGetters
     );
+
+    return [tool, usedAuthKeys];
   }
 
   /**
    * Asynchronously loads a tool from the server.
-   * Retrieves the schema for the specified tool from the Toolbox server and
-   * returns a callable (`ToolboxTool`) that can be used to invoke the
-   * tool remotely.
-   *
    * @param {string} name - The unique name or identifier of the tool to load.
-   * @returns {Promise<ReturnType<typeof ToolboxTool>>} A promise that resolves
-   * to a ToolboxTool function, ready for execution.
-   * @throws {Error} If the tool is not found in the manifest, the manifest structure is invalid,
-   * or if there's an error fetching data from the API.
+   * @param {AuthTokenGetters} [authTokenGetters] - Optional map of auth token getters.
+   * @returns {Promise<ReturnType<typeof ToolboxTool>>} A promise that resolves to a ToolboxTool function.
+   * @throws {Error} If the tool is not found, manifest is invalid, or on fetch error.
    */
-  async loadTool(name: string): Promise<ReturnType<typeof ToolboxTool>> {
+  async loadTool(
+    name: string,
+    authTokenGetters: AuthTokenGetters = {}
+  ): Promise<ReturnType<typeof ToolboxTool>> {
     const apiPath = `/api/tool/${name}`;
     const manifest = await this._fetchAndParseManifest(apiPath);
 
     if (
-      manifest.tools && // Zod ensures manifest.tools exists if schema requires it
-      Object.prototype.hasOwnProperty.call(manifest.tools, name)
+      !manifest.tools ||
+      !Object.prototype.hasOwnProperty.call(manifest.tools, name)
     ) {
-      const specificToolSchema = manifest.tools[name];
-      return this._createToolInstance(name, specificToolSchema);
-    } else {
       throw new Error(`Tool "${name}" not found in manifest from ${apiPath}.`);
     }
+
+    const specificToolSchema = manifest.tools[name];
+    const [tool, usedAuthKeys] = this._createToolInstance(
+      name,
+      specificToolSchema,
+      authTokenGetters
+    );
+
+    const providedAuthKeys = Object.keys(authTokenGetters);
+    const unusedAuth = providedAuthKeys.filter(k => !usedAuthKeys.has(k));
+
+    if (unusedAuth.length > 0) {
+      throw new Error(
+        `Validation failed for tool '${name}': unused auth tokens: ${unusedAuth.join(', ')}.`
+      );
+    }
+
+    return tool;
   }
 
   /**
    * Asynchronously fetches a toolset and loads all tools defined within it.
-   *
    * @param {string | null} [name] - Name of the toolset to load. If null or undefined, loads the default toolset.
-   * @returns {Promise<Array<ReturnType<typeof ToolboxTool>>>} A promise that resolves
-   * to a list of ToolboxTool functions, ready for execution.
-   * @throws {Error} If the manifest structure is invalid or if there's an error fetching data from the API.
+   * @param {AuthTokenGetters} [authTokenGetters] - Optional map of auth token getters.
+   * @returns {Promise<Array<ReturnType<typeof ToolboxTool>>>} A promise that resolves to a list of ToolboxTool functions.
+   * @throws {Error} If the manifest is invalid or on fetch error.
    */
   async loadToolset(
-    name?: string
+    name?: string,
+    authTokenGetters: AuthTokenGetters = {}
   ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
     const toolsetName = name || '';
     const apiPath = `/api/toolset/${toolsetName}`;
     const manifest = await this._fetchAndParseManifest(apiPath);
     const tools: Array<ReturnType<typeof ToolboxTool>> = [];
+    const overallUsedAuthKeys = new Set<string>();
 
     for (const [toolName, toolSchema] of Object.entries(manifest.tools)) {
-      const toolInstance = this._createToolInstance(toolName, toolSchema);
+      const [toolInstance, usedAuthKeys] = this._createToolInstance(
+        toolName,
+        toolSchema,
+        authTokenGetters
+      );
       tools.push(toolInstance);
+      usedAuthKeys.forEach(key => overallUsedAuthKeys.add(key));
+    }
+
+    const providedAuthKeys = Object.keys(authTokenGetters);
+    const unusedAuth = providedAuthKeys.filter(
+      k => !overallUsedAuthKeys.has(k)
+    );
+
+    if (unusedAuth.length > 0) {
+      throw new Error(
+        `Validation failed for toolset '${
+          toolsetName || 'default'
+        }': unused auth tokens could not be applied to any tool: ${unusedAuth.join(', ')}.`
+      );
     }
     return tools;
   }

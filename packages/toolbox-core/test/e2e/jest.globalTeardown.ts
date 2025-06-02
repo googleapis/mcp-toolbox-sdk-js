@@ -80,6 +80,7 @@ export default async function globalTeardown(): Promise<void> {
   }
   customGlobal.__TOOLBOX_SERVER_PROCESS__ = undefined;
   customGlobal.__TOOLS_FILE_PATH__ = undefined;
+  customGlobal.__GOOGLE_CLOUD_PROJECT__ = undefined;
 
   console.log('Jest Global Teardown: Completed.');
 }

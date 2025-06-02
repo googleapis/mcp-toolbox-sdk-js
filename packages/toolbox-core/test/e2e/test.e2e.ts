@@ -126,9 +126,21 @@ describe('ToolboxClient E2E Tests', () => {
     });
 
     it('should throw an error when trying to load a non-existent toolset', async () => {
-      await expect(
-        commonToolboxClient.loadToolset('non-existent-toolset')
-      ).rejects.toThrow('Request failed with status code 404');
+      // Spy on console.error to prevent logging for this specific, expected error.
+      const consoleErrorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      try {
+        await commonToolboxClient.loadToolset('non-existent-toolset');
+        fail('Expected loadToolset to throw, but it did not.');
+      } catch (error) {
+        expect(error).toBeInstanceOf(AxiosError);
+        const axiosError = error as AxiosError;
+        expect(axiosError.response?.status).toBe(404);
+      } finally {
+        consoleErrorSpy.mockRestore();
+      }
     });
   });
 
@@ -225,6 +237,7 @@ describe('ToolboxClient E2E Tests', () => {
       );
       try {
         await tool();
+        fail('Expected tool to throw, but it did not.');
       } catch (error) {
         expect(error).toBeInstanceOf(AxiosError);
         const axiosError = error as AxiosError;

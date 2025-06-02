@@ -137,10 +137,10 @@ export async function getAuthToken(clientId: string): Promise<string> {
  * @param {string} projectId The Google Cloud project ID.
  * @returns {Promise<string>} A promise that resolves to the first auth token.
  */
-export async function authTokenGetter(projectId: string, clientName: string): Promise<string> {
-  const clientId = await accessSecretVersion(
-    projectId,
-    clientName
-  );
+export async function authTokenGetter(
+  projectId: string,
+  clientName: string
+): Promise<string> {
+  const clientId = await accessSecretVersion(projectId, clientName);
   return getAuthToken(clientId);
 }

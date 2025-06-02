@@ -13,7 +13,6 @@
 // limitations under the License.
 
 type RequiredAuthnParams = Record<string, string[]>;
-type AuthTokenGetter = () => string | Promise<string>;
 
 /**
  * Asynchronously or synchronously resolves a given source to its value.

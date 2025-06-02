@@ -15,8 +15,8 @@
 import {ToolboxClient} from '../../src/toolbox_core/client';
 import {ToolboxTool} from '../../src/toolbox_core/tool';
 import {AxiosError} from 'axios';
-import { CustomGlobal } from './types';
-import { authTokenGetter } from './utils';
+import {CustomGlobal} from './types';
+import {authTokenGetter} from './utils';
 
 describe('ToolboxClient E2E Tests', () => {
   let commonToolboxClient: ToolboxClient;

@@ -44,7 +44,7 @@ function ToolboxTool(
   paramSchema: ZodObject<ZodRawShape>,
   requiredAuthnParams: RequiredAuthnParams = {},
   requiredAuthzTokens: string[] = [],
-  authServiceTokenGetters: AuthTokenGetters = {},
+  authServiceTokenGetters: AuthTokenGetters = {}
 ) {
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
 
@@ -86,10 +86,9 @@ function ToolboxTool(
 
     try {
       const headers: Record<string, string> = {};
-      for (const [
-        authService,
-        tokenGetter,
-      ] of Object.entries(authServiceTokenGetters)) {
+      for (const [authService, tokenGetter] of Object.entries(
+        authServiceTokenGetters
+      )) {
         headers[getAuthHeader(authService)] = await resolveValue(tokenGetter);
       }
 
@@ -122,7 +121,9 @@ function ToolboxTool(
   ): ReturnType<typeof ToolboxTool> => {
     const existingServices = Object.keys(authServiceTokenGetters);
     const incomingServices = Object.keys(newAuthTokenGetters);
-    const duplicates = existingServices.filter(s => incomingServices.includes(s));
+    const duplicates = existingServices.filter(s =>
+      incomingServices.includes(s)
+    );
     if (duplicates.length > 0) {
       throw new Error(
         `Authentication source(s) \`${duplicates.join(

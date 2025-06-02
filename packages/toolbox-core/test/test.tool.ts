@@ -278,7 +278,9 @@ describe('ToolboxTool', () => {
 
       expect(() =>
         tool.addAuthTokenGetters({'unused-auth': () => 'TOKEN'})
-      ).toThrow('Authentication source(s) `unused-auth` unused by tool `authedTool`.');
+      ).toThrow(
+        'Authentication source(s) `unused-auth` unused by tool `authedTool`.'
+      );
     });
   });
 });

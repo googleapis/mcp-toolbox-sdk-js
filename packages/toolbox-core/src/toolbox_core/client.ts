@@ -136,10 +136,9 @@ class ToolboxClient {
    */
   async loadTool(
     name: string,
-    boundParams?: any
+    boundParams: any = {}
   ): Promise<ReturnType<typeof ToolboxTool>> {
     const apiPath = `/api/tool/${name}`;
-    const finalBoundParams = boundParams || {};
     const manifest = await this._fetchAndParseManifest(apiPath);
 
     if (
@@ -150,10 +149,10 @@ class ToolboxClient {
       const {tool, usedBoundKeys} = this._createToolInstance(
         name,
         specificToolSchema,
-        finalBoundParams
+        boundParams
       );
 
-      const providedBoundKeys = Object.keys(finalBoundParams);
+      const providedBoundKeys = Object.keys(boundParams);
       const unusedBound = providedBoundKeys.filter(
         key => !usedBoundKeys.has(key)
       );
@@ -179,23 +178,22 @@ class ToolboxClient {
    */
   async loadToolset(
     name?: string,
-    boundParams?: any
+    boundParams: any = {},
   ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
     const toolsetName = name || '';
     const apiPath = `/api/toolset/${toolsetName}`;
-    const finalBoundParams = boundParams || {};
 
     const manifest = await this._fetchAndParseManifest(apiPath);
     const tools: Array<ReturnType<typeof ToolboxTool>> = [];
 
-    const providedBoundKeys = new Set(Object.keys(finalBoundParams));
+    const providedBoundKeys = new Set(Object.keys(boundParams));
     const overallUsedBoundParams: Set<string> = new Set();
 
     for (const [toolName, toolSchema] of Object.entries(manifest.tools)) {
       const {tool, usedBoundKeys} = this._createToolInstance(
         toolName,
         toolSchema,
-        finalBoundParams
+        boundParams
       );
       tools.push(tool);
       usedBoundKeys.forEach((key: string) => overallUsedBoundParams.add(key));

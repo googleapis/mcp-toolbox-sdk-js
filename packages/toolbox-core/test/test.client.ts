@@ -143,9 +143,9 @@ describe('ToolboxClient', () => {
     ) => {
       const manifestData: ZodManifest = {
         serverVersion: '1.0.0',
-        tools: {[toolName]: toolDefinition as unknown as InferredZodTool}, // Cast here if ZodManifest expects InferredZodTool
+        tools: {[toolName]: toolDefinition as unknown as InferredZodTool},
         ...overrides.manifestData,
-      } as ZodManifest; // Outer cast to ZodManifest
+      } as ZodManifest;
 
       const zodParamsSchema =
         overrides.zodParamsSchema ||
@@ -173,6 +173,7 @@ describe('ToolboxClient', () => {
           getName: jest.fn().mockReturnValue(toolName),
           getDescription: jest.fn().mockReturnValue(toolDefinition.description),
           getParamSchema: jest.fn().mockReturnValue(zodParamsSchema),
+          addAuthTokenGetters: jest.fn(),
         }
       );
 
@@ -195,7 +196,6 @@ describe('ToolboxClient', () => {
 
     it('should successfully load a tool with valid manifest and API response', async () => {
       const mockToolDefinition = {
-        // Original generic object
         description: 'Performs calculations',
         parameters: [
           {name: 'expression', type: 'string', description: 'Math expression'},
@@ -209,7 +209,7 @@ describe('ToolboxClient', () => {
       expect(mockSessionGet).toHaveBeenCalledWith(expectedApiUrl);
       expect(MockedZodManifestSchema.parse).toHaveBeenCalledWith(manifestData);
       expect(MockedCreateZodSchemaFromParams).toHaveBeenCalledWith(
-        mockToolDefinition.parameters as unknown as ParameterSchema[] // Cast if createZodSchemaFromParams expects ParameterSchema[]
+        mockToolDefinition.parameters as unknown as ParameterSchema[]
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
         client['_session'],
@@ -226,7 +226,7 @@ describe('ToolboxClient', () => {
 
     it('should throw an error if manifest parsing fails', async () => {
       const mockApiResponseData = {invalid: 'manifest structure'};
-      const mockZodError = new Error('Zod validation failed on manifest'); // Can be new ZodError(...)
+      const mockZodError = new Error('Zod validation failed on manifest');
 
       mockSessionGet.mockResolvedValueOnce({
         data: mockApiResponseData,
@@ -262,7 +262,7 @@ describe('ToolboxClient', () => {
     it('should throw an error if the specific tool is not found in manifest.tools', async () => {
       const mockManifestWithOtherTools = {
         serverVersion: '1.0.0',
-        tools: {anotherTool: {description: 'A different tool', parameters: []}}, // Kept generic as per baseline
+        tools: {anotherTool: {description: 'A different tool', parameters: []}},
       } as ZodManifest;
       mockSessionGet.mockResolvedValueOnce({
         data: mockManifestWithOtherTools,
@@ -283,9 +283,10 @@ describe('ToolboxClient', () => {
 
       await expect(client.loadTool(toolName)).rejects.toThrow(apiError);
       expect(mockSessionGet).toHaveBeenCalledWith(expectedApiUrl);
+      // FIX: The second argument to logApiError should be the error message for this case.
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         `Error fetching data from ${expectedApiUrl}:`,
-        apiError
+        apiError.message
       );
       expect(MockedZodManifestSchema.parse).not.toHaveBeenCalled();
     });
@@ -300,7 +301,7 @@ describe('ToolboxClient', () => {
     });
 
     const setupMocksForSuccessfulToolsetLoad = (
-      toolDefinitions: Record<string, InferredZodTool>, // Use InferredZodTool
+      toolDefinitions: Record<string, InferredZodTool>,
       manifestDataOverride?: ZodManifest
     ) => {
       const manifestData: ZodManifest = manifestDataOverride || {
@@ -339,6 +340,7 @@ describe('ToolboxClient', () => {
           getName: jest.fn().mockReturnValue(tName),
           getDescription: jest.fn().mockReturnValue(tDef.description),
           getParamSchema: jest.fn().mockReturnValue(zodParamsSchemas[tName]),
+          addAuthTokenGetters: jest.fn(),
         });
       });
 
@@ -360,10 +362,9 @@ describe('ToolboxClient', () => {
         if (currentToolName && toolInstances[currentToolName]) {
           return toolInstances[currentToolName];
         }
-        const fallbackCallable = jest.fn();
-        return Object.assign(fallbackCallable, {
-          toolName: 'fallback',
-        }) as unknown as CallableToolReturnedByFactory;
+        const fallbackCallable = jest.fn() as unknown as CallableToolReturnedByFactory & {toolName: string};
+        fallbackCallable.toolName = 'fallback';
+        return fallbackCallable;
       });
 
       return {manifestData, zodParamsSchemas, toolInstances};
@@ -485,10 +486,14 @@ describe('ToolboxClient', () => {
         throw mockZodError;
       });
 
+      // FIX: Match the exact error message which includes the stringified JSON.
+      const expectedErrorMsg = `Invalid manifest structure received from ${expectedApiUrlForToolset}: ${JSON.stringify(
+        mockZodError.issues,
+        null,
+        2
+      )}`;
       await expect(client.loadToolset(toolsetName)).rejects.toThrow(
-        expect.stringContaining(
-          `Invalid manifest structure received from ${expectedApiUrlForToolset}`
-        )
+        expectedErrorMsg
       );
     });
 
@@ -499,9 +504,10 @@ describe('ToolboxClient', () => {
       mockSessionGet.mockRejectedValueOnce(apiError);
 
       await expect(client.loadToolset(toolsetName)).rejects.toThrow(apiError);
+      // FIX: The second argument to logApiError should be the error message for this case.
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         `Error fetching data from ${expectedApiUrl}:`,
-        apiError
+        apiError.message
       );
     });
   });

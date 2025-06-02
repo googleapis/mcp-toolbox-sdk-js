@@ -164,7 +164,7 @@ describe('ToolboxTool', () => {
       await expect(tool(validArgs)).rejects.toThrow(apiError);
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         `Error posting data to ${expectedUrl}:`,
-        apiError
+        apiError.message
       );
     });
   });

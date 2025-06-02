@@ -132,6 +132,7 @@ class ToolboxClient {
    * returns a callable (`ToolboxTool`) that can be used to invoke the
    * tool remotely.
    *
+   * @param {BoundParams} [boundParams] - Optional parameters to pre-bind to the tool.
    * @param {string} name - The unique name or identifier of the tool to load.
    * @returns {Promise<ReturnType<typeof ToolboxTool>>} A promise that resolves
    * to a ToolboxTool function, ready for execution.
@@ -176,6 +177,7 @@ class ToolboxClient {
    * Asynchronously fetches a toolset and loads all tools defined within it.
    *
    * @param {string | null} [name] - Name of the toolset to load. If null or undefined, loads the default toolset.
+   * @param {BoundParams} [boundParams] - Optional parameters to pre-bind to the tools in the toolset.
    * @returns {Promise<Array<ReturnType<typeof ToolboxTool>>>} A promise that resolves
    * to a list of ToolboxTool functions, ready for execution.
    * @throws {Error} If the manifest structure is invalid or if there's an error fetching data from the API.

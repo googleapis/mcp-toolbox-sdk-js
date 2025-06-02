@@ -26,6 +26,7 @@ import {BoundParams, BoundValue, resolveValue} from './utils';
  * @param {string} name - The name of the remote tool.
  * @param {string} description - A description of the remote tool.
  * @param {ZodObject<any>} paramSchema - The Zod schema for validating the tool's parameters.
+ * @param {BoundParams} [boundParams] - Optional parameters to pre-bind to the tool.
  * @returns {CallableTool & CallableToolProperties} An async function that, when
  * called, invokes the tool with the provided arguments. Validates arguments
  * against the tool's signature, then sends them

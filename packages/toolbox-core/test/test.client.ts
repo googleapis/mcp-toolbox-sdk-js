@@ -220,7 +220,7 @@ describe('ToolboxClient', () => {
         toolName,
         mockToolDefinition.description,
         zodParamsSchema,
-        {}  // boundParams defaults to empty object
+        {} // boundParams defaults to empty object
       );
       expect(loadedTool).toBe(toolInstance);
     });
@@ -522,7 +522,9 @@ describe('ToolboxClient', () => {
 
       setupMocksForSuccessfulToolsetLoad(mockToolDefinitions);
 
-      await expect(client.loadToolset(toolsetName, boundParams)).rejects.toThrow(
+      await expect(
+        client.loadToolset(toolsetName, boundParams)
+      ).rejects.toThrow(
         `Validation failed for toolset '${toolsetName}': unused bound parameters could not be applied to any tool: unusedParam.`
       );
     });

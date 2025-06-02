@@ -97,9 +97,9 @@ describe('ToolboxTool', () => {
 
   describe('Callable Function - Argument Validation', () => {
     it('should call paramSchema.parse with the provided arguments', async () => {
-    const omitSpy = jest.spyOn(basicParamSchema, 'omit').mockImplementation(
-      () => basicParamSchema
-    );
+      const omitSpy = jest
+        .spyOn(basicParamSchema, 'omit')
+        .mockImplementation(() => basicParamSchema);
       const currentTool = ToolboxTool(
         mockSession,
         baseURL,
@@ -209,9 +209,9 @@ describe('ToolboxTool', () => {
     it('should use an empty object as default if no arguments are provided and schema allows it', async () => {
       const emptySchema = z.object({});
 
-      const omitSpy = jest.spyOn(emptySchema, 'omit').mockImplementation(
-        () => emptySchema
-      );
+      const omitSpy = jest
+        .spyOn(emptySchema, 'omit')
+        .mockImplementation(() => emptySchema);
       const parseSpy = jest.spyOn(emptySchema, 'parse');
       const currentTool = ToolboxTool(
         mockSession,

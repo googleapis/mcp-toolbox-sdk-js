@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { resolveValue } from '../src/toolbox_core/utils';
+import {resolveValue} from '../src/toolbox_core/utils';
 
 describe('resolveValue', () => {
   // Test cases for literal values (non-functions)
@@ -43,7 +43,7 @@ describe('resolveValue', () => {
     });
 
     test('should return a resolved promise with the same object', async () => {
-      const value = { key: 'value', nested: { a: 1 } };
+      const value = {key: 'value', nested: {a: 1}};
       // Use .toEqual for deep object comparison
       await expect(resolveValue(value)).resolves.toEqual(value);
     });
@@ -53,11 +53,13 @@ describe('resolveValue', () => {
   describe('when given a synchronous function', () => {
     test('should execute the function and resolve with its return value', async () => {
       const syncFunction = () => 'result from sync function';
-      await expect(resolveValue(syncFunction)).resolves.toBe('result from sync function');
+      await expect(resolveValue(syncFunction)).resolves.toBe(
+        'result from sync function'
+      );
     });
 
     test('should execute a function returning an object and resolve with that object', async () => {
-      const obj = { data: 'test' };
+      const obj = {data: 'test'};
       const syncFunction = () => obj;
       await expect(resolveValue(syncFunction)).resolves.toEqual(obj);
     });
@@ -76,21 +78,27 @@ describe('resolveValue', () => {
   describe('when given an asynchronous function', () => {
     test('should await an async function and resolve with its value', async () => {
       const asyncFunction = async () => 'result from async function';
-      await expect(resolveValue(asyncFunction)).resolves.toBe('result from async function');
+      await expect(resolveValue(asyncFunction)).resolves.toBe(
+        'result from async function'
+      );
     });
 
     test('should await a function returning a Promise and resolve with its value', async () => {
-        const promiseFunction = () => Promise.resolve({ data: 'from promise' });
-        await expect(resolveValue(promiseFunction)).resolves.toEqual({ data: 'from promise' });
+      const promiseFunction = () => Promise.resolve({data: 'from promise'});
+      await expect(resolveValue(promiseFunction)).resolves.toEqual({
+        data: 'from promise',
+      });
     });
 
     test('should correctly handle a delay in an async function', async () => {
-        const delayedAsyncFunction = async () => {
-            return new Promise(resolve => {
-                setTimeout(() => resolve('delayed result'), 20);
-            });
-        };
-        await expect(resolveValue(delayedAsyncFunction)).resolves.toBe('delayed result');
+      const delayedAsyncFunction = async () => {
+        return new Promise(resolve => {
+          setTimeout(() => resolve('delayed result'), 20);
+        });
+      };
+      await expect(resolveValue(delayedAsyncFunction)).resolves.toBe(
+        'delayed result'
+      );
     });
 
     test('should return a rejected promise if the async function rejects', async () => {
@@ -102,9 +110,11 @@ describe('resolveValue', () => {
     });
 
     test('should return a rejected promise if the function returns a rejected promise', async () => {
-        const error = new Error('Explicit rejection');
-        const rejectingPromiseFunction = () => Promise.reject(error);
-        await expect(resolveValue(rejectingPromiseFunction)).rejects.toThrow(error);
+      const error = new Error('Explicit rejection');
+      const rejectingPromiseFunction = () => Promise.reject(error);
+      await expect(resolveValue(rejectingPromiseFunction)).rejects.toThrow(
+        error
+      );
     });
   });
 });

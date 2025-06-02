@@ -38,7 +38,7 @@ function ToolboxTool(
   name: string,
   description: string,
   paramSchema: ZodObject<ZodRawShape>,
-  boundParams: any = {},
+  boundParams: any = {}
 ) {
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
   const boundKeys = Object.keys(boundParams);

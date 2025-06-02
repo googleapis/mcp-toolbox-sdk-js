@@ -178,7 +178,7 @@ class ToolboxClient {
    */
   async loadToolset(
     name?: string,
-    boundParams: any = {},
+    boundParams: any = {}
   ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
     const toolsetName = name || '';
     const apiPath = `/api/toolset/${toolsetName}`;

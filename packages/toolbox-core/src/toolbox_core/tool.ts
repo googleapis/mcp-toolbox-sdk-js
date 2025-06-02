@@ -42,9 +42,9 @@ function ToolboxTool(
   name: string,
   description: string,
   paramSchema: ZodObject<ZodRawShape>,
-  requiredAuthnParams: RequiredAuthnParams,
-  requiredAuthzTokens: string[],
-  authServiceTokenGetters: AuthTokenGetters
+  requiredAuthnParams: RequiredAuthnParams = {},
+  requiredAuthzTokens: string[] = [],
+  authServiceTokenGetters: AuthTokenGetters = {},
 ) {
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
 

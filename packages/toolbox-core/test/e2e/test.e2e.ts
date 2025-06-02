@@ -132,13 +132,24 @@ describe('ToolboxClient E2E Tests', () => {
     });
   });
 
-  describe('Auth E2E Tests', async () => {
-    const authToken1 = await authTokenGetter(projectId!, 'sdk_testing_client1');
-    const authToken2 = await authTokenGetter(projectId!, 'sdk_testing_client2');
+  describe('Auth E2E Tests', () => {
+    let authToken1: string;
+    let authToken2: string;
+    let authToken1Getter: () => string;
+    let authToken2Getter: () => string;
 
-    let authToken1Getter = () => authToken1;
-    let authToken2Getter = () => authToken2;
+    beforeAll(async () => {
+      if (!projectId) {
+        throw new Error(
+          'GOOGLE_CLOUD_PROJECT is not defined. Cannot run Auth E2E tests.'
+        );
+      }
+      authToken1 = await authTokenGetter(projectId, 'sdk_testing_client1');
+      authToken2 = await authTokenGetter(projectId, 'sdk_testing_client2');
 
+      authToken1Getter = () => authToken1;
+      authToken2Getter = () => authToken2;
+    });
 
     it('should fail when running a tool that does not require auth with auth provided', async () => {
       await expect(

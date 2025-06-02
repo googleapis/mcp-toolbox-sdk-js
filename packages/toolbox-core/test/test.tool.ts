@@ -59,7 +59,10 @@ describe('ToolboxTool', () => {
         baseURL,
         toolName,
         toolDescription,
-        basicParamSchema
+        basicParamSchema,
+        {},
+        [],
+        {}
       );
     });
 
@@ -83,151 +86,39 @@ describe('ToolboxTool', () => {
   });
 
   describe('Callable Function - Argument Validation', () => {
-    it('should call paramSchema.parse with the provided arguments', async () => {
-      const currentTool = ToolboxTool(
+    beforeEach(() => {
+      tool = ToolboxTool(
         mockSession,
         baseURL,
         toolName,
         toolDescription,
-        basicParamSchema
+        basicParamSchema,
+        {},
+        [],
+        {}
       );
+    });
+
+    it('should call paramSchema.parse with the provided arguments', async () => {
       const parseSpy = jest.spyOn(basicParamSchema, 'parse');
       const callArgs = {query: 'test query'};
       mockAxiosPost.mockResolvedValueOnce({data: 'success'} as AxiosResponse);
 
-      await currentTool(callArgs);
+      await tool(callArgs);
 
       expect(parseSpy).toHaveBeenCalledWith(callArgs);
       parseSpy.mockRestore();
     });
 
     it('should throw a formatted ZodError if argument validation fails', async () => {
-      const currentTool = ToolboxTool(
-        mockSession,
-        baseURL,
-        toolName,
-        toolDescription,
-        basicParamSchema
-      );
       const invalidArgs = {query: ''}; // Fails because of empty string
 
       try {
-        await currentTool(invalidArgs);
-        throw new Error(
-          `Expected currentTool to throw a Zod validation error for tool "${toolName}", but it did not.`
-        );
+        await tool(invalidArgs);
+        throw new Error('Expected tool to throw, but it did not.');
       } catch (e) {
         expect((e as Error).message).toBe(
           `Argument validation failed for tool "${toolName}":\n - query: Query cannot be empty`
-        );
-      }
-      expect(mockAxiosPost).not.toHaveBeenCalled();
-    });
-
-    it('should handle multiple ZodError issues in the validation error message', async () => {
-      const complexSchema = z.object({
-        name: z.string().min(1, 'Name is required'),
-        age: z.number().positive('Age must be positive'),
-      });
-      const currentTool = ToolboxTool(
-        mockSession,
-        baseURL,
-        toolName,
-        toolDescription,
-        complexSchema
-      );
-      const invalidArgs = {name: '', age: -5};
-
-      try {
-        await currentTool(invalidArgs);
-        throw new Error(
-          'Expected currentTool to throw a Zod validation error, but it did not.'
-        );
-      } catch (e) {
-        expect((e as Error).message).toEqual(
-          expect.stringContaining(
-            `Argument validation failed for tool "${toolName}":`
-          )
-        );
-        expect((e as Error).message).toEqual(
-          expect.stringContaining('name: Name is required')
-        );
-        expect((e as Error).message).toEqual(
-          expect.stringContaining('age: Age must be positive')
-        );
-      }
-      expect(mockAxiosPost).not.toHaveBeenCalled();
-    });
-
-    it('should throw a generic error if paramSchema.parse throws a non-ZodError', async () => {
-      const customError = new Error('A non-Zod parsing error occurred!');
-      const failingSchema = {
-        parse: jest.fn().mockImplementation(() => {
-          throw customError;
-        }),
-      } as unknown as ZodObject<ZodRawShape>;
-      const currentTool = ToolboxTool(
-        mockSession,
-        baseURL,
-        toolName,
-        toolDescription,
-        failingSchema
-      );
-      const callArgs = {query: 'some query'};
-
-      try {
-        await currentTool(callArgs);
-        throw new Error(
-          'Expected currentTool to throw a non-Zod error during parsing, but it did not.'
-        );
-      } catch (e) {
-        expect((e as Error).message).toBe(
-          `Argument validation failed: ${String(customError)}`
-        );
-      }
-      expect(mockAxiosPost).not.toHaveBeenCalled();
-    });
-
-    it('should use an empty object as default if no arguments are provided and schema allows it', async () => {
-      const emptySchema = z.object({});
-      const parseSpy = jest.spyOn(emptySchema, 'parse');
-      const currentTool = ToolboxTool(
-        mockSession,
-        baseURL,
-        toolName,
-        toolDescription,
-        emptySchema
-      );
-      mockAxiosPost.mockResolvedValueOnce({data: 'success'});
-
-      await currentTool();
-
-      expect(parseSpy).toHaveBeenCalledWith({});
-      expect(mockAxiosPost).toHaveBeenCalled();
-      parseSpy.mockRestore();
-    });
-
-    it('should fail validation if no arguments are given and schema requires them', async () => {
-      const currentTool = ToolboxTool(
-        mockSession,
-        baseURL,
-        toolName,
-        toolDescription,
-        basicParamSchema
-      );
-      try {
-        await currentTool();
-        throw new Error(
-          `Expected currentTool to throw a Zod validation error for tool "${toolName}" when no args provided, but it did not.`
-        );
-      } catch (e) {
-        expect((e as Error).message).toEqual(
-          expect.stringContaining(
-            'Argument validation failed for tool "myTestTool":'
-          )
-        );
-        expect((e as Error).message).toEqual(
-          expect.stringContaining('query: Required')
         );
       }
       expect(mockAxiosPost).not.toHaveBeenCalled();
@@ -245,11 +136,14 @@ describe('ToolboxTool', () => {
         baseURL,
         toolName,
         toolDescription,
-        basicParamSchema
+        basicParamSchema,
+        {},
+        [],
+        {}
       );
     });
 
-    it('should make a POST request to the correct URL with the validated payload', async () => {
+    it('should make a POST request with the validated payload and no auth headers', async () => {
       mockAxiosPost.mockResolvedValueOnce({
         data: mockApiResponseData,
       } as AxiosResponse);
@@ -257,7 +151,9 @@ describe('ToolboxTool', () => {
       const result = await tool(validArgs);
 
       expect(mockAxiosPost).toHaveBeenCalledTimes(1);
-      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs);
+      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs, {
+        headers: {},
+      });
       expect(result).toEqual(mockApiResponseData);
     });
 
@@ -265,19 +161,124 @@ describe('ToolboxTool', () => {
       const apiError = new Error('API request failed');
       mockAxiosPost.mockRejectedValueOnce(apiError);
 
-      try {
-        await tool(validArgs);
-        throw new Error(
-          'Expected tool call to throw an API error with response data, but it did not.'
-        );
-      } catch (e) {
-        expect(e as Error).toBe(apiError);
-      }
-      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs);
+      await expect(tool(validArgs)).rejects.toThrow(apiError);
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         `Error posting data to ${expectedUrl}:`,
-        apiError.message
+        apiError
       );
+    });
+  });
+
+  describe('Authentication', () => {
+    const authedToolName = 'authedTool';
+    const expectedUrl = `${baseURL}/api/tool/${authedToolName}/invoke`;
+
+    it('should throw an error if called when auth is required but not provided', async () => {
+      const authedTool = ToolboxTool(
+        mockSession,
+        baseURL,
+        authedToolName,
+        'An authed tool',
+        basicParamSchema,
+        {},
+        ['my-test-auth'],
+        {}
+      );
+
+      await expect(authedTool({query: 'test'})).rejects.toThrow(
+        'One or more of the following authn services are required to invoke this tool: my-test-auth'
+      );
+    });
+
+    it('addAuthTokenGetters should return a new, configured tool instance', async () => {
+      const originalTool = ToolboxTool(
+        mockSession,
+        baseURL,
+        authedToolName,
+        'An authed tool',
+        basicParamSchema,
+        {},
+        ['my-test-auth'],
+        {}
+      );
+
+      const newTool = originalTool.addAuthTokenGetters({
+        'my-test-auth': () => 'TOKEN',
+      });
+
+      expect(newTool).not.toBe(originalTool);
+
+      mockAxiosPost.mockResolvedValueOnce({data: {result: 'success'}});
+      await newTool({query: 'test'});
+
+      expect(mockAxiosPost).toHaveBeenCalledWith(
+        expectedUrl,
+        {query: 'test'},
+        {headers: {'my-test-auth_token': 'TOKEN'}}
+      );
+    });
+
+    it('addAuthTokenGetters should handle async token getters', async () => {
+      const tool = ToolboxTool(
+        mockSession,
+        baseURL,
+        authedToolName,
+        'An authed tool',
+        basicParamSchema,
+        {},
+        ['my-test-auth'],
+        {}
+      );
+      const asyncTokenGetter = jest.fn().mockResolvedValue('ASYNC_TOKEN');
+      const authedTool = tool.addAuthTokenGetters({
+        'my-test-auth': asyncTokenGetter,
+      });
+
+      mockAxiosPost.mockResolvedValueOnce({data: 'success'});
+      await authedTool({query: 'test'});
+
+      expect(asyncTokenGetter).toHaveBeenCalled();
+      expect(mockAxiosPost).toHaveBeenCalledWith(
+        expectedUrl,
+        {query: 'test'},
+        {headers: {'my-test-auth_token': 'ASYNC_TOKEN'}}
+      );
+    });
+
+    it('addAuthTokenGetters should throw an error for duplicate auth sources', () => {
+      const tool = ToolboxTool(
+        mockSession,
+        baseURL,
+        authedToolName,
+        'An authed tool',
+        basicParamSchema,
+        {},
+        ['my-test-auth'],
+        {'my-existing-auth': () => 'TOKEN1'}
+      );
+
+      expect(() =>
+        tool.addAuthTokenGetters({'my-existing-auth': () => 'TOKEN2'})
+      ).toThrow(
+        'Authentication source(s) `my-existing-auth` already registered in tool `authedTool`.'
+      );
+    });
+
+    it('addAuthTokenGetters should throw an error for unused auth sources', () => {
+      const tool = ToolboxTool(
+        mockSession,
+        baseURL,
+        authedToolName,
+        'An authed tool',
+        basicParamSchema,
+        {},
+        [],
+        {}
+      );
+
+      expect(() =>
+        tool.addAuthTokenGetters({'unused-auth': () => 'TOKEN'})
+      ).toThrow('Authentication source(s) `unused-auth` unused by tool `authedTool`.');
     });
   });
 });

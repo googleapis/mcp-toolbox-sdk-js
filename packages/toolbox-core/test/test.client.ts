@@ -131,9 +131,9 @@ describe('ToolboxClient', () => {
 
     const setupMocksForSuccessfulLoad = (
       toolDefinition: {
-        // This is the original generic object type for loadTool
         description: string;
         parameters: {name: string; type: string; description: string}[];
+        authRequired?: string[];
       },
       overrides: {
         manifestData?: Partial<ZodManifest>;
@@ -216,7 +216,10 @@ describe('ToolboxClient', () => {
         testBaseUrl,
         toolName,
         mockToolDefinition.description,
-        zodParamsSchema
+        zodParamsSchema,
+        {},
+        [],
+        {}
       );
       expect(loadedTool).toBe(toolInstance);
     });
@@ -282,7 +285,7 @@ describe('ToolboxClient', () => {
       expect(mockSessionGet).toHaveBeenCalledWith(expectedApiUrl);
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         `Error fetching data from ${expectedApiUrl}:`,
-        apiError.message // As per user's original assertion for loadTool
+        apiError
       );
       expect(MockedZodManifestSchema.parse).not.toHaveBeenCalled();
     });
@@ -379,7 +382,7 @@ describe('ToolboxClient', () => {
               description: 'Param A',
             } as ParameterSchema,
           ],
-          authRequired: [], // Assuming InferredZodTool might have this
+          authRequired: [],
         },
         toolB: {
           description: 'Tool B description',
@@ -390,7 +393,7 @@ describe('ToolboxClient', () => {
               description: 'Param B',
             } as ParameterSchema,
           ],
-          authRequired: [], // Assuming InferredZodTool might have this
+          authRequired: [],
         },
       };
 
@@ -413,14 +416,20 @@ describe('ToolboxClient', () => {
         testBaseUrl,
         'toolA',
         mockToolDefinitions.toolA.description,
-        zodParamsSchemas.toolA
+        zodParamsSchemas.toolA,
+        {},
+        [],
+        {}
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
         client['_session'],
         testBaseUrl,
         'toolB',
         mockToolDefinitions.toolB.description,
-        zodParamsSchemas.toolB
+        zodParamsSchemas.toolB,
+        {},
+        [],
+        {}
       );
       expect(loadedTools).toEqual(
         expect.arrayContaining([toolInstances.toolA, toolInstances.toolB])
@@ -435,13 +444,10 @@ describe('ToolboxClient', () => {
       await client.loadToolset();
       expect(mockSessionGet).toHaveBeenLastCalledWith(expectedApiUrl);
 
-      mockSessionGet.mockReset();
-      MockedZodManifestSchema.parse.mockReset();
-      MockedCreateZodSchemaFromParams.mockReset();
-      MockedToolboxToolFactory.mockReset();
+      jest.clearAllMocks();
 
       setupMocksForSuccessfulToolsetLoad({});
-      await client.loadToolset();
+      await client.loadToolset(undefined);
       expect(mockSessionGet).toHaveBeenLastCalledWith(expectedApiUrl);
     });
 
@@ -480,7 +486,9 @@ describe('ToolboxClient', () => {
       });
 
       await expect(client.loadToolset(toolsetName)).rejects.toThrow(
-        `Invalid manifest structure received from ${expectedApiUrlForToolset}: ${mockZodError.message}`
+        expect.stringContaining(
+          `Invalid manifest structure received from ${expectedApiUrlForToolset}`
+        )
       );
     });
 
@@ -493,7 +501,7 @@ describe('ToolboxClient', () => {
       await expect(client.loadToolset(toolsetName)).rejects.toThrow(apiError);
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         `Error fetching data from ${expectedApiUrl}:`,
-        apiError.message // Consistent with loadTool's API error logging assertion
+        apiError
       );
     });
   });

@@ -15,12 +15,20 @@
 import {ToolboxTool} from '../src/toolbox_core/tool';
 import {z, ZodObject, ZodRawShape} from 'zod';
 import {AxiosInstance, AxiosResponse} from 'axios';
+import * as utils from '../src/toolbox_core/utils';
 
-// Global mocks for Axios
+// Global mocks
 const mockAxiosPost = jest.fn();
 const mockSession = {
   post: mockAxiosPost,
 } as unknown as AxiosInstance;
+
+// Mock the utils module
+jest.mock('../src/toolbox_core/utils', () => ({
+  resolveValue: jest.fn(async (v: any) =>
+    typeof v === 'function' ? await v() : v
+  ),
+}));
 
 describe('ToolboxTool', () => {
   // Common constants for the tool
@@ -36,6 +44,7 @@ describe('ToolboxTool', () => {
   beforeEach(() => {
     // Reset mocks before each test
     mockAxiosPost.mockReset();
+    (utils.resolveValue as jest.Mock).mockClear();
 
     // Initialize a basic schema used by many tests
     basicParamSchema = z.object({
@@ -54,12 +63,15 @@ describe('ToolboxTool', () => {
 
   describe('Factory Properties and Getters', () => {
     beforeEach(() => {
+      // Note: The implementation of ToolboxTool should handle `boundParams` being
+      // undefined in the initial call, defaulting it to an empty object.
       tool = ToolboxTool(
         mockSession,
         baseURL,
         toolName,
         toolDescription,
-        basicParamSchema
+        basicParamSchema,
+        {} // Explicitly pass empty object for clarity
       );
     });
 
@@ -67,6 +79,7 @@ describe('ToolboxTool', () => {
       expect(tool.toolName).toBe(toolName);
       expect(tool.description).toBe(toolDescription);
       expect(tool.params).toBe(basicParamSchema);
+      expect(tool.boundParams).toEqual({});
     });
 
     it('getName() should return the tool name', () => {
@@ -84,6 +97,9 @@ describe('ToolboxTool', () => {
 
   describe('Callable Function - Argument Validation', () => {
     it('should call paramSchema.parse with the provided arguments', async () => {
+    const omitSpy = jest.spyOn(basicParamSchema, 'omit').mockImplementation(
+      () => basicParamSchema
+    );
       const currentTool = ToolboxTool(
         mockSession,
         baseURL,
@@ -99,6 +115,7 @@ describe('ToolboxTool', () => {
 
       expect(parseSpy).toHaveBeenCalledWith(callArgs);
       parseSpy.mockRestore();
+      omitSpy.mockRestore();
     });
 
     it('should throw a formatted ZodError if argument validation fails', async () => {
@@ -165,6 +182,7 @@ describe('ToolboxTool', () => {
         parse: jest.fn().mockImplementation(() => {
           throw customError;
         }),
+        omit: jest.fn().mockReturnThis(),
       } as unknown as ZodObject<ZodRawShape>;
       const currentTool = ToolboxTool(
         mockSession,
@@ -190,6 +208,10 @@ describe('ToolboxTool', () => {
 
     it('should use an empty object as default if no arguments are provided and schema allows it', async () => {
       const emptySchema = z.object({});
+
+      const omitSpy = jest.spyOn(emptySchema, 'omit').mockImplementation(
+        () => emptySchema
+      );
       const parseSpy = jest.spyOn(emptySchema, 'parse');
       const currentTool = ToolboxTool(
         mockSession,
@@ -205,6 +227,7 @@ describe('ToolboxTool', () => {
       expect(parseSpy).toHaveBeenCalledWith({});
       expect(mockAxiosPost).toHaveBeenCalled();
       parseSpy.mockRestore();
+      omitSpy.mockRestore();
     });
 
     it('should fail validation if no arguments are given and schema requires them', async () => {
@@ -278,6 +301,84 @@ describe('ToolboxTool', () => {
         `Error posting data to ${expectedUrl}:`,
         apiError.message
       );
+    });
+  });
+
+  describe('Bound Parameters Functionality', () => {
+    const expectedUrl = `${baseURL}/api/tool/${toolName}/invoke`;
+
+    beforeEach(() => {
+      tool = ToolboxTool(
+        mockSession,
+        baseURL,
+        toolName,
+        toolDescription,
+        basicParamSchema
+      );
+    });
+
+    it('should create a new tool with bound parameters using bindParams', () => {
+      const boundTool = tool.bindParams({limit: 10});
+      expect(boundTool).not.toBe(tool);
+      expect(boundTool.boundParams).toEqual({limit: 10});
+      expect(tool.boundParams).toEqual({});
+    });
+
+    it('should create a new tool with a single bound parameter using bindParam', () => {
+      const boundTool = tool.bindParam('limit', 20);
+      expect(boundTool.boundParams).toEqual({limit: 20});
+    });
+
+    it('should merge bound parameters with call arguments in the final payload', async () => {
+      const boundTool = tool.bindParams({limit: 5});
+      mockAxiosPost.mockResolvedValueOnce({data: 'success'});
+      await boundTool({query: 'specific query'});
+      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, {
+        query: 'specific query',
+        limit: 5,
+      });
+    });
+
+    it('should not require bound parameters to be provided at call time', async () => {
+      const boundTool = tool.bindParams({query: 'default query'});
+      mockAxiosPost.mockResolvedValueOnce({data: 'success'});
+      await boundTool({limit: 15});
+      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, {
+        query: 'default query',
+        limit: 15,
+      });
+    });
+
+    it('should validate only the user-provided arguments, not the bound ones', async () => {
+      const boundTool = tool.bindParams({query: 'a valid query'});
+      mockAxiosPost.mockResolvedValueOnce({data: 'success'});
+      // This call is valid because 'query' is bound, and no invalid args are passed
+      await expect(boundTool()).resolves.toBe('success');
+    });
+
+    it('should throw an error when trying to re-bind an already bound parameter', () => {
+      const boundTool = tool.bindParams({limit: 10});
+      const expectedError = `Cannot re-bind parameter: parameter 'limit' is already bound in tool '${toolName}'.`;
+      expect(() => boundTool.bindParams({limit: 20})).toThrow(expectedError);
+    });
+
+    it('should throw an error when trying to bind a parameter that does not exist', () => {
+      const expectedError = `Unable to bind parameter: no parameter named 'nonExistent' in tool '${toolName}'.`;
+      expect(() => tool.bindParams({nonExistent: 'value'})).toThrow(
+        expectedError
+      );
+    });
+
+    it('should resolve function values in bound parameters before making the API call', async () => {
+      const dynamicQuery = async () => 'resolved-query';
+      const boundTool = tool.bindParams({query: dynamicQuery});
+      mockAxiosPost.mockResolvedValueOnce({data: 'success'});
+      await boundTool({limit: 5});
+      expect(utils.resolveValue).toHaveBeenCalledWith(dynamicQuery);
+      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, {
+        query: 'resolved-query',
+        limit: 5,
+      });
     });
   });
 });

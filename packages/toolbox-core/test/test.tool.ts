@@ -25,7 +25,7 @@ const mockSession = {
 
 // Mock the utils module
 jest.mock('../src/toolbox_core/utils', () => ({
-  resolveValue: jest.fn(async (v: any) =>
+  resolveValue: jest.fn(async (v: unknown) =>
     typeof v === 'function' ? await v() : v
   ),
 }));

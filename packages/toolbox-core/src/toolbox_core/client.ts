@@ -18,6 +18,7 @@ import {type AxiosInstance, type AxiosResponse} from 'axios';
 import {ZodManifestSchema, createZodSchemaFromParams} from './protocol';
 import {logApiError} from './errorUtils';
 import {ZodError} from 'zod';
+import {BoundParams, BoundValue} from './utils';
 
 type Manifest = import('zod').infer<typeof ZodManifestSchema>;
 type ToolSchemaFromManifest = Manifest['tools'][string];
@@ -85,17 +86,20 @@ class ToolboxClient {
    * Creates a ToolboxTool instance from its schema.
    * @param {string} toolName - The name of the tool.
    * @param {ToolSchemaFromManifest} toolSchema - The schema definition of the tool from the manifest.
-   * @param {any} [boundParams] - A map of all candidate parameters to bind.
+   * @param {BoundParams} [boundParams] - A map of all candidate parameters to bind.
    * @returns {ReturnType<typeof ToolboxTool>} A ToolboxTool function.
    * @private
    */
   private _createToolInstance(
     toolName: string,
     toolSchema: ToolSchemaFromManifest,
-    boundParams?: any
-  ): any {
+    boundParams?: BoundParams
+  ): {
+    tool: ReturnType<typeof ToolboxTool>;
+    usedBoundKeys: Set<string>;
+  } {
     const toolParamNames = new Set(toolSchema.parameters.map(p => p.name));
-    const applicableBoundParams: Record<string, any> = {};
+    const applicableBoundParams: Record<string, BoundValue> = {};
     const usedBoundKeys = new Set<string>();
 
     if (boundParams) {
@@ -136,7 +140,7 @@ class ToolboxClient {
    */
   async loadTool(
     name: string,
-    boundParams: any = {}
+    boundParams: BoundParams = {}
   ): Promise<ReturnType<typeof ToolboxTool>> {
     const apiPath = `/api/tool/${name}`;
     const manifest = await this._fetchAndParseManifest(apiPath);
@@ -178,7 +182,7 @@ class ToolboxClient {
    */
   async loadToolset(
     name?: string,
-    boundParams: any = {}
+    boundParams: BoundParams = {}
   ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
     const toolsetName = name || '';
     const apiPath = `/api/toolset/${toolsetName}`;

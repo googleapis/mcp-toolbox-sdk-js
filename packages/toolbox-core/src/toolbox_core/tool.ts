@@ -15,7 +15,7 @@
 import {ZodObject, ZodError, ZodRawShape} from 'zod';
 import {AxiosInstance, AxiosResponse} from 'axios';
 import {logApiError} from './errorUtils';
-import {resolveValue} from './utils';
+import {BoundParams, BoundValue, resolveValue} from './utils';
 
 /**
  * Creates a callable tool function representing a specific tool on a remote
@@ -38,7 +38,7 @@ function ToolboxTool(
   name: string,
   description: string,
   paramSchema: ZodObject<ZodRawShape>,
-  boundParams: any = {}
+  boundParams: BoundParams = {}
 ) {
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
   const boundKeys = Object.keys(boundParams);
@@ -96,7 +96,7 @@ function ToolboxTool(
     return this.params;
   };
 
-  callable.bindParams = function (paramsToBind: any) {
+  callable.bindParams = function (paramsToBind: BoundParams) {
     const originalParamKeys = Object.keys(this.params.shape);
     for (const paramName of Object.keys(paramsToBind)) {
       if (paramName in this.boundParams) {
@@ -122,7 +122,7 @@ function ToolboxTool(
     );
   };
 
-  callable.bindParam = function (paramName: string, paramValue: any) {
+  callable.bindParam = function (paramName: string, paramValue: BoundValue) {
     return this.bindParams({[paramName]: paramValue});
   };
   return callable;

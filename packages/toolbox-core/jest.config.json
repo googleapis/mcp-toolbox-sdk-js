@@ -3,6 +3,14 @@
         "<rootDir>/test/*.ts"
     ],
     "preset": "ts-jest",
+    "transform": {
+      "^.+\\.ts$": [
+        "ts-jest",
+        {
+          "tsconfig": "tsconfig.test.json"
+        }
+      ]
+    },
     "testEnvironment": "node",
     "collectCoverage": true,
     "coverageDirectory": "coverage",

@@ -4,6 +4,14 @@
     "testMatch": [
         "<rootDir>/test/e2e/*.e2e.ts"
     ],
+     "transform": {
+      "^.+\\.ts$": [
+        "ts-jest",
+        {
+          "tsconfig": "tsconfig.test.json"
+        }
+      ]
+    },
     "globalSetup": "<rootDir>/test/e2e/jest.globalSetup.ts",
     "globalTeardown": "<rootDir>/test/e2e/jest.globalTeardown.ts",
     "testTimeout": 60000,

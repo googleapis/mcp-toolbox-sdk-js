@@ -104,10 +104,7 @@ class ToolboxClient {
 
     if (boundParams) {
       for (const key in boundParams) {
-        if (
-          Object.prototype.hasOwnProperty.call(boundParams, key) &&
-          toolParamNames.has(key)
-        ) {
+        if (toolParamNames.has(key)) {
           applicableBoundParams[key] = boundParams[key];
           usedBoundKeys.add(key);
         }

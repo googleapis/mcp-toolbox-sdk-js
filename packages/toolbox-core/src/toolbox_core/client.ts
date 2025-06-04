@@ -18,7 +18,7 @@ import {type AxiosInstance, type AxiosResponse} from 'axios';
 import {ZodManifestSchema, createZodSchemaFromParams} from './protocol.js';
 import {logApiError} from './errorUtils.js';
 import {ZodError} from 'zod';
-import {BoundParams, BoundValue} from './utils';
+import {BoundParams, BoundValue} from './utils.js';
 
 type Manifest = import('zod').infer<typeof ZodManifestSchema>;
 type ToolSchemaFromManifest = Manifest['tools'][string];

@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {getGoogleIdToken} from '../authMethods';
+import {getGoogleIdToken} from '../src/toolbox_core/authMethods';
 import {GoogleAuth} from 'google-auth-library';
 
-// Mock the GoogleAuth library
-jest.mock('google-auth-library');
+jest.mock('google-auth-library', () => ({GoogleAuth: jest.fn()}));
 
 describe('getGoogleIdToken', () => {
   const mockUrl = 'https://example.com';
@@ -33,9 +32,11 @@ describe('getGoogleIdToken', () => {
         fetchIdToken: mockFetchIdToken,
       },
     });
-    (GoogleAuth as jest.Mock).mockImplementation(() => ({
-      getIdTokenClient: mockGetIdTokenClient,
-    }));
+    (GoogleAuth as jest.MockedClass<typeof GoogleAuth>).mockImplementation(
+      () => ({
+        getIdTokenClient: mockGetIdTokenClient,
+      } as any)
+    );
   });
 
   it('should return a Bearer token on successful fetch', async () => {

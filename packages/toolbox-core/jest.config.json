@@ -1,7 +1,23 @@
 {
     "testMatch": [
-        "<rootDir>/test/**"
+        "<rootDir>/test/*.ts"
     ],
     "preset": "ts-jest",
-    "testEnvironment": "node"
+    "transform": {
+      "^.+\\.ts$": [
+        "ts-jest",
+        {
+          "tsconfig": "tsconfig.test.json"
+        }
+      ]
+    },
+    "testEnvironment": "node",
+    "collectCoverage": true,
+    "coverageDirectory": "coverage",
+    "coverageReporters": ["lcov", "text"],
+    "collectCoverageFrom": [
+      "src/**/*.ts",
+      "!src/**/*.d.ts",
+      "!src/**/index.ts"
+    ]
 }

@@ -1,15 +1,14 @@
 {
     "extends": "./node_modules/gts/tsconfig-google.json",
     "compilerOptions": {
-      "rootDir": ".",
-      "outDir": "build",
+      "rootDir": "src/toolbox_core",
+      "outDir": "build"
     },
     "include": [
-      "src/**/*.ts",
-      "test/*.ts",
+      "src/**/*.ts"
     ],
     "exclude": [
       "node_modules",
       "build"
     ]
-  }
+}

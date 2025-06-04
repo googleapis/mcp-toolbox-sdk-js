@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ToolboxTool} from './tool';
+import {ToolboxTool} from './tool.js';
 import axios from 'axios';
 import {type AxiosInstance, type AxiosResponse} from 'axios';
 import {
   ZodManifestSchema,
   createZodSchemaFromParams,
   ParameterSchema,
-} from './protocol';
-import {logApiError} from './errorUtils';
+} from './protocol.js';
+import {logApiError} from './errorUtils.js';
 import {ZodError} from 'zod';
-import {identifyAuthRequirements} from './utils';
+import {identifyAuthRequirements} from './utils.js';
 
 type Manifest = import('zod').infer<typeof ZodManifestSchema>;
 type ToolSchemaFromManifest = Manifest['tools'][string];

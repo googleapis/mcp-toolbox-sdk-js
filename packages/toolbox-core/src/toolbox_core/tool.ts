@@ -14,8 +14,8 @@
 
 import {ZodObject, ZodError, ZodRawShape} from 'zod';
 import {AxiosInstance, AxiosResponse} from 'axios';
-import {logApiError} from './errorUtils';
-import {identifyAuthRequirements, resolveValue} from './utils';
+import {logApiError} from './errorUtils.js';
+import {identifyAuthRequirements, resolveValue} from './utils.js';
 
 type AuthTokenGetter = () => string | Promise<string>;
 type AuthTokenGetters = Record<string, AuthTokenGetter>;

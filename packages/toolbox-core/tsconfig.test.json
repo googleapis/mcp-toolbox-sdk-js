@@ -2,6 +2,8 @@
     "extends": "./tsconfig.json",
     "compilerOptions": {
       "rootDir": ".",
-      "outDir": "build"
+      "outDir": "build",
+      "esModuleInterop": true,
+      "sourceMap": true   
     }
 }

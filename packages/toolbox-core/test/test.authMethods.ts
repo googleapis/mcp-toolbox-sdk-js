@@ -33,9 +33,10 @@ describe('getGoogleIdToken', () => {
       },
     });
     (GoogleAuth as jest.MockedClass<typeof GoogleAuth>).mockImplementation(
-      () => ({
-        getIdTokenClient: mockGetIdTokenClient,
-      } as any)
+      () =>
+        ({
+          getIdTokenClient: mockGetIdTokenClient,
+        }) as unknown as GoogleAuth
     );
   });
 

@@ -19,5 +19,8 @@
       "src/**/*.ts",
       "!src/**/*.d.ts",
       "!src/**/index.ts"
-    ]
+    ],
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    }
 }

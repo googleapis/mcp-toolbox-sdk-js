@@ -15,5 +15,8 @@
     "globalSetup": "<rootDir>/test/e2e/jest.globalSetup.ts",
     "globalTeardown": "<rootDir>/test/e2e/jest.globalTeardown.ts",
     "testTimeout": 60000,
-    "collectCoverage": false
+    "collectCoverage": false,
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    }
 }

@@ -14,7 +14,7 @@
 
 import {ZodObject, ZodError, ZodRawShape} from 'zod';
 import {AxiosInstance, AxiosResponse} from 'axios';
-import {logApiError} from './errorUtils';
+import {logApiError} from './errorUtils.js';
 
 /**
  * Creates a callable tool function representing a specific tool on a remote

@@ -64,7 +64,8 @@ class ToolboxClient {
 
   /**
    * Applies an Axios request interceptor to handle dynamic client headers.
-   * The interceptor resolves header provider functions before each request.
+   * The interceptor resolves header provider functions before each request sent
+   * to toolbox server through this client.
    */
   private _applyHeaderInterceptor(): void {
     if (this._headerInterceptorId !== null) {
@@ -73,14 +74,16 @@ class ToolboxClient {
 
     this._headerInterceptorId = this._session.interceptors.request.use(
       async (config: InternalAxiosRequestConfig) => {
-        config.headers = config.headers || {};
-        for (const headerName in this._clientHeaders) {
-          const headerProvider = this._clientHeaders[headerName];
-          const result = headerProvider();
-          if (result instanceof Promise) {
-            config.headers[headerName] = await result;
-          } else {
-            config.headers[headerName] = result;
+        if (config.url && config.url.startsWith(this._baseUrl)) {
+          config.headers = config.headers || {};
+          for (const headerName in this._clientHeaders) {
+            const headerProvider = this._clientHeaders[headerName];
+            const result = headerProvider();
+            if (result instanceof Promise) {
+              config.headers[headerName] = await result;
+            } else {
+              config.headers[headerName] = result;
+            }
           }
         }
         return config;

@@ -19,4 +19,5 @@ export type CustomGlobal = typeof globalThis & {
   __TOOLS_FILE_PATH__?: string;
   __TOOLBOX_SERVER_PROCESS__?: ChildProcess;
   __SERVER_TEARDOWN_INITIATED__?: boolean;
+  __GOOGLE_CLOUD_PROJECT__?: string;
 };

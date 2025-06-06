@@ -35,6 +35,7 @@ export default async function globalSetup(): Promise<void> {
   try {
     const projectId = getEnvVar('GOOGLE_CLOUD_PROJECT');
     const toolboxVersion = getEnvVar('TOOLBOX_VERSION');
+    (globalThis as CustomGlobal).__GOOGLE_CLOUD_PROJECT__ = projectId;
 
     // Fetch tools manifest and create temp file
     const toolsManifest = await accessSecretVersion(
@@ -154,6 +155,7 @@ export default async function globalSetup(): Promise<void> {
         );
       }
     }
+    (globalThis as CustomGlobal).__GOOGLE_CLOUD_PROJECT__ = undefined;
     throw error;
   }
 }

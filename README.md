@@ -96,7 +96,7 @@ to get started.
 ## License
 
 This project is licensed under the Apache License 2.0. See the
-[LICENSE](https://github.com/googleapis/genai-toolbox/blob/main/LICENSE) file
+[LICENSE](https://github.com/googleapis/mcp-toolbox-sdk-js/blob/main/LICENSE) file
 for details.
 
 ## Support

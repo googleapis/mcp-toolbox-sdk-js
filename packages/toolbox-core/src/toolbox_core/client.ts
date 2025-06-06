@@ -14,7 +14,11 @@
 
 import {ToolboxTool} from './tool.js';
 import axios from 'axios';
-import {type AxiosInstance, type AxiosResponse} from 'axios';
+import {
+  type AxiosInstance,
+  type AxiosResponse,
+  type InternalAxiosRequestConfig,
+} from 'axios';
 import {ZodManifestSchema, createZodSchemaFromParams} from './protocol.js';
 import {logApiError} from './errorUtils.js';
 import {ZodError} from 'zod';
@@ -29,6 +33,8 @@ type ToolSchemaFromManifest = Manifest['tools'][string];
 class ToolboxClient {
   private _baseUrl: string;
   private _session: AxiosInstance;
+  private _manageSession: boolean;
+  private _isClosed = false;
 
   /**
    * Initializes the ToolboxClient.
@@ -38,7 +44,37 @@ class ToolboxClient {
    */
   constructor(url: string, session?: AxiosInstance) {
     this._baseUrl = url;
-    this._session = session || axios.create({baseURL: this._baseUrl});
+    this._manageSession = false;
+
+    if (session === undefined) {
+      this._manageSession = true;
+      this._session = axios.create({baseURL: this._baseUrl});
+    } else {
+      this._session = session;
+    }
+
+    // Add a request interceptor to block requests when the client is closed.
+    this._session.interceptors.request.use(
+      (config: InternalAxiosRequestConfig) => {
+        if (this._manageSession && this._isClosed) {
+          return Promise.reject(new Error('ToolboxClient is closed.'));
+        }
+        return config;
+      },
+      error => {
+        return Promise.reject(error);
+      }
+    );
+  }
+
+  /**
+   * Closes the client, preventing any new requests from being made.
+   * This method is only effective if the session is managed by the client.
+   */
+  close(): void {
+    if (this._manageSession) {
+      this._isClosed = true;
+    }
   }
 
   /**
@@ -72,7 +108,8 @@ class ToolboxClient {
     } catch (error) {
       if (
         error instanceof Error &&
-        error.message.startsWith('Invalid manifest structure received from')
+        (error.message.startsWith('Invalid manifest structure received from') ||
+          error.message === 'ToolboxClient is closed.')
       ) {
         throw error;
       }

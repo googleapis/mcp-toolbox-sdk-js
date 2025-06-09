@@ -247,9 +247,16 @@ describe('ToolboxClient E2E Tests', () => {
       const authTool = tool.addAuthTokenGetters({
         'my-test-auth': authToken2Getter,
       });
-      await expect(authTool({id: '2'})).rejects.toThrow(
-        'tool invocation not authorized'
-      );
+      try {
+        await authTool({id: '2'});
+      } catch (error) {
+        expect(error).toBeInstanceOf(AxiosError);
+        const axiosError = error as AxiosError;
+        expect(axiosError.response?.status).toBe(401);
+        expect(axiosError.response?.data).toEqual(
+          expect.objectContaining({error: 'tool invocation not authorized'})
+        );
+      }
     });
 
     it('should succeed when running a tool with correct auth', async () => {

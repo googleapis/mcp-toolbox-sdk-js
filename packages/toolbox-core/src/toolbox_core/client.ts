@@ -19,7 +19,11 @@ import {
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from 'axios';
-import {ZodManifestSchema, createZodSchemaFromParams, ParameterSchema} from './protocol.js';
+import {
+  ZodManifestSchema,
+  createZodSchemaFromParams,
+  ParameterSchema,
+} from './protocol.js';
 import {logApiError} from './errorUtils.js';
 import {ZodError} from 'zod';
 import {BoundParams, identifyAuthRequirements} from './utils.js';
@@ -176,11 +180,11 @@ class ToolboxClient {
     usedAuthKeys: Set<string>;
     usedBoundKeys: Set<string>;
   } {
-    let params: ParameterSchema[] = [];
-    let authParams: RequiredAuthnParams = {};
-    let boundParams: BoundParams = {};
+    const params: ParameterSchema[] = [];
+    const authParams: RequiredAuthnParams = {};
+    const boundParams: BoundParams = {};
 
-    for (let p of toolSchema.parameters) {
+    for (const p of toolSchema.parameters) {
       if (p.authSources && p.authSources.length > 0) {
         authParams[p.name] = p.authSources;
       } else if (allBoundParams && p.name in allBoundParams) {

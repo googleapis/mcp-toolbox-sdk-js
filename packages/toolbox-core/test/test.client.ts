@@ -139,6 +139,12 @@ describe('ToolboxClient', () => {
         // Prepare the config Axios would pass to interceptors
         get: jest.fn(
           async (url: string, config?: InternalAxiosRequestConfig) => {
+            const isAbsoluteUrl =
+              url.startsWith('http://') || url.startsWith('https://');
+            const fullUrl = isAbsoluteUrl
+              ? url
+              : `${instanceDefaults.baseURL || ''}${url}`;
+
             const currentConfig: InternalAxiosRequestConfig = {
               ...instanceDefaults,
               ...(config || {}),
@@ -146,7 +152,7 @@ describe('ToolboxClient', () => {
                 ...(instanceDefaults.headers || {}),
                 ...(config?.headers || {}),
               },
-              url: url,
+              url: fullUrl,
               method: 'get',
             };
 
@@ -301,7 +307,7 @@ describe('ToolboxClient', () => {
       await client['_session'].get(mockUrl);
 
       expect(mockSessionGet).toHaveBeenCalled();
-      const lastCallConfig = mockSessionGet.mock.calls[0][1] || {}; // Axios config is the second arg to get()
+      const lastCallConfig = mockSessionGet.mock.calls[0][1] || {};
       expect(lastCallConfig.headers['X-Sync-Header']).toBe('sync-value');
     });
 

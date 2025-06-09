@@ -82,6 +82,11 @@ const tools = await client.loadToolset();
 ```
 
 All interactions for loading and invoking tools happen through this client.
+> [!IMPORTANT]
+> Closing the `ToolboxClient` also closes the underlying network session shared by
+> all tools loaded from that client. As a result, any tool instances you have
+> loaded will cease to function and will raise an error if you attempt to invoke
+> them after the client is closed.
 
 > [!NOTE]
 > For advanced use cases, you can provide an external `AxiosInstance`
@@ -89,11 +94,6 @@ All interactions for loading and invoking tools happen through this client.
 > provide your own session, you are responsible for managing its lifecycle;
 > `ToolboxClient` *will not* close it.
 
-> [!IMPORTANT]
-> Closing the `ToolboxClient` also closes the underlying network session shared by
-> all tools loaded from that client. As a result, any tool instances you have
-> loaded will cease to function and will raise an error if you attempt to invoke
-> them after the client is closed.
 
 ## Loading Tools
 
@@ -330,11 +330,11 @@ tools loaded in that specific call, without modifying the original tool objects
 if they were loaded previously.
 
 ```javascript
-const authTool = await toolbox.loadTool(authTokenGetters={"myAuth": getAuthToken})
+const authTool = await toolbox.loadTool("toolName", {"myAuth": getAuthToken})
 
 // OR
 
-const authTools = await toolbox.loadToolset(authTokenGetters={"myAuth": getAuthToken})
+const authTools = await toolbox.loadToolset({"myAuth": getAuthToken})
 ```
 
 > [!NOTE]
@@ -352,7 +352,7 @@ async function getAuthToken() {
     return "YOUR_ID_TOKEN" // Placeholder
 }
 
-let client = ToolboxClient("http://127.0.0.1:5000")
+let client = new ToolboxClient("http://127.0.0.1:5000")
 const tool = await client.loadTool("my-tool")
 const authTool = tool.addAuthTokenGetters({"my_auth": getAuthToken})
 const result = await authTool({input:"some input"})
@@ -389,7 +389,7 @@ specific tool instance.
 
 import { ToolboxClient } from '@toolbox/core';
 
-let client = ToolboxClient("http://127.0.0.1:5000")
+let client = new ToolboxClient("http://127.0.0.1:5000")
 const tool = await client.loadTool("my-tool")
 
 const boundTool = tool.bindParam("param", "value")
@@ -405,11 +405,11 @@ Specify bound parameters directly when loading tools. This applies the binding
 only to the tools loaded in that specific call.
 
 ```javascript
-const boundTool = await client.loadTool("my-tool", boundParams={"param": "value"})
+const boundTool = await client.loadTool("my-tool", null, {"param": "value"})
 
 // OR
 
-const boundTools = await client.loadToolset(boundParams={"param": "value"})
+const boundTools = await client.loadToolset(null, {"param": "value"})
 ```
 
 > [!NOTE]

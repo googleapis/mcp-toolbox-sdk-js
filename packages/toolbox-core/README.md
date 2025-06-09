@@ -66,6 +66,23 @@ npm install @toolbox/core
 > call `close()` to clean up these resources. If you provide your own session,
 > you'll need to close it in addition to calling `ToolboxClient.close()`.
 
+## Quickstart
+
+Here's a minimal example to get you started. Ensure your Toolbox service is running and accessible.
+
+```javascript
+
+import { ToolboxClient } from '@toolbox/core';
+
+try {
+    const client = new ToolboxClient(URL);
+    const tools = await client.loadToolset();
+    // Use tools
+} catch (error) {
+    console.error("Error using @toolbox/core:", error);
+}
+```
+
 ## Usage
 
 Import and initialize a Toolbox client, pointing it to the URL of your running

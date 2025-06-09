@@ -169,8 +169,8 @@ class ToolboxClient {
   private _createToolInstance(
     toolName: string,
     toolSchema: ToolSchemaFromManifest,
-    authTokenGetters?: AuthTokenGetters,
-    boundParams?: BoundParams
+    authTokenGetters?: AuthTokenGetters | null,
+    boundParams?: BoundParams | null
   ): {
     tool: ReturnType<typeof ToolboxTool>;
     usedAuthKeys: Set<string>;
@@ -203,7 +203,7 @@ class ToolboxClient {
       toolSchema.description,
       paramZodSchema,
       actualBoundParams,
-      authTokenGetters,
+      authTokenGetters || {},
       remainingAuthnParams,
       remainingAuthzTokens
     );
@@ -228,7 +228,7 @@ class ToolboxClient {
    */
   async loadTool(
     name: string,
-    authTokenGetters: AuthTokenGetters = {},
+    authTokenGetters: AuthTokenGetters | null = {},
     boundParams: BoundParams = {}
   ): Promise<ReturnType<typeof ToolboxTool>> {
     const apiPath = `/api/tool/${name}`;
@@ -242,11 +242,13 @@ class ToolboxClient {
       const {tool, usedAuthKeys, usedBoundKeys} = this._createToolInstance(
         name,
         specificToolSchema,
-        authTokenGetters,
+        authTokenGetters || undefined,
         boundParams
       );
 
-      const providedAuthKeys = new Set(Object.keys(authTokenGetters));
+      const providedAuthKeys = new Set(
+        authTokenGetters ? Object.keys(authTokenGetters) : []
+      );
       const providedBoundKeys = new Set(Object.keys(boundParams));
       const unusedAuth = [...providedAuthKeys].filter(
         key => !usedAuthKeys.has(key)
@@ -289,7 +291,7 @@ class ToolboxClient {
    */
   async loadToolset(
     name?: string,
-    authTokenGetters: AuthTokenGetters = {},
+    authTokenGetters: AuthTokenGetters | null = {},
     boundParams: BoundParams = {},
     strict: Boolean = false
   ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
@@ -301,7 +303,9 @@ class ToolboxClient {
 
     const overallUsedAuthKeys: Set<string> = new Set();
     const overallUsedBoundParams: Set<string> = new Set();
-    const providedAuthKeys = new Set(Object.keys(authTokenGetters));
+    const providedAuthKeys = new Set(
+      authTokenGetters ? Object.keys(authTokenGetters) : []
+    );
     const providedBoundKeys = new Set(Object.keys(boundParams));
 
     for (const [toolName, toolSchema] of Object.entries(manifest.tools)) {

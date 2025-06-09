@@ -177,7 +177,7 @@ describe('ToolboxClient E2E Tests', () => {
     });
 
     it('should successfully bind parameters at load time', async () => {
-      const tool = await commonToolboxClient.loadTool('get-n-rows', {
+      const tool = await commonToolboxClient.loadTool('get-n-rows', null, {
         num_rows: '3',
       });
       const response = await tool();

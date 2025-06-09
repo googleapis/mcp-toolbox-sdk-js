@@ -45,7 +45,6 @@ class ToolboxClient {
    */
   constructor(url: string, session?: AxiosInstance) {
     this._baseUrl = url;
-    this._manageSession = false;
     this._abortController = new AbortController();
 
     if (session === undefined) {
@@ -53,6 +52,7 @@ class ToolboxClient {
       this._session = axios.create({baseURL: this._baseUrl});
     } else {
       this._session = session;
+      this._manageSession = false;
     }
 
     // Add a request interceptor to block requests when the client is closed

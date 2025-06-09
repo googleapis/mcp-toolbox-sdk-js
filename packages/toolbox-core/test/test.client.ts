@@ -82,14 +82,22 @@ describe('ToolboxClient', () => {
   const testBaseUrl = 'http://api.example.com';
   let consoleErrorSpy: jest.SpyInstance;
   let mockSessionGet: jest.Mock;
+  let autoCreatedSession: AxiosInstance;
 
   beforeEach(() => {
     jest.resetAllMocks();
 
     mockSessionGet = jest.fn();
-    mockedAxios.create.mockReturnValue({
+    autoCreatedSession = {
       get: mockSessionGet,
-    } as unknown as AxiosInstance);
+      post: jest.fn(),
+      defaults: {headers: {} as import('axios').HeadersDefaults},
+      interceptors: {
+        request: {use: jest.fn()},
+        response: {use: jest.fn()},
+      } as unknown as import('axios').AxiosInstance['interceptors'],
+    } as unknown as AxiosInstance;
+    mockedAxios.create.mockReturnValue(autoCreatedSession);
 
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
@@ -100,22 +108,17 @@ describe('ToolboxClient', () => {
 
   describe('constructor', () => {
     it('should set baseUrl and create a new session if one is not provided', () => {
-      const client = new ToolboxClient(testBaseUrl);
+      new ToolboxClient(testBaseUrl);
 
-      expect(client['_baseUrl']).toBe(testBaseUrl);
       expect(mockedAxios.create).toHaveBeenCalledTimes(1);
       expect(mockedAxios.create).toHaveBeenCalledWith({baseURL: testBaseUrl});
-      expect(client['_session'].get).toBe(mockSessionGet);
     });
 
     it('should set baseUrl and use the provided session if one is given', () => {
       const customMockSession = {
         get: mockSessionGet,
       } as unknown as AxiosInstance;
-      const client = new ToolboxClient(testBaseUrl, customMockSession);
-
-      expect(client['_baseUrl']).toBe(testBaseUrl);
-      expect(client['_session']).toBe(customMockSession);
+      new ToolboxClient(testBaseUrl, customMockSession);
       expect(mockedAxios.create).not.toHaveBeenCalled();
     });
   });
@@ -215,7 +218,7 @@ describe('ToolboxClient', () => {
         mockToolDefinition.parameters as unknown as ParameterSchema[] // Cast if createZodSchemaFromParams expects ParameterSchema[]
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
-        client['_session'],
+        autoCreatedSession,
         testBaseUrl,
         toolName,
         mockToolDefinition.description,
@@ -240,7 +243,7 @@ describe('ToolboxClient', () => {
 
       // Assert that the factory was called with the applicable bound parameters
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
-        expect.anything(),
+        autoCreatedSession,
         expect.anything(),
         expect.anything(),
         expect.anything(),
@@ -453,7 +456,7 @@ describe('ToolboxClient', () => {
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledTimes(2);
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
-        client['_session'],
+        autoCreatedSession,
         testBaseUrl,
         'toolA',
         mockToolDefinitions.toolA.description,
@@ -461,7 +464,7 @@ describe('ToolboxClient', () => {
         {}
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
-        client['_session'],
+        autoCreatedSession,
         testBaseUrl,
         'toolB',
         mockToolDefinitions.toolB.description,
@@ -493,7 +496,7 @@ describe('ToolboxClient', () => {
 
       expect(MockedToolboxToolFactory).toHaveBeenCalledTimes(2);
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
-        expect.anything(),
+        autoCreatedSession,
         expect.anything(),
         'toolA',
         expect.anything(),
@@ -501,7 +504,7 @@ describe('ToolboxClient', () => {
         boundParams
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
-        expect.anything(),
+        autoCreatedSession,
         expect.anything(),
         'toolB',
         expect.anything(),

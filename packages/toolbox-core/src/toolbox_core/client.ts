@@ -28,8 +28,8 @@ type ToolSchemaFromManifest = Manifest['tools'][string];
  * Manages an Axios Client Session, if not provided.
  */
 class ToolboxClient {
-  private _baseUrl: string;
-  private _session: AxiosInstance;
+  #baseUrl: string;
+  #session: AxiosInstance;
 
   /**
    * Initializes the ToolboxClient.
@@ -38,8 +38,8 @@ class ToolboxClient {
    * requests. If not provided, a new one will be created.
    */
   constructor(url: string, session?: AxiosInstance) {
-    this._baseUrl = url;
-    this._session = session || axios.create({baseURL: this._baseUrl});
+    this.#baseUrl = url;
+    this.#session = session || axios.create({baseURL: this.#baseUrl});
   }
 
   /**
@@ -47,12 +47,11 @@ class ToolboxClient {
    * @param {string} apiPath - The API path to fetch the manifest from (e.g., "/api/tool/mytool").
    * @returns {Promise<Manifest>} A promise that resolves to the parsed manifest.
    * @throws {Error} If there's an error fetching data or if the manifest structure is invalid.
-   * @private
    */
-  private async _fetchAndParseManifest(apiPath: string): Promise<Manifest> {
-    const url = `${this._baseUrl}${apiPath}`;
+  async #fetchAndParseManifest(apiPath: string): Promise<Manifest> {
+    const url = `${this.#baseUrl}${apiPath}`;
     try {
-      const response: AxiosResponse = await this._session.get(url);
+      const response: AxiosResponse = await this.#session.get(url);
       const responseData = response.data;
 
       try {
@@ -88,9 +87,8 @@ class ToolboxClient {
    * @param {ToolSchemaFromManifest} toolSchema - The schema definition of the tool from the manifest.
    * @param {BoundParams} [boundParams] - A map of all candidate parameters to bind.
    * @returns {ReturnType<typeof ToolboxTool>} A ToolboxTool function.
-   * @private
    */
-  private _createToolInstance(
+  #createToolInstance(
     toolName: string,
     toolSchema: ToolSchemaFromManifest,
     boundParams?: BoundParams
@@ -113,8 +111,8 @@ class ToolboxClient {
 
     const paramZodSchema = createZodSchemaFromParams(toolSchema.parameters);
     const tool = ToolboxTool(
-      this._session,
-      this._baseUrl,
+      this.#session,
+      this.#baseUrl,
       toolName,
       toolSchema.description,
       paramZodSchema,
@@ -141,14 +139,14 @@ class ToolboxClient {
     boundParams: BoundParams = {}
   ): Promise<ReturnType<typeof ToolboxTool>> {
     const apiPath = `/api/tool/${name}`;
-    const manifest = await this._fetchAndParseManifest(apiPath);
+    const manifest = await this.#fetchAndParseManifest(apiPath);
 
     if (
       manifest.tools && // Zod ensures manifest.tools exists if schema requires it
       Object.prototype.hasOwnProperty.call(manifest.tools, name)
     ) {
       const specificToolSchema = manifest.tools[name];
-      const {tool, usedBoundKeys} = this._createToolInstance(
+      const {tool, usedBoundKeys} = this.#createToolInstance(
         name,
         specificToolSchema,
         boundParams
@@ -186,14 +184,14 @@ class ToolboxClient {
     const toolsetName = name || '';
     const apiPath = `/api/toolset/${toolsetName}`;
 
-    const manifest = await this._fetchAndParseManifest(apiPath);
+    const manifest = await this.#fetchAndParseManifest(apiPath);
     const tools: Array<ReturnType<typeof ToolboxTool>> = [];
 
     const providedBoundKeys = new Set(Object.keys(boundParams));
     const overallUsedBoundParams: Set<string> = new Set();
 
     for (const [toolName, toolSchema] of Object.entries(manifest.tools)) {
-      const {tool, usedBoundKeys} = this._createToolInstance(
+      const {tool, usedBoundKeys} = this.#createToolInstance(
         toolName,
         toolSchema,
         boundParams

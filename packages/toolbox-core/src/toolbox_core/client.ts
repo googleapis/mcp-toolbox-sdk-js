@@ -291,7 +291,7 @@ class ToolboxClient {
     name?: string,
     authTokenGetters: AuthTokenGetters = {},
     boundParams: BoundParams = {},
-    strict: Boolean = false,
+    strict: Boolean = false
   ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
     const toolsetName = name || '';
     const apiPath = `/api/toolset/${toolsetName}`;
@@ -303,7 +303,7 @@ class ToolboxClient {
     const overallUsedBoundParams: Set<string> = new Set();
     const providedAuthKeys = new Set(Object.keys(authTokenGetters));
     const providedBoundKeys = new Set(Object.keys(boundParams));
-    
+
     for (const [toolName, toolSchema] of Object.entries(manifest.tools)) {
       const {tool, usedAuthKeys, usedBoundKeys} = this._createToolInstance(
         toolName,

@@ -104,9 +104,7 @@ function ToolboxTool(
     const payload = {...validatedUserArgs, ...resolvedBoundParams};
 
     const headers: Record<string, string> = {};
-    for (const [authService, tokenGetter] of Object.entries(
-      authTokenGetters
-    )) {
+    for (const [authService, tokenGetter] of Object.entries(authTokenGetters)) {
       const token = await resolveValue(tokenGetter);
       if (typeof token !== 'string') {
         throw new Error(

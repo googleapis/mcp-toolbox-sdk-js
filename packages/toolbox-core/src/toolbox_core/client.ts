@@ -35,6 +35,7 @@ class ToolboxClient {
   private _session: AxiosInstance;
   private _manageSession: boolean;
   private _isClosed = false;
+  private _abortController: AbortController;
 
   /**
    * Initializes the ToolboxClient.
@@ -45,6 +46,7 @@ class ToolboxClient {
   constructor(url: string, session?: AxiosInstance) {
     this._baseUrl = url;
     this._manageSession = false;
+    this._abortController = new AbortController();
 
     if (session === undefined) {
       this._manageSession = true;
@@ -53,11 +55,15 @@ class ToolboxClient {
       this._session = session;
     }
 
-    // Add a request interceptor to block requests when the client is closed.
+    // Add a request interceptor to block requests when the client is closed
+    // and to add an abort signal to in-flight requests.
     this._session.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
-        if (this._manageSession && this._isClosed) {
-          return Promise.reject(new Error('ToolboxClient is closed.'));
+        if (this._manageSession) {
+          if (this._isClosed) {
+            return Promise.reject(new Error('ToolboxClient is closed.'));
+          }
+          config.signal = this._abortController.signal;
         }
         return config;
       },
@@ -68,12 +74,14 @@ class ToolboxClient {
   }
 
   /**
-   * Closes the client, preventing any new requests from being made.
+   * Closes the client, preventing any new requests from being made and
+   * aborting any existing in-flight requests.
    * This method is only effective if the session is managed by the client.
    */
   close(): void {
     if (this._manageSession) {
       this._isClosed = true;
+      this._abortController.abort();
     }
   }
 
@@ -107,9 +115,12 @@ class ToolboxClient {
       }
     } catch (error) {
       if (
-        error instanceof Error &&
-        (error.message.startsWith('Invalid manifest structure received from') ||
-          error.message === 'ToolboxClient is closed.')
+        axios.isCancel(error) ||
+        (error instanceof Error &&
+          (error.message.startsWith(
+            'Invalid manifest structure received from'
+          ) ||
+            error.message === 'ToolboxClient is closed.'))
       ) {
         throw error;
       }

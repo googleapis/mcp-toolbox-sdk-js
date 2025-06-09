@@ -17,6 +17,7 @@ involving Large Language Models (LLMs).
 <!-- TOC -->
 
 - [Installation](#installation)
+- [Quickstart](#quickstart)
 - [Usage](#usage)
 - [Loading Tools](#loading-tools)
   - [Load a toolset](#load-a-toolset)

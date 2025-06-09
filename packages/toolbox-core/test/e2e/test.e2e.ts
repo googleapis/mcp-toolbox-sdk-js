@@ -254,7 +254,7 @@ describe('ToolboxClient E2E Tests', () => {
         const axiosError = error as AxiosError;
         expect(axiosError.response?.status).toBe(401);
         expect(axiosError.response?.data).toEqual(
-          expect.objectContaining({error: 'tool invocation not authorized'})
+          expect.objectContaining({error: 'tool invocation not authorized. Please make sure your specify correct auth headers'})
         );
       }
     });

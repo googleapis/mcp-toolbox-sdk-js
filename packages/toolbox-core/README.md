@@ -60,13 +60,6 @@ npm install @toolbox/core
 > - The primary `ToolboxClient` is asynchronous and requires using `await` for
 >   loading and invoking tools, as shown in most examples.
 
-> [!IMPORTANT]
->
-> The `ToolboxClient` interacts with network resources using an underlying HTTP
-> client session. You should remember to use a context manager or explicitly
-> call `close()` to clean up these resources. If you provide your own session,
-> you'll need to close it in addition to calling `ToolboxClient.close()`.
-
 ## Quickstart
 
 Here's a minimal example to get you started. Ensure your Toolbox service is running and accessible.
@@ -80,7 +73,7 @@ try {
     const tools = await client.loadToolset();
     // Use tools
 } catch (error) {
-    console.error("Error using @toolbox/core:", error);
+    console.error("unable to load toolset:", error);
 }
 ```
 
@@ -108,10 +101,7 @@ All interactions for loading and invoking tools happen through this client.
 
 > [!NOTE]
 > For advanced use cases, you can provide an external `AxiosInstance`
-> during initialization (e.g., `ToolboxClient(url, my_session)`). If you
-> provide your own session, you are responsible for managing its lifecycle;
-> `ToolboxClient` *will not* close it.
-
+> during initialization (e.g., `ToolboxClient(url, my_session)`).
 
 ## Loading Tools
 

@@ -15,10 +15,15 @@
 import {ToolboxClient} from '../../src/toolbox_core/client';
 import {ToolboxTool} from '../../src/toolbox_core/tool';
 
+import {AxiosError} from 'axios';
+import {CustomGlobal} from './types';
+import {authTokenGetter} from './utils';
+
 describe('ToolboxClient E2E Tests', () => {
   let commonToolboxClient: ToolboxClient;
   let getNRowsTool: ReturnType<typeof ToolboxTool>;
   const testBaseUrl = 'http://localhost:5000';
+  const projectId = (globalThis as CustomGlobal).__GOOGLE_CLOUD_PROJECT__;
 
   beforeAll(async () => {
     commonToolboxClient = new ToolboxClient(testBaseUrl);
@@ -198,6 +203,111 @@ describe('ToolboxClient E2E Tests', () => {
       }).toThrow(
         "Unable to bind parameter: no parameter named 'non_existent_param' in tool 'get-n-rows'."
       );
+    });
+  });
+
+  describe('Auth E2E Tests', () => {
+    let authToken1: string;
+    let authToken2: string;
+    let authToken1Getter: () => string;
+    let authToken2Getter: () => string;
+
+    beforeAll(async () => {
+      if (!projectId) {
+        throw new Error(
+          'GOOGLE_CLOUD_PROJECT is not defined. Cannot run Auth E2E tests.'
+        );
+      }
+      authToken1 = await authTokenGetter(projectId, 'sdk_testing_client1');
+      authToken2 = await authTokenGetter(projectId, 'sdk_testing_client2');
+
+      authToken1Getter = () => authToken1;
+      authToken2Getter = () => authToken2;
+    });
+
+    it('should fail when running a tool that does not require auth with auth provided', async () => {
+      await expect(
+        commonToolboxClient.loadTool('get-row-by-id', {
+          'my-test-auth': authToken2Getter,
+        })
+      ).rejects.toThrow(
+        "Validation failed for tool 'get-row-by-id': unused auth tokens: my-test-auth"
+      );
+    });
+
+    it('should fail when running a tool requiring auth without providing auth', async () => {
+      const tool = await commonToolboxClient.loadTool('get-row-by-id-auth');
+      await expect(tool({id: '2'})).rejects.toThrow(
+        'One or more of the following authn services are required to invoke this tool: my-test-auth'
+      );
+    });
+
+    it('should fail when running a tool with incorrect auth', async () => {
+      const tool = await commonToolboxClient.loadTool('get-row-by-id-auth');
+      const authTool = tool.addAuthTokenGetters({
+        'my-test-auth': authToken2Getter,
+      });
+      await expect(authTool({id: '2'})).rejects.toThrow(
+        'tool invocation not authorized'
+      );
+    });
+
+    it('should succeed when running a tool with correct auth', async () => {
+      const tool = await commonToolboxClient.loadTool('get-row-by-id-auth');
+      const authTool = tool.addAuthTokenGetters({
+        'my-test-auth': authToken1Getter,
+      });
+      const response = await authTool({id: '2'});
+      expect(response.result).toContain('row2');
+    });
+
+    it('should succeed when running a tool with correct async auth', async () => {
+      const tool = await commonToolboxClient.loadTool('get-row-by-id-auth');
+      const getAsyncToken = async () => {
+        return authToken1Getter();
+      };
+      const authTool = tool.addAuthTokenGetters({
+        'my-test-auth': getAsyncToken,
+      });
+      const response = await authTool({id: '2'});
+      expect(response.result).toContain('row2');
+    });
+
+    it('should fail when a tool with a param requiring auth is run without auth', async () => {
+      const tool = await commonToolboxClient.loadTool('get-row-by-email-auth');
+      await expect(tool()).rejects.toThrow(
+        'One or more of the following authn services are required to invoke this tool: my-test-auth'
+      );
+    });
+
+    it('should succeed when a tool with a param requiring auth is run with correct auth', async () => {
+      const tool = await commonToolboxClient.loadTool('get-row-by-email-auth', {
+        'my-test-auth': authToken1Getter,
+      });
+      const response = await tool();
+      expect(response.result).toContain('row4');
+      expect(response.result).toContain('row5');
+      expect(response.result).toContain('row6');
+    });
+
+    it('should fail when a tool with a param requiring auth is run with insufficient auth claims', async () => {
+      expect.assertions(2);
+
+      const tool = await commonToolboxClient.loadTool(
+        'get-row-by-content-auth',
+        {
+          'my-test-auth': authToken1Getter,
+        }
+      );
+      try {
+        await tool();
+      } catch (error) {
+        expect(error).toBeInstanceOf(AxiosError);
+        const axiosError = error as AxiosError;
+        expect(axiosError.response?.data).toEqual({
+          error: 'no field named row_data in claims',
+        });
+      }
     });
   });
 });

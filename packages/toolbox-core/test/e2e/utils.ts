@@ -14,6 +14,8 @@
 
 import * as os from 'os';
 import * as fs from 'fs-extra';
+import {GoogleAuth} from 'google-auth-library';
+
 import * as tmp from 'tmp';
 import {SecretManagerServiceClient} from '@google-cloud/secret-manager';
 import {Storage} from '@google-cloud/storage';
@@ -109,4 +111,36 @@ export function getToolboxBinaryGcsPath(toolboxVersion: string): string {
 
 export function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Retrieves an OIDC authentication token from the metadata server.
+ * This function is intended to be run on a Google Cloud environment (e.g., Compute Engine).
+ *
+ * @param {string} clientId The target audience for the OIDC token.
+ * @returns {Promise<string>} A promise that resolves to the authentication token.
+ */
+export async function getAuthToken(clientId: string): Promise<string> {
+  // The GoogleAuth library automatically detects the environment (e.g., GCE).
+  const auth = new GoogleAuth();
+  // Get an OIDC token client for the specified audience.
+  const client = await auth.getIdTokenClient(clientId);
+  // Fetch the token. The library handles credential refreshing automatically.
+  const token = await client.idTokenProvider.fetchIdToken(clientId);
+  return token;
+}
+
+/**
+ * Pytest fixture equivalent for auth_token1.
+ * Fetches the client ID from Secret Manager and then gets the auth token.
+ *
+ * @param {string} projectId The Google Cloud project ID.
+ * @returns {Promise<string>} A promise that resolves to the first auth token.
+ */
+export async function authTokenGetter(
+  projectId: string,
+  clientName: string
+): Promise<string> {
+  const clientId = await accessSecretVersion(projectId, clientName);
+  return getAuthToken(clientId);
 }

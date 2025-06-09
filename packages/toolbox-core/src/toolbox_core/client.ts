@@ -187,15 +187,6 @@ class ToolboxClient {
       }
     }
 
-    const satisfiedAuthnParamNames = Object.keys(authnParamsDefinitions).filter(
-      p => !Object.prototype.hasOwnProperty.call(remainingAuthnParams, p)
-    );
-    for (const paramName of satisfiedAuthnParamNames) {
-      if (!Object.prototype.hasOwnProperty.call(actualBoundParams, paramName)) {
-        actualBoundParams[paramName] = 'AUTH_FULFILLED';
-      }
-    }
-
     const [remainingAuthnParams, remainingAuthzTokens, usedAuthKeys] =
       identifyAuthRequirements(
         authnParamsDefinitions,

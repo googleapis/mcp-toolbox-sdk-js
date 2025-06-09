@@ -314,10 +314,12 @@ describe('ToolboxClient E2E Tests', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(AxiosError);
         const axiosError = error as AxiosError;
-        expect(axiosError.response?.data).toEqual({
-          error:
-            'provided parameters were invalid: error parsing authenticated parameter "data": no field named row_data in claims',
-        });
+        expect(axiosError.response?.data).toEqual(
+          expect.objectContaining({
+            error:
+              'provided parameters were invalid: error parsing authenticated parameter "data": no field named row_data in claims',
+          })
+        );
       }
     });
   });

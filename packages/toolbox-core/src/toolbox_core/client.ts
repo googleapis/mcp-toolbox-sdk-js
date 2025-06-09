@@ -19,7 +19,7 @@ import {
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from 'axios';
-import {ZodManifestSchema, createZodSchemaFromParams} from './protocol.js';
+import {ZodManifestSchema, createZodSchemaFromParams, ParameterSchema} from './protocol.js';
 import {logApiError} from './errorUtils.js';
 import {ZodError} from 'zod';
 import {BoundParams, identifyAuthRequirements} from './utils.js';
@@ -162,7 +162,7 @@ class ToolboxClient {
    * Creates a ToolboxTool instance from its schema.
    * @param {string} toolName - The name of the tool.
    * @param {ToolSchemaFromManifest} toolSchema - The schema definition of the tool from the manifest.
-   * @param {BoundParams} [boundParams] - A map of all candidate parameters to bind.
+   * @param {BoundParams} [allBoundParams] - A map of all candidate parameters to bind.
    * @returns {ReturnType<typeof ToolboxTool>} A ToolboxTool function.
    * @private
    */
@@ -170,31 +170,34 @@ class ToolboxClient {
     toolName: string,
     toolSchema: ToolSchemaFromManifest,
     authTokenGetters?: AuthTokenGetters | null,
-    boundParams?: BoundParams | null
+    allBoundParams?: BoundParams | null
   ): {
     tool: ReturnType<typeof ToolboxTool>;
     usedAuthKeys: Set<string>;
     usedBoundKeys: Set<string>;
   } {
-    const authnParamsDefinitions: RequiredAuthnParams = {};
-    const actualBoundParams: BoundParams = {};
+    let params: ParameterSchema[] = [];
+    let authParams: RequiredAuthnParams = {};
+    let boundParams: BoundParams = {};
 
-    for (const p of toolSchema.parameters) {
+    for (let p of toolSchema.parameters) {
       if (p.authSources && p.authSources.length > 0) {
-        authnParamsDefinitions[p.name] = p.authSources;
-      } else if (boundParams && p.name in boundParams) {
-        actualBoundParams[p.name] = boundParams[p.name];
+        authParams[p.name] = p.authSources;
+      } else if (allBoundParams && p.name in allBoundParams) {
+        boundParams[p.name] = allBoundParams[p.name];
+      } else {
+        params.push(p);
       }
     }
 
     const [remainingAuthnParams, remainingAuthzTokens, usedAuthKeys] =
       identifyAuthRequirements(
-        authnParamsDefinitions,
+        authParams,
         toolSchema.authRequired || [],
         authTokenGetters ? Object.keys(authTokenGetters) : []
       );
 
-    const paramZodSchema = createZodSchemaFromParams(toolSchema.parameters);
+    const paramZodSchema = createZodSchemaFromParams(params);
 
     const tool = ToolboxTool(
       this._session,
@@ -202,13 +205,13 @@ class ToolboxClient {
       toolName,
       toolSchema.description,
       paramZodSchema,
-      actualBoundParams,
+      boundParams,
       authTokenGetters || {},
       remainingAuthnParams,
       remainingAuthzTokens
     );
 
-    const usedBoundKeys = new Set(Object.keys(actualBoundParams));
+    const usedBoundKeys = new Set(Object.keys(boundParams));
 
     return {tool, usedAuthKeys, usedBoundKeys};
   }

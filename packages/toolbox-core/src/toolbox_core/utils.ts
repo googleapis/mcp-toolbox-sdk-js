@@ -45,13 +45,13 @@ export function identifyAuthRequirements(
   const matchedAuthzServices = reqAuthzTokens.filter(s =>
     availableServices.has(s)
   );
-  let requiredAuthzTokensResult: string[] = [];
+  let requiredAuthzTokens: string[] = [];
 
   if (matchedAuthzServices.length > 0) {
     matchedAuthzServices.forEach(s => usedServices.add(s));
   } else {
-    requiredAuthzTokensResult = [...reqAuthzTokens];
+    requiredAuthzTokens = [...reqAuthzTokens];
   }
 
-  return [requiredAuthnParams, requiredAuthzTokensResult, usedServices];
+  return [requiredAuthnParams, requiredAuthzTokens, usedServices];
 }

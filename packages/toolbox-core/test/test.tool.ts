@@ -280,7 +280,9 @@ describe('ToolboxTool', () => {
       const result = await tool(validArgs);
 
       expect(mockAxiosPost).toHaveBeenCalledTimes(1);
-      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs);
+      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs, {
+        headers: {},
+      });
       expect(result).toEqual(mockApiResponseData);
     });
 
@@ -296,7 +298,9 @@ describe('ToolboxTool', () => {
       } catch (e) {
         expect(e as Error).toBe(apiError);
       }
-      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs);
+      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs, {
+        headers: {},
+      });
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         `Error posting data to ${expectedUrl}:`,
         apiError.message
@@ -333,20 +337,28 @@ describe('ToolboxTool', () => {
       const boundTool = tool.bindParams({limit: 5});
       mockAxiosPost.mockResolvedValueOnce({data: 'success'});
       await boundTool({query: 'specific query'});
-      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, {
-        query: 'specific query',
-        limit: 5,
-      });
+      expect(mockAxiosPost).toHaveBeenCalledWith(
+        expectedUrl,
+        {
+          query: 'specific query',
+          limit: 5,
+        },
+        {headers: {}}
+      );
     });
 
     it('should not require bound parameters to be provided at call time', async () => {
       const boundTool = tool.bindParams({query: 'default query'});
       mockAxiosPost.mockResolvedValueOnce({data: 'success'});
       await boundTool({limit: 15});
-      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, {
-        query: 'default query',
-        limit: 15,
-      });
+      expect(mockAxiosPost).toHaveBeenCalledWith(
+        expectedUrl,
+        {
+          query: 'default query',
+          limit: 15,
+        },
+        {headers: {}}
+      );
     });
 
     it('should validate only the user-provided arguments, not the bound ones', async () => {
@@ -375,10 +387,14 @@ describe('ToolboxTool', () => {
       mockAxiosPost.mockResolvedValueOnce({data: 'success'});
       await boundTool({limit: 5});
       expect(utils.resolveValue).toHaveBeenCalledWith(dynamicQuery);
-      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, {
-        query: 'resolved-query',
-        limit: 5,
-      });
+      expect(mockAxiosPost).toHaveBeenCalledWith(
+        expectedUrl,
+        {
+          query: 'resolved-query',
+          limit: 5,
+        },
+        {headers: {}}
+      );
     });
   });
 });

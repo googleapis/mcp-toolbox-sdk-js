@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//       http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,21 +16,20 @@ import {ToolboxTool} from './tool.js';
 import axios from 'axios';
 import {
   type AxiosInstance,
+  type AxiosRequestConfig,
   type AxiosResponse,
-  type InternalAxiosRequestConfig,
 } from 'axios';
 import {ZodManifestSchema, createZodSchemaFromParams} from './protocol.js';
 import {logApiError} from './errorUtils.js';
 import {ZodError} from 'zod';
-import {BoundParams, BoundValue} from './utils.js';
+import {BoundParams, BoundValue, resolveValue} from './utils.js';
 
 type Manifest = import('zod').infer<typeof ZodManifestSchema>;
 type ToolSchemaFromManifest = Manifest['tools'][string];
 
 // Types for dynamic headers
-export type HeaderFunction = () => string;
-export type AsyncHeaderFunction = () => Promise<string>;
-export type ClientHeaderProvider = HeaderFunction | AsyncHeaderFunction;
+export type HeaderFunction = () => string | Promise<string>;
+export type ClientHeaderProvider = string | HeaderFunction;
 export type ClientHeadersConfig = Record<string, ClientHeaderProvider>;
 
 /**
@@ -39,16 +38,15 @@ export type ClientHeadersConfig = Record<string, ClientHeaderProvider>;
 class ToolboxClient {
   #baseUrl: string;
   #session: AxiosInstance;
-  #clientHeaders: ClientHeadersConfig = {};
-  #headerInterceptorId: number | null = null;
+  #clientHeaders: ClientHeadersConfig;
 
   /**
    * Initializes the ToolboxClient.
    * @param {string} url - The base URL for the Toolbox service API (e.g., "http://localhost:5000").
    * @param {AxiosInstance} [session] - Optional Axios instance for making HTTP
-   *   requests. If not provided, a new one will be created.
+   * requests. If not provided, a new one will be created.
    * @param {ClientHeadersConfig} [clientHeaders] - Optional initial headers to
-   *   be included in each request.
+   * be included in each request.
    */
   constructor(
     url: string,
@@ -57,40 +55,21 @@ class ToolboxClient {
   ) {
     this.#baseUrl = url;
     this.#session = session || axios.create({baseURL: this.#baseUrl});
-    if (clientHeaders) {
-      this.#clientHeaders = {...clientHeaders}; // Initialize with a copy
-    }
-    this.#applyHeaderInterceptor();
+    this.#clientHeaders = clientHeaders || {};
   }
 
   /**
-   * Applies an Axios request interceptor to handle dynamic client headers.
-   * The interceptor resolves header provider functions before each request sent
-   * to toolbox server through this client.
+   * Resolves client headers from their provider functions.
+   * @returns {Promise<Record<string, string>>} A promise that resolves to the resolved headers.
    */
-  #applyHeaderInterceptor(): void {
-    if (this.#headerInterceptorId !== null) {
-      this.#session.interceptors.request.eject(this.#headerInterceptorId);
-    }
-
-    this.#headerInterceptorId = this.#session.interceptors.request.use(
-      async (config: InternalAxiosRequestConfig) => {
-        if (config.url && config.url.startsWith(this.#baseUrl)) {
-          config.headers = config.headers || {};
-          for (const headerName in this.#clientHeaders) {
-            const headerProvider = this.#clientHeaders[headerName];
-            const result = headerProvider();
-            if (result instanceof Promise) {
-              config.headers[headerName] = await result;
-            } else {
-              config.headers[headerName] = result;
-            }
-          }
-        }
-        return config;
-      },
-      (error: Error) => Promise.reject(error)
+  async #resolveClientHeaders(): Promise<Record<string, string>> {
+    const resolvedEntries = await Promise.all(
+      Object.entries(this.#clientHeaders).map(async ([key, value]) => {
+        const resolved = await resolveValue(value);
+        return [key, String(resolved)];
+      })
     );
+    return Object.fromEntries(resolvedEntries);
   }
 
   /**
@@ -102,7 +81,9 @@ class ToolboxClient {
   async #fetchAndParseManifest(apiPath: string): Promise<Manifest> {
     const url = `${this.#baseUrl}${apiPath}`;
     try {
-      const response: AxiosResponse = await this.#session.get(url);
+      const headers = await this.#resolveClientHeaders();
+      const config: AxiosRequestConfig = {headers};
+      const response: AxiosResponse = await this.#session.get(url, config);
       const responseData = response.data;
 
       try {
@@ -165,7 +146,8 @@ class ToolboxClient {
       toolName,
       toolSchema.description,
       paramZodSchema,
-      boundParams
+      applicableBoundParams,
+      this.#clientHeaders
     );
     return {tool, usedBoundKeys};
   }
@@ -176,8 +158,8 @@ class ToolboxClient {
    * returns a callable (`ToolboxTool`) that can be used to invoke the
    * tool remotely.
    *
-   * @param {BoundParams} [boundParams] - Optional parameters to pre-bind to the tool.
    * @param {string} name - The unique name or identifier of the tool to load.
+   * @param {BoundParams} [boundParams] - Optional parameters to pre-bind to the tool.
    * @returns {Promise<ReturnType<typeof ToolboxTool>>} A promise that resolves
    * to a ToolboxTool function, ready for execution.
    * @throws {Error} If the tool is not found in the manifest, the manifest structure is invalid,
@@ -208,7 +190,9 @@ class ToolboxClient {
 
       if (unusedBound.length > 0) {
         throw new Error(
-          `Validation failed for tool '${name}': unused bound parameters: ${unusedBound.join(', ')}.`
+          `Validation failed for tool '${name}': unused bound parameters: ${unusedBound.join(
+            ', '
+          )}.`
         );
       }
       return tool;
@@ -256,7 +240,9 @@ class ToolboxClient {
       throw new Error(
         `Validation failed for toolset '${
           name || 'default'
-        }': unused bound parameters could not be applied to any tool: ${unusedBound.join(', ')}.`
+        }': unused bound parameters could not be applied to any tool: ${unusedBound.join(
+          ', '
+        )}.`
       );
     }
     return tools;

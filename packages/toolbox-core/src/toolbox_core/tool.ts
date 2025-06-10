@@ -13,9 +13,10 @@
 // limitations under the License.
 
 import {ZodObject, ZodError, ZodRawShape} from 'zod';
-import {AxiosInstance, AxiosResponse} from 'axios';
+import {AxiosInstance, AxiosRequestConfig, AxiosResponse} from 'axios';
 import {logApiError} from './errorUtils.js';
 import {BoundParams, BoundValue, resolveValue} from './utils.js';
+import {ClientHeadersConfig} from './client.js';
 
 /**
  * Creates a callable tool function representing a specific tool on a remote
@@ -27,6 +28,7 @@ import {BoundParams, BoundValue, resolveValue} from './utils.js';
  * @param {string} description - A description of the remote tool.
  * @param {ZodObject<any>} paramSchema - The Zod schema for validating the tool's parameters.
  * @param {BoundParams} [boundParams] - Optional parameters to pre-bind to the tool.
+ * @param {ClientHeadersConfig} [clientHeaders] - Optional client-specific headers.
  * @returns {CallableTool & CallableToolProperties} An async function that, when
  * called, invokes the tool with the provided arguments. Validates arguments
  * against the tool's signature, then sends them
@@ -39,7 +41,8 @@ function ToolboxTool(
   name: string,
   description: string,
   paramSchema: ZodObject<ZodRawShape>,
-  boundParams: BoundParams = {}
+  boundParams: BoundParams = {},
+  clientHeaders: ClientHeadersConfig = {}
 ) {
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
   const boundKeys = Object.keys(boundParams);
@@ -59,23 +62,42 @@ function ToolboxTool(
           e => `${e.path.join('.') || 'payload'}: ${e.message}`
         );
         throw new Error(
-          `Argument validation failed for tool "${name}":\n - ${errorMessages.join('\n - ')}`
+          `Argument validation failed for tool "${name}":\n - ${errorMessages.join(
+            '\n - '
+          )}`
         );
       }
       throw new Error(`Argument validation failed: ${String(error)}`);
     }
 
     // Resolve any bound parameters that are functions.
-    const resolvedEntries = await Promise.all(
+    const resolvedBoundEntries = await Promise.all(
       Object.entries(boundParams).map(async ([key, value]) => {
         const resolved = await resolveValue(value);
         return [key, resolved];
       })
     );
-    const resolvedBoundParams = Object.fromEntries(resolvedEntries);
+    const resolvedBoundParams = Object.fromEntries(resolvedBoundEntries);
+
+    // Resolve client headers
+    const resolvedHeaderEntries = await Promise.all(
+      Object.entries(clientHeaders).map(async ([key, value]) => {
+        const resolved = await resolveValue(value);
+        return [key, resolved];
+      })
+    );
+    const resolvedHeaders = Object.fromEntries(resolvedHeaderEntries);
+
     const payload = {...validatedUserArgs, ...resolvedBoundParams};
     try {
-      const response: AxiosResponse = await session.post(toolUrl, payload);
+      const config: AxiosRequestConfig = {
+        headers: resolvedHeaders,
+      };
+      const response: AxiosResponse = await session.post(
+        toolUrl,
+        payload,
+        config
+      );
       return response.data;
     } catch (error) {
       logApiError(`Error posting data to ${toolUrl}:`, error);
@@ -119,7 +141,8 @@ function ToolboxTool(
       this.toolName,
       this.description,
       this.params,
-      newBoundParams
+      newBoundParams,
+      clientHeaders
     );
   };
 

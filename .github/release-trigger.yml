@@ -13,5 +13,4 @@
 # limitations under the License.
 
 enabled: true
-# TODO: Add Kokoro scripts
 multiScmName: mcp-toolbox-sdk-js

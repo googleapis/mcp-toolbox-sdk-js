@@ -42,16 +42,14 @@ export function identifyAuthRequirements(
     }
   }
 
-  const matchedAuthzServices = reqAuthzTokens.filter(s =>
-    availableServices.has(s)
-  );
-  let requiredAuthzTokens: string[] = [];
+  // Determine remaining authorization tokens and update usedServices
+  const remainingAuthzTokens = reqAuthzTokens.filter(token => {
+    if (availableServices.has(token)) {
+      usedServices.add(token);
+      return false;
+    }
+    return true;
+  });
 
-  if (matchedAuthzServices.length > 0) {
-    matchedAuthzServices.forEach(s => usedServices.add(s));
-  } else {
-    requiredAuthzTokens = [...reqAuthzTokens];
-  }
-
-  return [requiredAuthnParams, requiredAuthzTokens, usedServices];
+  return [requiredAuthnParams, remainingAuthzTokens, usedServices];
 }

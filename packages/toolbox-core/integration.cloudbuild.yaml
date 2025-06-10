@@ -20,13 +20,13 @@ steps:
     args:
       - -c
       - npm ci
-  # - id: Run unit tests
-  #   name: 'node:${_VERSION}'
-  #   entrypoint: /bin/bash
-  #   dir: packages/toolbox-core
-  #   args:
-  #     - '-c'
-  #     - npm run test:unit
+  - id: Run unit tests
+    name: 'node:${_VERSION}'
+    entrypoint: /bin/bash
+    dir: packages/toolbox-core
+    args:
+      - '-c'
+      - npm run test:unit
   - id: Run integration tests
     name: 'node:${_VERSION}'
     entrypoint: /bin/bash

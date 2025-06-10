@@ -34,6 +34,7 @@ import axios, {
   AxiosHeaders,
 } from 'axios';
 import {z, ZodRawShape, ZodObject, ZodTypeAny, ZodError} from 'zod';
+import * as utils from '../src/toolbox_core/utils';
 
 // --- Helper Types ---
 type OriginalToolboxToolType = typeof ToolboxTool;
@@ -381,6 +382,11 @@ describe('ToolboxClient', () => {
           boundParams: {},
           bindParams: jest.fn().mockReturnThis(),
           bindParam: jest.fn().mockReturnThis(),
+          authTokenGetters: {},
+          requiredAuthnParams: {},
+          requiredAuthzTokens: [],
+          addAuthTokenGetters: jest.fn().mockReturnThis(),
+          addAuthTokenGetter: jest.fn().mockReturnThis(),
         }
       );
 
@@ -428,7 +434,10 @@ describe('ToolboxClient', () => {
         toolName,
         mockToolDefinition.description,
         zodParamsSchema,
-        {} // boundParams defaults to empty object
+        {}, // Bound params
+        {}, // authTokenGetters
+        {}, // requiredAuthnParams
+        [], // requiredAuthzTokens
       );
       expect(loadedTool).toBe(toolInstance);
     });
@@ -437,14 +446,22 @@ describe('ToolboxClient', () => {
       const mockToolDefinition = {
         description: 'Performs calculations',
         parameters: [
-          {name: 'expression', type: 'string', description: 'Math expression'},
-          {name: 'precision', type: 'number', description: 'Decimal places'},
-        ],
+          {
+            name: 'expression',
+            type: 'string' as const,
+            description: 'Math expression',
+          },
+          {
+            name: 'precision',
+            type: 'integer' as const,
+            description: 'Decimal places',
+          },
+        ] as ParameterSchema[], // Ensure this cast is correct based on actual structure
       };
       const boundParams = {expression: '2+2'};
       setupMocksForSuccessfulLoad(mockToolDefinition);
 
-      await client.loadTool(toolName, boundParams);
+      await client.loadTool(toolName, {}, boundParams);
 
       // Assert that the factory was called with the applicable bound parameters
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
@@ -453,19 +470,29 @@ describe('ToolboxClient', () => {
         expect.anything(),
         expect.anything(),
         expect.anything(),
-        boundParams
+        boundParams, // boundParams
+        {}, // authTokenGetters
+        {}, // requiredAuthnParams
+        [] // requiredAuthzTokens
       );
     });
 
     it('should throw an error if unused bound parameters are provided', async () => {
       const mockToolDefinition = {
         description: 'A tool',
-        parameters: [{name: 'param1', type: 'string', description: 'A param'}],
+        parameters: [
+          {
+            name: 'param1',
+            type: 'string' as const,
+            description: 'A param',
+          },
+        ] as ParameterSchema[],
+        authRequired: [],
       };
       const boundParams = {param1: 'value1', unusedParam: 'value2'};
       setupMocksForSuccessfulLoad(mockToolDefinition);
 
-      await expect(client.loadTool(toolName, boundParams)).rejects.toThrow(
+      await expect(client.loadTool(toolName, {}, boundParams)).rejects.toThrow(
         `Validation failed for tool '${toolName}': unused bound parameters: unusedParam.`
       );
     });
@@ -594,6 +621,11 @@ describe('ToolboxClient', () => {
           boundParams: {},
           bindParams: jest.fn().mockReturnThis(),
           bindParam: jest.fn().mockReturnThis(),
+          authTokenGetters: {},
+          requiredAuthnParams: {},
+          requiredAuthzTokens: [],
+          addAuthTokenGetters: jest.fn().mockReturnThis(),
+          addAuthTokenGetter: jest.fn().mockReturnThis(),
         });
       });
 
@@ -675,7 +707,10 @@ describe('ToolboxClient', () => {
         'toolA',
         mockToolDefinitions.toolA.description,
         zodParamsSchemas.toolA,
-        {}
+        {}, // boundParams
+        {}, // authTokenGetters
+        {}, // requiredAuthnParams
+        [] // requiredAuthzTokens
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
         client['_session'],
@@ -683,7 +718,10 @@ describe('ToolboxClient', () => {
         'toolB',
         mockToolDefinitions.toolB.description,
         zodParamsSchemas.toolB,
-        {}
+        {}, // boundParams
+        {}, // authTokenGetters
+        {}, // requiredAuthnParams
+        [] // requiredAuthzTokens
       );
       expect(loadedTools).toEqual(
         expect.arrayContaining([toolInstances.toolA, toolInstances.toolB])
@@ -706,7 +744,7 @@ describe('ToolboxClient', () => {
       const boundParams = {paramA: 'valueA', paramB: 123};
 
       setupMocksForSuccessfulToolsetLoad(mockToolDefinitions);
-      await client.loadToolset(toolsetName, boundParams);
+      await client.loadToolset(toolsetName, {}, boundParams);
 
       expect(MockedToolboxToolFactory).toHaveBeenCalledTimes(2);
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
@@ -715,7 +753,10 @@ describe('ToolboxClient', () => {
         'toolA',
         expect.anything(),
         expect.anything(),
-        boundParams
+        {paramA: 'valueA'}, // Only boundParams applicable to toolA
+        {}, // authTokenGetters
+        {}, // requiredAuthnParams
+        [] // requiredAuthzTokens
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
         expect.anything(),
@@ -723,7 +764,10 @@ describe('ToolboxClient', () => {
         'toolB',
         expect.anything(),
         expect.anything(),
-        boundParams
+        {paramB: 123}, // Only boundParams applicable to toolB
+        {}, // authTokenGetters
+        {}, // requiredAuthnParams
+        [] // requiredAuthzTokens
       );
     });
 
@@ -732,7 +776,7 @@ describe('ToolboxClient', () => {
       const mockToolDefinitions: Record<string, InferredZodTool> = {
         toolA: {
           description: 'Tool A',
-          parameters: [{name: 'paramA', type: 'string'} as ParameterSchema],
+          parameters: [{name: 'paramA', type: 'string' as const} as ParameterSchema],
         },
       };
       const boundParams = {paramA: 'valueA', unusedParam: 'value2'};
@@ -740,7 +784,7 @@ describe('ToolboxClient', () => {
       setupMocksForSuccessfulToolsetLoad(mockToolDefinitions);
 
       await expect(
-        client.loadToolset(toolsetName, boundParams)
+        client.loadToolset(toolsetName, {}, boundParams)
       ).rejects.toThrow(
         `Validation failed for toolset '${toolsetName}': unused bound parameters could not be applied to any tool: unusedParam.`
       );

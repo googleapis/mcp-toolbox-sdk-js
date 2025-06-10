@@ -25,9 +25,11 @@ const mockSession = {
 
 // Mock the utils module
 jest.mock('../src/toolbox_core/utils', () => ({
+  ...jest.requireActual('../src/toolbox_core/utils'),
   resolveValue: jest.fn(async (v: unknown) =>
     typeof v === 'function' ? await v() : v
   ),
+  identifyAuthRequirements: jest.fn(),
 }));
 
 describe('ToolboxTool', () => {
@@ -45,6 +47,7 @@ describe('ToolboxTool', () => {
     // Reset mocks before each test
     mockAxiosPost.mockReset();
     (utils.resolveValue as jest.Mock).mockClear();
+    (utils.identifyAuthRequirements as jest.Mock).mockClear();
 
     // Initialize a basic schema used by many tests
     basicParamSchema = z.object({
@@ -59,6 +62,7 @@ describe('ToolboxTool', () => {
   afterEach(() => {
     // Restore the original console.error
     consoleErrorSpy.mockRestore();
+    jest.clearAllMocks();
   });
 
   describe('Factory Properties and Getters', () => {
@@ -80,6 +84,9 @@ describe('ToolboxTool', () => {
       expect(tool.description).toBe(toolDescription);
       expect(tool.params).toBe(basicParamSchema);
       expect(tool.boundParams).toEqual({});
+      expect(tool.authTokenGetters).toEqual({});
+      expect(tool.requiredAuthnParams).toEqual({});
+      expect(tool.requiredAuthzTokens).toEqual([]);
     });
 
     it('getName() should return the tool name', () => {
@@ -280,7 +287,10 @@ describe('ToolboxTool', () => {
       const result = await tool(validArgs);
 
       expect(mockAxiosPost).toHaveBeenCalledTimes(1);
-      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs);
+      // FIX: Added headers object to the assertion
+      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs, {
+        headers: {},
+      });
       expect(result).toEqual(mockApiResponseData);
     });
 
@@ -294,9 +304,11 @@ describe('ToolboxTool', () => {
           'Expected tool call to throw an API error with response data, but it did not.'
         );
       } catch (e) {
-        expect(e as Error).toBe(apiError);
+        expect(e).toBe(apiError);
       }
-      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs);
+      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs, {
+        headers: {},
+      });
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         `Error posting data to ${expectedUrl}:`,
         apiError.message
@@ -333,20 +345,28 @@ describe('ToolboxTool', () => {
       const boundTool = tool.bindParams({limit: 5});
       mockAxiosPost.mockResolvedValueOnce({data: 'success'});
       await boundTool({query: 'specific query'});
-      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, {
-        query: 'specific query',
-        limit: 5,
-      });
+      expect(mockAxiosPost).toHaveBeenCalledWith(
+        expectedUrl,
+        {
+          query: 'specific query',
+          limit: 5,
+        },
+        {headers: {}}
+      );
     });
 
     it('should not require bound parameters to be provided at call time', async () => {
       const boundTool = tool.bindParams({query: 'default query'});
       mockAxiosPost.mockResolvedValueOnce({data: 'success'});
       await boundTool({limit: 15});
-      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, {
-        query: 'default query',
-        limit: 15,
-      });
+      expect(mockAxiosPost).toHaveBeenCalledWith(
+        expectedUrl,
+        {
+          query: 'default query',
+          limit: 15,
+        },
+        {headers: {}}
+      );
     });
 
     it('should validate only the user-provided arguments, not the bound ones', async () => {
@@ -375,10 +395,151 @@ describe('ToolboxTool', () => {
       mockAxiosPost.mockResolvedValueOnce({data: 'success'});
       await boundTool({limit: 5});
       expect(utils.resolveValue).toHaveBeenCalledWith(dynamicQuery);
-      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, {
-        query: 'resolved-query',
-        limit: 5,
+      expect(mockAxiosPost).toHaveBeenCalledWith(
+        expectedUrl,
+        {
+          query: 'resolved-query',
+          limit: 5,
+        },
+        {headers: {}}
+      );
+    });
+  });
+
+  describe('Authentication Functionality', () => {
+    const expectedUrl = `${baseURL}/api/tool/${toolName}/invoke`;
+    const initialRequiredAuthn = {paramA: ['service1', 'service2']};
+    const initialRequiredAuthz = ['service3'];
+
+    beforeEach(() => {
+      tool = ToolboxTool(
+        mockSession,
+        baseURL,
+        toolName,
+        toolDescription,
+        basicParamSchema,
+        {},
+        {},
+        initialRequiredAuthn,
+        initialRequiredAuthz
+      );
+    });
+
+    it('should throw an error if called with unmet authentication requirements', async () => {
+      await expect(tool({query: 'test'})).rejects.toThrow(
+        'One or more of the following authn services are required to invoke this tool: service1,service2,service3'
+      );
+    });
+
+    it('should add a single auth token getter and create a new tool', () => {
+      (utils.identifyAuthRequirements as jest.Mock).mockReturnValue([
+        {paramA: ['service2']},
+        ['service3'],
+        new Set(['service1']),
+      ]);
+      const newTool = tool.addAuthTokenGetter('service1', () => 'token1');
+
+      expect(newTool).not.toBe(tool);
+      expect(Object.keys(newTool.authTokenGetters)).toContain('service1');
+      expect(newTool.requiredAuthnParams).toEqual({paramA: ['service2']});
+      expect(newTool.requiredAuthzTokens).toEqual(['service3']);
+    });
+
+    it('should add multiple auth token getters', () => {
+      (utils.identifyAuthRequirements as jest.Mock).mockReturnValue([
+        {},
+        [],
+        new Set(['service1', 'service2', 'service3']),
+      ]);
+      const newTool = tool.addAuthTokenGetters({
+        service1: () => 'token1',
+        service2: () => 'token2',
+        service3: () => 'token3',
       });
+
+      expect(Object.keys(newTool.authTokenGetters)).toEqual([
+        'service1',
+        'service2',
+        'service3',
+      ]);
+      expect(newTool.requiredAuthnParams).toEqual({});
+      expect(newTool.requiredAuthzTokens).toEqual([]);
+    });
+
+    it('should call the API with the correct auth headers', async () => {
+      const readyTool = ToolboxTool(
+        mockSession,
+        baseURL,
+        toolName,
+        toolDescription,
+        basicParamSchema
+      );
+      (utils.identifyAuthRequirements as jest.Mock).mockReturnValue([
+        {},
+        [],
+        new Set(['service1', 'service3']),
+      ]);
+      const authedTool = readyTool.addAuthTokenGetters({
+        service1: () => 'token-one',
+        service3: async () => 'token-three',
+      });
+      mockAxiosPost.mockResolvedValue({data: 'success'});
+      await authedTool({query: 'a query'});
+      expect(mockAxiosPost).toHaveBeenCalledWith(
+        expectedUrl,
+        {query: 'a query'},
+        {
+          headers: {
+            service1_token: 'token-one',
+            service3_token: 'token-three',
+          },
+        }
+      );
+    });
+
+    it('should throw an error if an auth token getter does not return a string', async () => {
+      (utils.identifyAuthRequirements as jest.Mock).mockReturnValue([
+        {},
+        [],
+        new Set(['service1']),
+      ]);
+      const badTokenGetter = () => 12345;
+      const authedTool = tool.addAuthTokenGetter(
+        'service1',
+        badTokenGetter as any
+      );
+      authedTool.requiredAuthnParams = {};
+      authedTool.requiredAuthzTokens = [];
+
+      await expect(authedTool({query: 'a query'})).rejects.toThrow(
+        "Auth token getter for 'service1' did not return a string."
+      );
+    });
+
+    it('should throw an error when registering a duplicate auth source', () => {
+      (utils.identifyAuthRequirements as jest.Mock).mockReturnValue([
+        {},
+        [],
+        new Set(['service1']),
+      ]);
+      const newTool = tool.addAuthTokenGetter('service1', () => 'token1');
+      expect(() =>
+        newTool.addAuthTokenGetter('service1', () => 'token1-new')
+      ).toThrow(
+        `Authentication source(s) \`service1\` already registered in tool \`${toolName}\`.`
+      );
+    });
+
+    it('should throw an error if an unused auth source is provided', () => {
+      (utils.identifyAuthRequirements as jest.Mock).mockReturnValue([
+        initialRequiredAuthn,
+        initialRequiredAuthz, 
+        new Set(),
+      ]);
+
+      expect(() => tool.addAuthTokenGetter('unusedService', () => 'token')).toThrow(
+        `Authentication source(s) \`unusedService\` unused by tool \`${toolName}\`.`
+      );
     });
   });
 });

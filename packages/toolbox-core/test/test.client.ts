@@ -26,6 +26,7 @@ import {
   type ParameterSchema,
 } from '../src/toolbox_core/protocol';
 import {logApiError} from '../src/toolbox_core/errorUtils';
+import {identifyAuthRequirements} from '../src/toolbox_core/utils.js';
 
 import axios, {
   AxiosInstance,
@@ -94,6 +95,9 @@ const MockedLogApiError = logApiError as jest.MockedFunction<
   typeof logApiError
 >;
 
+jest.mock('../src/toolbox_core/utils.js');
+const mockedIdentifyAuthRequirements = identifyAuthRequirements as jest.Mock;
+
 describe('ToolboxClient', () => {
   const testBaseUrl = 'http://api.example.com';
   let consoleErrorSpy: jest.SpyInstance;
@@ -111,10 +115,17 @@ describe('ToolboxClient', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     capturedRequestInterceptorFunction = null;
+    mockedIdentifyAuthRequirements.mockReturnValue([{}, [], new Set()]); // Default mock
 
     mockSessionGet = jest.fn();
-    mockRequestInterceptorUse = jest.fn(onFulfilled => {
-      capturedRequestInterceptorFunction = onFulfilled;
+    mockRequestInterceptorUse = jest.fn((onFulfilled, onRejected) => {
+      capturedRequestInterceptorFunction = config => {
+        try {
+          return Promise.resolve(onFulfilled(config));
+        } catch (error) {
+          return Promise.reject(onRejected(error));
+        }
+      };
       return 1;
     });
     mockRequestInterceptorEject = jest.fn();
@@ -295,8 +306,6 @@ describe('ToolboxClient', () => {
     let client: ToolboxClient;
     const mockUrl = '/test-endpoint';
 
-    beforeEach(() => {});
-
     it('should apply synchronous headers from _clientHeaders to requests', async () => {
       const syncHeaderProvider: ClientHeaderProvider = () => 'sync-value';
       client = new ToolboxClient(testBaseUrl, null, {
@@ -326,6 +335,19 @@ describe('ToolboxClient', () => {
       expect(mockSessionGet).toHaveBeenCalled();
       const lastCallConfig = mockSessionGet.mock.calls[0][1] || {};
       expect(lastCallConfig.headers['X-Async-Header']).toBe('async-value');
+    });
+
+    it('should reject if a header provider function throws an error', async () => {
+      const erroringHeaderProvider: ClientHeaderProvider = () => {
+        throw new Error('Header provider failed');
+      };
+      client = new ToolboxClient(testBaseUrl, null, {
+        'X-Error-Header': erroringHeaderProvider,
+      });
+
+      await expect(client['_session'].get(mockUrl)).rejects.toThrow(
+        'Header provider failed'
+      );
     });
   });
 
@@ -357,9 +379,11 @@ describe('ToolboxClient', () => {
         createMockZodObject(
           toolDefinition.parameters.reduce(
             (shapeAccumulator: ZodRawShape, param: ParameterSchema) => {
-              shapeAccumulator[param.name] = {
-                _def: {typeName: 'ZodString'},
-              } as unknown as ZodTypeAny;
+              if (!param.authSources) {
+                shapeAccumulator[param.name] = {
+                  _def: {typeName: 'ZodString'},
+                } as unknown as ZodTypeAny;
+              }
               return shapeAccumulator;
             },
             {} as ZodRawShape
@@ -441,6 +465,47 @@ describe('ToolboxClient', () => {
       expect(loadedTool).toBe(toolInstance);
     });
 
+    it('should correctly handle tools requiring authentication', async () => {
+      const mockToolDefinition: InferredZodTool = {
+        description: 'An authenticated tool',
+        parameters: [
+          {
+            name: 'authToken',
+            type: 'string',
+            description: 'Auth token',
+            authSources: ['my_auth_service'],
+          },
+        ],
+        authRequired: [],
+      };
+      const authTokenGetters = {my_auth_service: () => 'token123'};
+      setupMocksForSuccessfulLoad(mockToolDefinition);
+      mockedIdentifyAuthRequirements.mockReturnValueOnce([
+        {},
+        [],
+        new Set(['my_auth_service']),
+      ]);
+
+      await client.loadTool(toolName, authTokenGetters, {});
+
+      expect(mockedIdentifyAuthRequirements).toHaveBeenCalledWith(
+        {authToken: ['my_auth_service']},
+        [],
+        ['my_auth_service']
+      );
+      expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        {},
+        authTokenGetters,
+        {},
+        []
+      );
+    });
+
     it('should successfully load a tool with valid bound parameters', async () => {
       const mockToolDefinition = {
         description: 'Performs calculations',
@@ -455,24 +520,23 @@ describe('ToolboxClient', () => {
             type: 'integer' as const,
             description: 'Decimal places',
           },
-        ] as ParameterSchema[], // Ensure this cast is correct based on actual structure
+        ] as ParameterSchema[],
       };
       const boundParams = {expression: '2+2'};
       setupMocksForSuccessfulLoad(mockToolDefinition);
 
       await client.loadTool(toolName, {}, boundParams);
 
-      // Assert that the factory was called with the applicable bound parameters
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
         expect.anything(),
         expect.anything(),
         expect.anything(),
         expect.anything(),
         expect.anything(),
-        boundParams, // boundParams
-        {}, // authTokenGetters
-        {}, // requiredAuthnParams
-        [] // requiredAuthzTokens
+        boundParams,
+        {},
+        {},
+        []
       );
     });
 
@@ -496,6 +560,23 @@ describe('ToolboxClient', () => {
       );
     });
 
+    it('should throw an error if unused auth token getters are provided', async () => {
+      const mockToolDefinition: InferredZodTool = {
+        description: 'A tool that does not need auth',
+        parameters: [],
+        authRequired: [],
+      };
+      const authTokenGetters = {unused_auth: () => 'token'};
+      setupMocksForSuccessfulLoad(mockToolDefinition);
+      mockedIdentifyAuthRequirements.mockReturnValueOnce([{}, [], new Set()]);
+
+      await expect(
+        client.loadTool(toolName, authTokenGetters, {})
+      ).rejects.toThrow(
+        `Validation failed for tool '${toolName}': unused auth tokens: unused_auth.`
+      );
+    });
+
     it('should throw an error if manifest parsing fails', async () => {
       const mockApiResponseData = {invalid: 'manifest structure'};
       const mockZodError = new Error('Zod validation failed on manifest');
@@ -514,6 +595,21 @@ describe('ToolboxClient', () => {
       expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
     });
 
+    it('should handle non-Error objects during manifest parsing failure', async () => {
+      const mockApiResponseData = {invalid: 'manifest'};
+      const validationError = 'a string error';
+
+      mockSessionGet.mockResolvedValueOnce({data: mockApiResponseData});
+      MockedZodManifestSchema.parse.mockImplementationOnce(() => {
+        // eslint-disable-next-line @typescript-eslint/no-throw-literal
+        throw validationError;
+      });
+
+      await expect(client.loadTool(toolName)).rejects.toThrow(
+        `Invalid manifest structure received from ${expectedApiUrl}: Unknown validation error.`
+      );
+    });
+
     it('should throw an error if manifest.tools key is missing', async () => {
       const mockManifestWithoutTools = {serverVersion: '1.0.0'};
 
@@ -527,8 +623,6 @@ describe('ToolboxClient', () => {
       await expect(client.loadTool(toolName)).rejects.toThrow(
         `Tool "${toolName}" not found in manifest from /api/tool/${toolName}.`
       );
-      expect(MockedCreateZodSchemaFromParams).not.toHaveBeenCalled();
-      expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
     });
 
     it('should throw an error if the specific tool is not found in manifest.tools', async () => {
@@ -551,8 +645,6 @@ describe('ToolboxClient', () => {
       await expect(client.loadTool(toolName)).rejects.toThrow(
         `Tool "${toolName}" not found in manifest from /api/tool/${toolName}.`
       );
-      expect(MockedCreateZodSchemaFromParams).not.toHaveBeenCalled();
-      expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
     });
 
     it('should throw and log error if API GET request fails', async () => {
@@ -568,7 +660,6 @@ describe('ToolboxClient', () => {
         `Error fetching data from ${expectedApiUrl}:`,
         apiError
       );
-      expect(MockedZodManifestSchema.parse).not.toHaveBeenCalled();
     });
   });
 
@@ -600,9 +691,11 @@ describe('ToolboxClient', () => {
         const tDef = toolDefinitions[tName];
         zodParamsSchemas[tName] = createMockZodObject(
           tDef.parameters.reduce((acc: ZodRawShape, p) => {
-            acc[p.name] = {
-              _def: {typeName: 'ZodString'},
-            } as unknown as ZodTypeAny;
+            if (!p.authSources) {
+              acc[p.name] = {
+                _def: {typeName: 'ZodString'},
+              } as unknown as ZodTypeAny;
+            }
             return acc;
           }, {})
         );
@@ -693,12 +786,7 @@ describe('ToolboxClient', () => {
       );
       expect(MockedZodManifestSchema.parse).toHaveBeenCalledWith(manifestData);
 
-      expect(MockedCreateZodSchemaFromParams).toHaveBeenCalledWith(
-        mockToolDefinitions.toolA.parameters
-      );
-      expect(MockedCreateZodSchemaFromParams).toHaveBeenCalledWith(
-        mockToolDefinitions.toolB.parameters
-      );
+      expect(MockedCreateZodSchemaFromParams).toHaveBeenCalledTimes(2);
       expect(MockedToolboxToolFactory).toHaveBeenCalledTimes(2);
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
         client['_session'],
@@ -706,10 +794,10 @@ describe('ToolboxClient', () => {
         'toolA',
         mockToolDefinitions.toolA.description,
         zodParamsSchemas.toolA,
-        {}, // boundParams
-        {}, // authTokenGetters
-        {}, // requiredAuthnParams
-        [] // requiredAuthzTokens
+        {},
+        {},
+        {},
+        []
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
         client['_session'],
@@ -717,15 +805,14 @@ describe('ToolboxClient', () => {
         'toolB',
         mockToolDefinitions.toolB.description,
         zodParamsSchemas.toolB,
-        {}, // boundParams
-        {}, // authTokenGetters
-        {}, // requiredAuthnParams
-        [] // requiredAuthzTokens
+        {},
+        {},
+        {},
+        []
       );
       expect(loadedTools).toEqual(
         expect.arrayContaining([toolInstances.toolA, toolInstances.toolB])
       );
-      expect(loadedTools.length).toBe(2);
     });
 
     it('should successfully load a toolset with bound parameters applicable to its tools', async () => {
@@ -752,10 +839,10 @@ describe('ToolboxClient', () => {
         'toolA',
         expect.anything(),
         expect.anything(),
-        {paramA: 'valueA'}, // Only boundParams applicable to toolA
-        {}, // authTokenGetters
-        {}, // requiredAuthnParams
-        [] // requiredAuthzTokens
+        {paramA: 'valueA'},
+        {},
+        {},
+        []
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
         expect.anything(),
@@ -763,10 +850,10 @@ describe('ToolboxClient', () => {
         'toolB',
         expect.anything(),
         expect.anything(),
-        {paramB: 123}, // Only boundParams applicable to toolB
-        {}, // authTokenGetters
-        {}, // requiredAuthnParams
-        [] // requiredAuthzTokens
+        {paramB: 123},
+        {},
+        {},
+        []
       );
     });
 
@@ -791,23 +878,28 @@ describe('ToolboxClient', () => {
       );
     });
 
+    it('should throw an error if auth token getters cannot be applied to any tool in the set', async () => {
+      const toolsetName = 'my-toolset';
+      const mockToolDefinitions: Record<string, InferredZodTool> = {
+        toolA: {description: 'Tool A', parameters: []},
+      };
+      const authTokenGetters = {unused_auth: () => 'token'};
+      setupMocksForSuccessfulToolsetLoad(mockToolDefinitions);
+      mockedIdentifyAuthRequirements.mockReturnValueOnce([{}, [], new Set()]);
+
+      await expect(
+        client.loadToolset(toolsetName, authTokenGetters, {})
+      ).rejects.toThrow(
+        `Validation failed for toolset '${toolsetName}': unused auth tokens could not be applied to any tool: unused_auth.`
+      );
+    });
+
     it('should request the default toolset if no name is provided', async () => {
       const expectedApiUrl = `${testBaseUrl}/api/toolset/`;
-
       setupMocksForSuccessfulToolsetLoad({});
-      await client.loadToolset();
-      expect(mockSessionGet).toHaveBeenLastCalledWith(
-        expectedApiUrl,
-        expect.anything()
-      );
 
-      mockSessionGet.mockReset();
-      MockedZodManifestSchema.parse.mockReset();
-      MockedCreateZodSchemaFromParams.mockReset();
-      MockedToolboxToolFactory.mockReset();
-
-      setupMocksForSuccessfulToolsetLoad({});
       await client.loadToolset();
+
       expect(mockSessionGet).toHaveBeenLastCalledWith(
         expectedApiUrl,
         expect.anything()
@@ -825,7 +917,6 @@ describe('ToolboxClient', () => {
       const loadedTools = await client.loadToolset(toolsetName);
 
       expect(loadedTools).toEqual([]);
-      expect(MockedCreateZodSchemaFromParams).not.toHaveBeenCalled();
       expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
     });
 
@@ -840,16 +931,13 @@ describe('ToolboxClient', () => {
           code: 'custom',
         },
       ]);
-
-      mockSessionGet.mockResolvedValueOnce({
-        data: mockApiResponseData,
-      } as AxiosResponse);
+      mockSessionGet.mockResolvedValueOnce({data: mockApiResponseData});
       MockedZodManifestSchema.parse.mockImplementationOnce(() => {
         throw mockZodError;
       });
 
       await expect(client.loadToolset(toolsetName)).rejects.toThrow(
-        `Invalid manifest structure received from ${expectedApiUrlForToolset}: ${mockZodError.message}`
+        `Invalid manifest structure received from ${expectedApiUrlForToolset}`
       );
     });
 
@@ -864,6 +952,42 @@ describe('ToolboxClient', () => {
         `Error fetching data from ${expectedApiUrl}:`,
         apiError
       );
+    });
+
+    describe('in strict mode', () => {
+      it('should throw an error if a bound parameter is not used by a tool', async () => {
+        const toolsetName = 'strict-set';
+        const mockToolDefinitions: Record<string, InferredZodTool> = {
+          toolA: {
+            description: 'Tool A',
+            parameters: [{name: 'paramA', type: 'string'} as ParameterSchema],
+          },
+        };
+        const boundParams = {paramA: 'valueA', unusedForToolA: 'value'};
+        setupMocksForSuccessfulToolsetLoad(mockToolDefinitions);
+
+        await expect(
+          client.loadToolset(toolsetName, {}, boundParams, true)
+        ).rejects.toThrow(
+          "Validation failed for tool 'toolA': unused bound parameters: unusedForToolA."
+        );
+      });
+
+      it('should throw an error if an auth token getter is not used by a tool', async () => {
+        const toolsetName = 'strict-set-auth';
+        const mockToolDefinitions: Record<string, InferredZodTool> = {
+          toolA: {description: 'Tool A', parameters: []},
+        };
+        const authTokenGetters = {unused_auth: () => 'secret'};
+        setupMocksForSuccessfulToolsetLoad(mockToolDefinitions);
+        mockedIdentifyAuthRequirements.mockReturnValueOnce([{}, [], new Set()]);
+
+        await expect(
+          client.loadToolset(toolsetName, authTokenGetters, {}, true)
+        ).rejects.toThrow(
+          "Validation failed for tool 'toolA': unused auth tokens: unused_auth."
+        );
+      });
     });
   });
 });

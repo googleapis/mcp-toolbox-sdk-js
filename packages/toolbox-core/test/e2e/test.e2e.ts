@@ -301,7 +301,7 @@ describe('ToolboxClient E2E Tests', () => {
     });
 
     it('should fail when a tool with a param requiring auth is run with insufficient auth claims', async () => {
-      expect.assertions(2);
+      expect.assertions(3); // Adjusted to account for logApiError's console.error
 
       const tool = await commonToolboxClient.loadTool(
         'get-row-by-content-auth',

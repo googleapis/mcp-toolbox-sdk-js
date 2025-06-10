@@ -12,11 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  ToolboxClient,
-  type ClientHeadersConfig,
-  type ClientHeaderProvider,
-} from '../src/toolbox_core/client';
+import {ToolboxClient} from '../src/toolbox_core/client';
 import {ToolboxTool} from '../src/toolbox_core/tool';
 import {
   ZodManifestSchema,
@@ -30,8 +26,7 @@ import {logApiError} from '../src/toolbox_core/errorUtils';
 import axios, {
   AxiosInstance,
   AxiosResponse,
-  type InternalAxiosRequestConfig,
-  AxiosHeaders,
+  InternalAxiosRequestConfig,
 } from 'axios';
 import {z, ZodRawShape, ZodObject, ZodTypeAny, ZodError} from 'zod';
 
@@ -39,7 +34,6 @@ import {z, ZodRawShape, ZodObject, ZodTypeAny, ZodError} from 'zod';
 type OriginalToolboxToolType = typeof ToolboxTool;
 type CallableToolReturnedByFactory = ReturnType<OriginalToolboxToolType>;
 type InferredZodTool = z.infer<typeof ZodToolSchema>;
-type AsyncHeaderFunction = () => Promise<string>;
 
 const createMockZodObject = (
   shape: ZodRawShape = {}
@@ -95,151 +89,106 @@ const MockedLogApiError = logApiError as jest.MockedFunction<
 describe('ToolboxClient', () => {
   const testBaseUrl = 'http://api.example.com';
   let mockSessionGet: jest.Mock;
-  let capturedRequestInterceptorFunction:
-    | ((
-        config: InternalAxiosRequestConfig
-      ) => Promise<InternalAxiosRequestConfig> | InternalAxiosRequestConfig)
-    | null;
-
-  let mockRequestInterceptorUse: jest.Mock;
+  let autoCreatedSession: AxiosInstance;
+  let requestInterceptor: jest.Mock;
 
   beforeEach(() => {
     jest.resetAllMocks();
-    capturedRequestInterceptorFunction = null;
     mockSessionGet = jest.fn();
+    requestInterceptor = jest.fn((config: InternalAxiosRequestConfig) =>
+      Promise.resolve(config)
+    );
 
-    mockRequestInterceptorUse = jest.fn(onFulfilled => {
-      capturedRequestInterceptorFunction = onFulfilled;
-      return 1;
-    });
-    const mockRequestInterceptorEject = jest.fn();
-
-    mockedAxios.create.mockImplementation((axiosConfig?: any) => {
-      const instanceDefaults = {
-        ...(axiosConfig || {}),
-        headers: axiosConfig?.headers || {},
-      };
-
-      const sessionInstance = {
-        defaults: instanceDefaults,
-        interceptors: {
-          request: {
-            use: mockRequestInterceptorUse,
-            eject: mockRequestInterceptorEject,
-            handlers: [],
-          },
-          response: {use: jest.fn(), eject: jest.fn(), handlers: []},
+    autoCreatedSession = {
+      get: mockSessionGet,
+      interceptors: {
+        request: {
+          use: jest.fn().mockImplementation(requestInterceptor),
+          eject: jest.fn(),
+          handlers: [],
         },
-        get: jest.fn(
-          async (url: string, config?: InternalAxiosRequestConfig) => {
-            const fullUrl =
-              url.startsWith('http://') || url.startsWith('https://')
-                ? url
-                : `${instanceDefaults.baseURL || ''}${url}`;
+        response: {use: jest.fn(), eject: jest.fn(), handlers: []},
+      },
+    } as unknown as AxiosInstance;
 
-            const currentConfig: InternalAxiosRequestConfig = {
-              ...instanceDefaults,
-              ...(config || {}),
-              headers: {
-                ...(instanceDefaults.headers || {}),
-                ...(config?.headers || {}),
-              },
-              url: fullUrl,
-              method: 'get',
-            };
-
-            if (capturedRequestInterceptorFunction) {
-              try {
-                if (!currentConfig.headers) {
-                  currentConfig.headers = new AxiosHeaders();
-                }
-                const processedConfig = await Promise.resolve(
-                  capturedRequestInterceptorFunction(currentConfig)
-                );
-                return mockSessionGet(url, processedConfig);
-              } catch (error) {
-                return Promise.reject(error);
-              }
-            }
-            return mockSessionGet(url, currentConfig);
-          }
-        ),
-      } as unknown as AxiosInstance;
-      return sessionInstance;
-    });
+    mockedAxios.create.mockReturnValue(autoCreatedSession);
   });
 
   describe('constructor', () => {
-    it('should set baseUrl and create a new session if one is not provided', () => {
-      const client = new ToolboxClient(testBaseUrl);
-      expect((client as any)['_baseUrl']).toBe(testBaseUrl);
+    it('should create a new session if one is not provided', () => {
+      new ToolboxClient(testBaseUrl);
       expect(mockedAxios.create).toHaveBeenCalledTimes(1);
       expect(mockedAxios.create).toHaveBeenCalledWith({baseURL: testBaseUrl});
-      expect((client as any)['_session'].get).toBeDefined();
-      expect(mockRequestInterceptorUse).toHaveBeenCalledTimes(1);
     });
 
-    it('should set baseUrl and use the provided session if one is given', () => {
-      const providedSessionMockUse = jest.fn();
+    it('should use the provided session if one is given', () => {
       const customMockSession = {
         get: jest.fn(),
         interceptors: {
-          request: {
-            use: providedSessionMockUse,
-            eject: jest.fn(),
-            handlers: [],
-          },
-          response: {use: jest.fn(), eject: jest.fn(), handlers: []},
+          request: {use: jest.fn(), eject: jest.fn(), handlers: []},
         },
-        defaults: {headers: {}},
       } as unknown as AxiosInstance;
-      const client = new ToolboxClient(testBaseUrl, customMockSession);
+      new ToolboxClient(testBaseUrl, customMockSession);
 
-      expect((client as any)['_baseUrl']).toBe(testBaseUrl);
-      expect((client as any)['_session']).toBe(customMockSession);
       expect(mockedAxios.create).not.toHaveBeenCalled();
-      expect(providedSessionMockUse).toHaveBeenCalledTimes(1);
     });
 
-    it('should initialize with clientHeaders if provided', () => {
-      const initialHeaders: ClientHeadersConfig = {
-        'X-Test-Header': () => 'test-value',
-      };
-      const client = new ToolboxClient(testBaseUrl, null, initialHeaders);
-      expect((client as any)['_clientHeaders']).toEqual(initialHeaders);
+    it('should apply the header interceptor upon instantiation', () => {
+      new ToolboxClient(testBaseUrl);
+      expect(autoCreatedSession.interceptors.request.use).toHaveBeenCalled();
     });
   });
 
-  describe('Header Interceptor Functionality', () => {
-    it('should apply synchronous headers to requests', async () => {
-      const syncHeaderProvider: ClientHeaderProvider = () => 'sync-value';
+  describe('Header Handling', () => {
+    it('should correctly apply sync and async headers to requests', async () => {
       const client = new ToolboxClient(testBaseUrl, null, {
-        'X-Sync-Header': syncHeaderProvider,
+        'X-Sync-Header': () => 'sync-value',
+        'X-Async-Header': async () => 'async-value',
       });
-      mockSessionGet.mockResolvedValueOnce({data: 'success'} as AxiosResponse);
 
-      await (client as any)['_session'].get('/test-endpoint');
+      // The interceptor is the first argument to the first call to `use`.
+      const interceptor = (
+        autoCreatedSession.interceptors.request.use as jest.Mock
+      ).mock.calls[0][0];
 
-      expect(mockSessionGet).toHaveBeenCalled();
-      const lastCallConfig = mockSessionGet.mock.calls[0][1] || {};
-      expect(lastCallConfig.headers['X-Sync-Header']).toBe('sync-value');
+      const config: InternalAxiosRequestConfig = {
+        url: `${testBaseUrl}/some/path`,
+        headers: {'X-Existing-Header': 'existing-value'} as any,
+      };
+
+      const updatedConfig = await interceptor(config);
+
+      // Assert using plain object property access, which matches the client's implementation.
+      expect(updatedConfig.headers['X-Existing-Header']).toBe('existing-value');
+      expect(updatedConfig.headers['X-Sync-Header']).toBe('sync-value');
+      expect(updatedConfig.headers['X-Async-Header']).toBe('async-value');
     });
 
-    it('should apply and await asynchronous headers to requests', async () => {
-      const asyncHeaderProvider: ClientHeaderProvider = async () => {
-        await new Promise(resolve => setTimeout(resolve, 10));
-        return 'async-value';
-      };
-      const client = new ToolboxClient(testBaseUrl, null, {
-        'X-Async-Header': asyncHeaderProvider,
+    it('should not add headers if the request URL is not for the toolbox server', async () => {
+      new ToolboxClient(testBaseUrl, null, {
+        'X-Should-Not-Be-Added': () => 'value',
       });
-      mockSessionGet.mockResolvedValueOnce({data: 'success'} as AxiosResponse);
+      const interceptor = (
+        autoCreatedSession.interceptors.request.use as jest.Mock
+      ).mock.calls[0][0];
+      const config: InternalAxiosRequestConfig = {
+        url: 'http://some.other.api/path',
+        headers: {} as any,
+      };
 
-      await (client as any)['_session'].get('/test-endpoint');
+      const updatedConfig = await interceptor(config);
+      // Assert that the property was not added to the plain header object.
+      expect(updatedConfig.headers).not.toHaveProperty('X-Should-Not-Be-Added');
+    });
 
-      expect(mockSessionGet).toHaveBeenCalled();
-      const lastCallConfig = mockSessionGet.mock.calls[0][1] || {};
-      expect(lastCallConfig.headers['X-Async-Header']).toBe('async-value');
+    it('should handle errors in the interceptor', async () => {
+      new ToolboxClient(testBaseUrl);
+      // The error handler is the second argument to the first call to `use`.
+      const errorHandler = (
+        autoCreatedSession.interceptors.request.use as jest.Mock
+      ).mock.calls[0][1];
+      const error = new Error('Interceptor failed');
+      await expect(errorHandler(error)).rejects.toThrow(error);
     });
   });
 
@@ -264,7 +213,7 @@ describe('ToolboxClient', () => {
         serverVersion: '1.0.0',
         tools: {[toolName]: toolDefinition},
         ...overrides.manifestData,
-      } as ZodManifest;
+      };
 
       const zodParamsSchema =
         overrides.zodParamsSchema ||
@@ -283,7 +232,7 @@ describe('ToolboxClient', () => {
       const defaultMockCallable = jest
         .fn()
         .mockResolvedValue({result: 'mock tool execution'});
-      const defaultToolInstance = Object.assign(defaultMockCallable, {
+      const toolInstance = Object.assign(defaultMockCallable, {
         toolName: toolName,
         description: toolDefinition.description,
         params: zodParamsSchema,
@@ -293,17 +242,15 @@ describe('ToolboxClient', () => {
         boundParams: {},
         bindParams: jest.fn().mockReturnThis(),
         bindParam: jest.fn().mockReturnThis(),
-      }) as CallableToolReturnedByFactory; // Ensure the base mock conforms
+        ...overrides.toolInstance,
+      }) as CallableToolReturnedByFactory;
 
-      // toolInstance should be the callable function with properties.
-      const toolInstance: CallableToolReturnedByFactory = defaultToolInstance;
-
-      mockSessionGet.mockResolvedValueOnce({data: manifestData});
+      mockSessionGet.mockResolvedValueOnce({
+        data: manifestData,
+      } as AxiosResponse);
       MockedZodManifestSchema.parse.mockReturnValueOnce(manifestData);
       MockedCreateZodSchemaFromParams.mockReturnValueOnce(zodParamsSchema);
-      MockedToolboxToolFactory.mockReturnValueOnce(
-        toolInstance as CallableToolReturnedByFactory
-      );
+      MockedToolboxToolFactory.mockReturnValueOnce(toolInstance);
       return {manifestData, zodParamsSchema, toolInstance};
     };
 
@@ -319,16 +266,13 @@ describe('ToolboxClient', () => {
         setupMocksForSuccessfulLoad(mockToolDefinition);
       const loadedTool = await client.loadTool(toolName);
 
-      expect(mockSessionGet).toHaveBeenCalledWith(
-        expectedApiUrl,
-        expect.anything()
-      );
+      expect(mockSessionGet).toHaveBeenCalledWith(expectedApiUrl);
       expect(MockedZodManifestSchema.parse).toHaveBeenCalledWith(manifestData);
       expect(MockedCreateZodSchemaFromParams).toHaveBeenCalledWith(
         mockToolDefinition.parameters
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
-        (client as any)['_session'],
+        autoCreatedSession,
         testBaseUrl,
         toolName,
         mockToolDefinition.description,
@@ -352,7 +296,7 @@ describe('ToolboxClient', () => {
       await client.loadTool(toolName, boundParams);
 
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
-        expect.anything(),
+        autoCreatedSession,
         expect.anything(),
         expect.anything(),
         expect.anything(),
@@ -374,16 +318,43 @@ describe('ToolboxClient', () => {
       );
     });
 
-    it('should throw an error if manifest parsing fails', async () => {
-      const mockZodError = new Error('Zod validation failed on manifest');
+    it('should throw detailed error if manifest parsing fails with ZodError', async () => {
+      const issues = [
+        {code: 'custom' as const, path: ['tools'], message: 'Is required'},
+      ];
+      const mockZodError = new ZodError(issues);
       mockSessionGet.mockResolvedValueOnce({data: {invalid: 'structure'}});
       MockedZodManifestSchema.parse.mockImplementationOnce(() => {
         throw mockZodError;
       });
 
       await expect(client.loadTool(toolName)).rejects.toThrow(
-        `Invalid manifest structure received from ${expectedApiUrl}: ${mockZodError.message}`
+        `Invalid manifest structure received from ${expectedApiUrl}: ${JSON.stringify(
+          issues,
+          null,
+          2
+        )}`
       );
+    });
+
+    it('should throw generic error if manifest parsing fails with a non-Error object', async () => {
+      mockSessionGet.mockResolvedValueOnce({data: {invalid: 'structure'}});
+      MockedZodManifestSchema.parse.mockImplementationOnce(() => {
+        throw 'a string error';
+      });
+
+      await expect(client.loadTool(toolName)).rejects.toThrow(
+        `Invalid manifest structure received from ${expectedApiUrl}: Unknown validation error.`
+      );
+    });
+
+    it('should re-throw specific manifest errors without logging', async () => {
+      const specificError = new Error(
+        'Invalid manifest structure received from http://some.url'
+      );
+      mockSessionGet.mockRejectedValueOnce(specificError);
+      await expect(client.loadTool(toolName)).rejects.toThrow(specificError);
+      expect(MockedLogApiError).not.toHaveBeenCalled();
     });
 
     it('should throw an error if the specific tool is not found in manifest.tools', async () => {
@@ -421,15 +392,17 @@ describe('ToolboxClient', () => {
     });
 
     const setupMocksForSuccessfulToolsetLoad = (
-      toolDefinitions: Record<string, InferredZodTool>,
-      manifestDataOverride?: ZodManifest
+      toolDefinitions: Record<string, InferredZodTool>
     ) => {
-      const manifestData: ZodManifest = manifestDataOverride || {
+      const manifestData: ZodManifest = {
         serverVersion: '1.0.0',
         tools: toolDefinitions,
       };
 
-      const zodParamsSchemas: Record<string, ZodObject<any>> = {};
+      const zodParamsSchemas: Record<
+        string,
+        ZodObject<ZodRawShape, 'strip', ZodTypeAny>
+      > = {};
       const toolInstances: Record<string, CallableToolReturnedByFactory> = {};
       const orderedToolNames = Object.keys(toolDefinitions);
 
@@ -492,7 +465,7 @@ describe('ToolboxClient', () => {
 
       expect(MockedToolboxToolFactory).toHaveBeenCalledTimes(2);
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
-        (client as any)['_session'],
+        autoCreatedSession,
         testBaseUrl,
         'toolA',
         'A',
@@ -500,7 +473,7 @@ describe('ToolboxClient', () => {
         {}
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
-        (client as any)['_session'],
+        autoCreatedSession,
         testBaseUrl,
         'toolB',
         'B',
@@ -527,7 +500,7 @@ describe('ToolboxClient', () => {
       await client.loadToolset('my-toolset', boundParams);
 
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
-        expect.anything(),
+        autoCreatedSession,
         expect.anything(),
         'toolA',
         expect.anything(),
@@ -535,7 +508,7 @@ describe('ToolboxClient', () => {
         boundParams
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
-        expect.anything(),
+        autoCreatedSession,
         expect.anything(),
         'toolB',
         expect.anything(),
@@ -565,10 +538,7 @@ describe('ToolboxClient', () => {
       const expectedApiUrl = `${testBaseUrl}/api/toolset/`;
       setupMocksForSuccessfulToolsetLoad({});
       await client.loadToolset();
-      expect(mockSessionGet).toHaveBeenLastCalledWith(
-        expectedApiUrl,
-        expect.anything()
-      );
+      expect(mockSessionGet).toHaveBeenLastCalledWith(expectedApiUrl);
     });
 
     it('should throw and log error if API GET request for toolset fails', async () => {

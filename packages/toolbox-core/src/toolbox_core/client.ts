@@ -37,10 +37,10 @@ export type ClientHeadersConfig = Record<string, ClientHeaderProvider>;
  * An asynchronous client for interacting with a Toolbox service.
  */
 class ToolboxClient {
-  private _baseUrl: string;
-  private _session: AxiosInstance;
-  private _clientHeaders: ClientHeadersConfig = {};
-  private _headerInterceptorId: number | null = null;
+  #baseUrl: string;
+  #session: AxiosInstance;
+  #clientHeaders: ClientHeadersConfig = {};
+  #headerInterceptorId: number | null = null;
 
   /**
    * Initializes the ToolboxClient.
@@ -55,12 +55,12 @@ class ToolboxClient {
     session?: AxiosInstance | null,
     clientHeaders?: ClientHeadersConfig | null
   ) {
-    this._baseUrl = url;
-    this._session = session || axios.create({baseURL: this._baseUrl});
+    this.#baseUrl = url;
+    this.#session = session || axios.create({baseURL: this.#baseUrl});
     if (clientHeaders) {
-      this._clientHeaders = {...clientHeaders}; // Initialize with a copy
+      this.#clientHeaders = {...clientHeaders}; // Initialize with a copy
     }
-    this._applyHeaderInterceptor();
+    this.#applyHeaderInterceptor();
   }
 
   /**
@@ -68,17 +68,17 @@ class ToolboxClient {
    * The interceptor resolves header provider functions before each request sent
    * to toolbox server through this client.
    */
-  private _applyHeaderInterceptor(): void {
-    if (this._headerInterceptorId !== null) {
-      this._session.interceptors.request.eject(this._headerInterceptorId);
+  #applyHeaderInterceptor(): void {
+    if (this.#headerInterceptorId !== null) {
+      this.#session.interceptors.request.eject(this.#headerInterceptorId);
     }
 
-    this._headerInterceptorId = this._session.interceptors.request.use(
+    this.#headerInterceptorId = this.#session.interceptors.request.use(
       async (config: InternalAxiosRequestConfig) => {
-        if (config.url && config.url.startsWith(this._baseUrl)) {
+        if (config.url && config.url.startsWith(this.#baseUrl)) {
           config.headers = config.headers || {};
-          for (const headerName in this._clientHeaders) {
-            const headerProvider = this._clientHeaders[headerName];
+          for (const headerName in this.#clientHeaders) {
+            const headerProvider = this.#clientHeaders[headerName];
             const result = headerProvider();
             if (result instanceof Promise) {
               config.headers[headerName] = await result;
@@ -100,9 +100,9 @@ class ToolboxClient {
    * @throws {Error} If there's an error fetching data or if the manifest structure is invalid.
    */
   async #fetchAndParseManifest(apiPath: string): Promise<Manifest> {
-    const url = `${this._baseUrl}${apiPath}`;
+    const url = `${this.#baseUrl}${apiPath}`;
     try {
-      const response: AxiosResponse = await this._session.get(url);
+      const response: AxiosResponse = await this.#session.get(url);
       const responseData = response.data;
 
       try {
@@ -160,8 +160,8 @@ class ToolboxClient {
 
     const paramZodSchema = createZodSchemaFromParams(toolSchema.parameters);
     const tool = ToolboxTool(
-      this._session,
-      this._baseUrl,
+      this.#session,
+      this.#baseUrl,
       toolName,
       toolSchema.description,
       paramZodSchema,

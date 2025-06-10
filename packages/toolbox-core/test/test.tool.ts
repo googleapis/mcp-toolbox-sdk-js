@@ -506,7 +506,7 @@ describe('ToolboxTool', () => {
       const badTokenGetter = () => 12345;
       const authedTool = tool.addAuthTokenGetter(
         'service1',
-        badTokenGetter as any
+        badTokenGetter as unknown as () => string
       );
       authedTool.requiredAuthnParams = {};
       authedTool.requiredAuthzTokens = [];
@@ -533,11 +533,13 @@ describe('ToolboxTool', () => {
     it('should throw an error if an unused auth source is provided', () => {
       (utils.identifyAuthRequirements as jest.Mock).mockReturnValue([
         initialRequiredAuthn,
-        initialRequiredAuthz, 
+        initialRequiredAuthz,
         new Set(),
       ]);
 
-      expect(() => tool.addAuthTokenGetter('unusedService', () => 'token')).toThrow(
+      expect(() =>
+        tool.addAuthTokenGetter('unusedService', () => 'token')
+      ).toThrow(
         `Authentication source(s) \`unusedService\` unused by tool \`${toolName}\`.`
       );
     });

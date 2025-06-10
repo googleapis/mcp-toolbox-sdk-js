@@ -127,15 +127,12 @@ describe('identifyAuthRequirements', () => {
     const reqAuthnParams = {param1: ['serviceA']};
     const reqAuthzTokens = ['serviceB'];
     const authServiceNames = ['serviceA', 'serviceB'];
-    const [
-      remainingAuthnParams,
-      remainingAuthzTokens,
-      usedServices,
-    ] = identifyAuthRequirements(
-      reqAuthnParams,
-      reqAuthzTokens,
-      authServiceNames
-    );
+    const [remainingAuthnParams, remainingAuthzTokens, usedServices] =
+      identifyAuthRequirements(
+        reqAuthnParams,
+        reqAuthzTokens,
+        authServiceNames
+      );
     expect(remainingAuthnParams).toEqual({});
     expect(remainingAuthzTokens).toEqual([]);
     expect(usedServices).toEqual(new Set(['serviceA', 'serviceB']));
@@ -145,17 +142,14 @@ describe('identifyAuthRequirements', () => {
     const reqAuthnParams = {param1: ['serviceA'], param2: ['serviceC']};
     const reqAuthzTokens = ['serviceB', 'serviceD'];
     const authServiceNames = ['serviceA', 'serviceB'];
-    const [
-      remainingAuthnParams,
-      remainingAuthzTokens,
-      usedServices,
-    ] = identifyAuthRequirements(
-      reqAuthnParams,
-      reqAuthzTokens,
-      authServiceNames
-    );
+    const [remainingAuthnParams, remainingAuthzTokens, usedServices] =
+      identifyAuthRequirements(
+        reqAuthnParams,
+        reqAuthzTokens,
+        authServiceNames
+      );
     expect(remainingAuthnParams).toEqual({param2: ['serviceC']});
-    expect(remainingAuthzTokens).toEqual(['serviceD']); 
+    expect(remainingAuthzTokens).toEqual(['serviceD']);
     expect(usedServices).toEqual(new Set(['serviceA', 'serviceB']));
   });
 
@@ -163,15 +157,12 @@ describe('identifyAuthRequirements', () => {
     const reqAuthnParams = {};
     const reqAuthzTokens: string[] = [];
     const authServiceNames = ['serviceA', 'serviceB'];
-    const [
-      remainingAuthnParams,
-      remainingAuthzTokens,
-      usedServices,
-    ] = identifyAuthRequirements(
-      reqAuthnParams,
-      reqAuthzTokens,
-      authServiceNames
-    );
+    const [remainingAuthnParams, remainingAuthzTokens, usedServices] =
+      identifyAuthRequirements(
+        reqAuthnParams,
+        reqAuthzTokens,
+        authServiceNames
+      );
     expect(remainingAuthnParams).toEqual({});
     expect(remainingAuthzTokens).toEqual([]);
     expect(usedServices).toEqual(new Set());
@@ -181,15 +172,12 @@ describe('identifyAuthRequirements', () => {
     const reqAuthnParams = {param1: ['serviceA']};
     const reqAuthzTokens = ['serviceB'];
     const authServiceNames: string[] = [];
-    const [
-      remainingAuthnParams,
-      remainingAuthzTokens,
-      usedServices,
-    ] = identifyAuthRequirements(
-      reqAuthnParams,
-      reqAuthzTokens,
-      authServiceNames
-    );
+    const [remainingAuthnParams, remainingAuthzTokens, usedServices] =
+      identifyAuthRequirements(
+        reqAuthnParams,
+        reqAuthzTokens,
+        authServiceNames
+      );
     expect(remainingAuthnParams).toEqual({param1: ['serviceA']});
     expect(remainingAuthzTokens).toEqual(['serviceB']);
     expect(usedServices).toEqual(new Set());
@@ -199,17 +187,14 @@ describe('identifyAuthRequirements', () => {
     const reqAuthnParams = {param1: ['serviceA', 'serviceX']};
     const reqAuthzTokens = ['serviceB', 'serviceY'];
     const authServiceNames = ['serviceA', 'serviceB'];
-    const [
-      remainingAuthnParams,
-      remainingAuthzTokens,
-      usedServices,
-    ] = identifyAuthRequirements(
-      reqAuthnParams,
-      reqAuthzTokens,
-      authServiceNames
-    );
+    const [remainingAuthnParams, remainingAuthzTokens, usedServices] =
+      identifyAuthRequirements(
+        reqAuthnParams,
+        reqAuthzTokens,
+        authServiceNames
+      );
     expect(remainingAuthnParams).toEqual({});
-    expect(remainingAuthzTokens).toEqual(['serviceY']); 
+    expect(remainingAuthzTokens).toEqual(['serviceY']);
     expect(usedServices).toEqual(new Set(['serviceA', 'serviceB']));
   });
 
@@ -217,15 +202,12 @@ describe('identifyAuthRequirements', () => {
     const reqAuthnParams = {param1: ['serviceA', 'serviceX']};
     const reqAuthzTokens: string[] = [];
     const authServiceNames = ['serviceA'];
-    const [
-      remainingAuthnParams,
-      remainingAuthzTokens,
-      usedServices,
-    ] = identifyAuthRequirements(
-      reqAuthnParams,
-      reqAuthzTokens,
-      authServiceNames
-    );
+    const [remainingAuthnParams, remainingAuthzTokens, usedServices] =
+      identifyAuthRequirements(
+        reqAuthnParams,
+        reqAuthzTokens,
+        authServiceNames
+      );
     expect(remainingAuthnParams).toEqual({});
     expect(remainingAuthzTokens).toEqual([]);
     expect(usedServices).toEqual(new Set(['serviceA']));

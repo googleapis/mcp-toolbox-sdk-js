@@ -34,7 +34,6 @@ import axios, {
   AxiosHeaders,
 } from 'axios';
 import {z, ZodRawShape, ZodObject, ZodTypeAny, ZodError} from 'zod';
-import * as utils from '../src/toolbox_core/utils';
 
 // --- Helper Types ---
 type OriginalToolboxToolType = typeof ToolboxTool;
@@ -437,7 +436,7 @@ describe('ToolboxClient', () => {
         {}, // Bound params
         {}, // authTokenGetters
         {}, // requiredAuthnParams
-        [], // requiredAuthzTokens
+        [] // requiredAuthzTokens
       );
       expect(loadedTool).toBe(toolInstance);
     });
@@ -776,7 +775,9 @@ describe('ToolboxClient', () => {
       const mockToolDefinitions: Record<string, InferredZodTool> = {
         toolA: {
           description: 'Tool A',
-          parameters: [{name: 'paramA', type: 'string' as const} as ParameterSchema],
+          parameters: [
+            {name: 'paramA', type: 'string' as const} as ParameterSchema,
+          ],
         },
       };
       const boundParams = {paramA: 'valueA', unusedParam: 'value2'};

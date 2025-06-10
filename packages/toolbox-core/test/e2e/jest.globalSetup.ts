@@ -62,7 +62,7 @@ export default async function globalSetup(): Promise<void> {
     console.log('Starting toolbox server process...');
     const serverProcess = spawn(
       localToolboxPath,
-      ['--tools_file', toolsFilePath],
+      ['--tools-file', toolsFilePath],
       {
         stdio: ['ignore', 'pipe', 'pipe'], // ignore stdin, pipe stdout/stderr
       }

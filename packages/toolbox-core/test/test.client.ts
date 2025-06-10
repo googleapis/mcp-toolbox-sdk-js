@@ -23,13 +23,7 @@ import {
 } from '../src/toolbox_core/protocol';
 import {logApiError} from '../src/toolbox_core/errorUtils';
 
-import axios, {
-  AxiosInstance,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
-  AxiosHeaders,
-  AxiosRequestHeaders,
-} from 'axios';
+import axios, {AxiosInstance, AxiosResponse} from 'axios';
 import {z, ZodRawShape, ZodObject, ZodTypeAny, ZodError} from 'zod';
 
 // --- Helper Types ---
@@ -119,7 +113,6 @@ describe('ToolboxClient', () => {
 
       expect(mockedAxios.create).not.toHaveBeenCalled();
     });
-
   });
 
   describe('loadTool', () => {
@@ -195,7 +188,9 @@ describe('ToolboxClient', () => {
         setupMocksForSuccessfulLoad(mockToolDefinition);
       const loadedTool = await client.loadTool(toolName);
 
-      expect(mockSessionGet).toHaveBeenCalledWith(expectedApiUrl, {headers: {}});
+      expect(mockSessionGet).toHaveBeenCalledWith(expectedApiUrl, {
+        headers: {},
+      });
       expect(MockedZodManifestSchema.parse).toHaveBeenCalledWith(manifestData);
       expect(MockedCreateZodSchemaFromParams).toHaveBeenCalledWith(
         mockToolDefinition.parameters
@@ -207,7 +202,7 @@ describe('ToolboxClient', () => {
         mockToolDefinition.description,
         zodParamsSchema,
         {}, // applicableBoundParams
-        {}  // clientHeaders
+        {} // clientHeaders
       );
       expect(loadedTool).toBe(toolInstance);
     });
@@ -402,7 +397,7 @@ describe('ToolboxClient', () => {
         'A',
         zodParamsSchemas.toolA,
         {}, // applicableBoundParams
-        {}  // clientHeaders
+        {} // clientHeaders
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
         autoCreatedSession,
@@ -411,7 +406,7 @@ describe('ToolboxClient', () => {
         'B',
         zodParamsSchemas.toolB,
         {}, // applicableBoundParams
-        {}  // clientHeaders
+        {} // clientHeaders
       );
       expect(loadedTools).toEqual(Object.values(toolInstances));
     });
@@ -473,7 +468,9 @@ describe('ToolboxClient', () => {
       const expectedApiUrl = `${testBaseUrl}/api/toolset/`;
       setupMocksForSuccessfulToolsetLoad({});
       await client.loadToolset();
-      expect(mockSessionGet).toHaveBeenLastCalledWith(expectedApiUrl, {headers: {}});
+      expect(mockSessionGet).toHaveBeenLastCalledWith(expectedApiUrl, {
+        headers: {},
+      });
     });
 
     it('should throw and log error if API GET request for toolset fails', async () => {

@@ -133,30 +133,6 @@ class ToolboxClient {
   }
 
   /**
-   * Add headers to be included in each request sent through this client.
-   *
-   * @param {ClientHeadersConfig} headers - Headers to include in each request.
-   * Keys are header names, and values are functions (sync or async) that return the header string.
-   * @throws {Error} If any of the header names are already registered in the client.
-   */
-  public addHeaders(headers: ClientHeadersConfig): void {
-    const incomingHeaderKeys = Object.keys(headers);
-    const existingHeaderKeys = Object.keys(this._clientHeaders);
-
-    const duplicates = incomingHeaderKeys.filter(key =>
-      existingHeaderKeys.includes(key)
-    );
-
-    if (duplicates.length > 0) {
-      throw new Error(
-        `Client header(s) \`${duplicates.join(', ')}\` already registered in the client.`
-      );
-    }
-
-    this._clientHeaders = {...this._clientHeaders, ...headers};
-  }
-
-  /**
    * Creates a ToolboxTool instance from its schema.
    * @param {string} toolName - The name of the tool.
    * @param {ToolSchemaFromManifest} toolSchema - The schema definition of the tool from the manifest.

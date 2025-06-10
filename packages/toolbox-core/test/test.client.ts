@@ -250,47 +250,6 @@ describe('ToolboxClient', () => {
     });
   });
 
-  describe('addHeaders', () => {
-    let client: ToolboxClient;
-
-    beforeEach(() => {
-      client = new ToolboxClient(testBaseUrl);
-    });
-
-    it('should add new headers to _clientHeaders', () => {
-      const headers1: ClientHeadersConfig = {'X-Header-1': () => 'value1'};
-      client.addHeaders(headers1);
-      expect(client['_clientHeaders']).toEqual(headers1);
-
-      const headers2: ClientHeadersConfig = {
-        'X-Header-2': async () => 'value2',
-      };
-      client.addHeaders(headers2);
-      expect(client['_clientHeaders']).toEqual({...headers1, ...headers2});
-    });
-
-    it('should throw an error if adding a duplicate header name', () => {
-      const headers: ClientHeadersConfig = {'X-Duplicate': () => 'value1'};
-      client.addHeaders(headers);
-      expect(() => client.addHeaders(headers)).toThrow(
-        'Client header(s) `X-Duplicate` already registered in the client.'
-      );
-    });
-
-    it('should throw an error if adding multiple headers with one duplicate', () => {
-      client.addHeaders({'X-Existing': () => 'value'});
-      const newHeaders: ClientHeadersConfig = {
-        'X-New': () => 'new_value',
-        'X-Existing': () => 'another_value', // Duplicate
-      };
-      expect(() => client.addHeaders(newHeaders)).toThrow(
-        'Client header(s) `X-Existing` already registered in the client.'
-      );
-      // Ensure non-duplicate headers were not added
-      expect(client['_clientHeaders']['X-New']).toBeUndefined();
-    });
-  });
-
   describe('Header Interceptor Functionality', () => {
     let client: ToolboxClient;
     const mockUrl = '/test-endpoint';

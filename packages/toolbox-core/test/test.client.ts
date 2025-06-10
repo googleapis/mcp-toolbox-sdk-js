@@ -141,7 +141,7 @@ describe('ToolboxClient', () => {
 
   describe('Header Handling', () => {
     it('should correctly apply sync and async headers to requests', async () => {
-      const client = new ToolboxClient(testBaseUrl, null, {
+      new ToolboxClient(testBaseUrl, null, {
         'X-Sync-Header': () => 'sync-value',
         'X-Async-Header': async () => 'async-value',
       });

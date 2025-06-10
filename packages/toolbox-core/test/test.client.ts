@@ -27,6 +27,8 @@ import axios, {
   AxiosInstance,
   AxiosResponse,
   InternalAxiosRequestConfig,
+  AxiosHeaders,
+  AxiosRequestHeaders,
 } from 'axios';
 import {z, ZodRawShape, ZodObject, ZodTypeAny, ZodError} from 'zod';
 
@@ -153,7 +155,9 @@ describe('ToolboxClient', () => {
 
       const config: InternalAxiosRequestConfig = {
         url: `${testBaseUrl}/some/path`,
-        headers: {'X-Existing-Header': 'existing-value'} as any,
+        headers: {
+          'X-Existing-Header': 'existing-value',
+        } as unknown as AxiosRequestHeaders,
       };
 
       const updatedConfig = await interceptor(config);
@@ -173,7 +177,7 @@ describe('ToolboxClient', () => {
       ).mock.calls[0][0];
       const config: InternalAxiosRequestConfig = {
         url: 'http://some.other.api/path',
-        headers: {} as any,
+        headers: new AxiosHeaders(),
       };
 
       const updatedConfig = await interceptor(config);

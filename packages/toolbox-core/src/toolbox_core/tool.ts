@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import {ZodObject, ZodError, ZodRawShape} from 'zod';
-import {AxiosInstance, AxiosResponse} from 'axios';
+import {AxiosInstance, AxiosRequestConfig, AxiosResponse} from 'axios';
 import {logApiError} from './errorUtils.js';
 import {
   BoundParams,
@@ -21,6 +21,7 @@ import {
   identifyAuthRequirements,
   resolveValue,
 } from './utils.js';
+import {ClientHeadersConfig} from './client.js';
 
 export type AuthTokenGetter = () => string | Promise<string>;
 export type AuthTokenGetters = Record<string, AuthTokenGetter>;
@@ -39,6 +40,7 @@ export type RequiredAuthnParams = Record<string, string[]>;
  * @param {AuthTokenGetters} [authTokenGetters] - Optional map of auth service names to token getters.
  * @param {RequiredAuthnParams} [requiredAuthnParams] - Optional map of auth params that still need satisfying.
  * @param {string[]} [requiredAuthzTokens] - Optional list of auth tokens that still need satisfying.
+ * @param {ClientHeadersConfig} [clientHeaders] - Optional client-specific headers.
  * @returns {CallableTool & CallableToolProperties} An async function that, when
  * called, invokes the tool with the provided arguments.
  */
@@ -52,6 +54,7 @@ function ToolboxTool(
   authTokenGetters: AuthTokenGetters = {},
   requiredAuthnParams: RequiredAuthnParams = {},
   requiredAuthzTokens: string[] = []
+  clientHeaders: ClientHeadersConfig = {}
 ) {
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
   const boundKeys = Object.keys(boundParams);
@@ -87,7 +90,9 @@ function ToolboxTool(
           e => `${e.path.join('.') || 'payload'}: ${e.message}`
         );
         throw new Error(
-          `Argument validation failed for tool "${name}":\n - ${errorMessages.join('\n - ')}`
+          `Argument validation failed for tool "${name}":\n - ${errorMessages.join(
+            '\n - '
+          )}`
         );
       }
       throw new Error(`Argument validation failed: ${String(error)}`);
@@ -218,6 +223,7 @@ function ToolboxTool(
       this.authTokenGetters,
       this.requiredAuthnParams,
       this.requiredAuthzTokens
+      clientHeaders
     );
   };
 

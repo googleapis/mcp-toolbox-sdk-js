@@ -287,7 +287,6 @@ describe('ToolboxTool', () => {
       const result = await tool(validArgs);
 
       expect(mockAxiosPost).toHaveBeenCalledTimes(1);
-      // FIX: Added headers object to the assertion
       expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs, {
         headers: {},
       });

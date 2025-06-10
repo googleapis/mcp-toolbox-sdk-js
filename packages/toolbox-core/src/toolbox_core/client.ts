@@ -16,8 +16,8 @@ import {ToolboxTool} from './tool.js';
 import axios from 'axios';
 import {
   type AxiosInstance,
+  type AxiosRequestConfig,
   type AxiosResponse,
-  type InternalAxiosRequestConfig,
 } from 'axios';
 import {
   ZodManifestSchema,
@@ -33,69 +33,48 @@ type Manifest = import('zod').infer<typeof ZodManifestSchema>;
 type ToolSchemaFromManifest = Manifest['tools'][string];
 
 // Types for dynamic headers
-export type HeaderFunction = () => string;
-export type AsyncHeaderFunction = () => Promise<string>;
-export type ClientHeaderProvider = HeaderFunction | AsyncHeaderFunction;
+export type HeaderFunction = () => string | Promise<string>;
+export type ClientHeaderProvider = string | HeaderFunction;
 export type ClientHeadersConfig = Record<string, ClientHeaderProvider>;
 
 /**
  * An asynchronous client for interacting with a Toolbox service.
  */
 class ToolboxClient {
-  private _baseUrl: string;
-  private _session: AxiosInstance;
-  private _clientHeaders: ClientHeadersConfig = {};
-  private _headerInterceptorId: number | null = null;
+  #baseUrl: string;
+  #session: AxiosInstance;
+  #clientHeaders: ClientHeadersConfig;
 
   /**
    * Initializes the ToolboxClient.
    * @param {string} url - The base URL for the Toolbox service API (e.g., "http://localhost:5000").
    * @param {AxiosInstance} [session] - Optional Axios instance for making HTTP
-   *   requests. If not provided, a new one will be created.
+   * requests. If not provided, a new one will be created.
    * @param {ClientHeadersConfig} [clientHeaders] - Optional initial headers to
-   *   be included in each request.
+   * be included in each request.
    */
   constructor(
     url: string,
     session?: AxiosInstance | null,
     clientHeaders?: ClientHeadersConfig | null
   ) {
-    this._baseUrl = url;
-    this._session = session || axios.create({baseURL: this._baseUrl});
-    if (clientHeaders) {
-      this._clientHeaders = {...clientHeaders}; // Initialize with a copy
-    }
-    this._applyHeaderInterceptor();
+    this.#baseUrl = url;
+    this.#session = session || axios.create({baseURL: this.#baseUrl});
+    this.#clientHeaders = clientHeaders || {};
   }
 
   /**
-   * Applies an Axios request interceptor to handle dynamic client headers.
-   * The interceptor resolves header provider functions before each request sent
-   * to toolbox server through this client.
+   * Resolves client headers from their provider functions.
+   * @returns {Promise<Record<string, string>>} A promise that resolves to the resolved headers.
    */
-  private _applyHeaderInterceptor(): void {
-    if (this._headerInterceptorId !== null) {
-      this._session.interceptors.request.eject(this._headerInterceptorId);
-    }
-
-    this._headerInterceptorId = this._session.interceptors.request.use(
-      async (config: InternalAxiosRequestConfig) => {
-        if (config.url && config.url.startsWith(this._baseUrl)) {
-          config.headers = config.headers || {};
-          for (const headerName in this._clientHeaders) {
-            const headerProvider = this._clientHeaders[headerName];
-            const result = headerProvider();
-            if (result instanceof Promise) {
-              config.headers[headerName] = await result;
-            } else {
-              config.headers[headerName] = result;
-            }
-          }
-        }
-        return config;
-      },
-      (error: Error) => Promise.reject(error)
+  async #resolveClientHeaders(): Promise<Record<string, string>> {
+    const resolvedEntries = await Promise.all(
+      Object.entries(this.#clientHeaders).map(async ([key, value]) => {
+        const resolved = await resolveValue(value);
+        return [key, String(resolved)];
+      })
     );
+    return Object.fromEntries(resolvedEntries);
   }
 
   /**
@@ -103,12 +82,13 @@ class ToolboxClient {
    * @param {string} apiPath - The API path to fetch the manifest from (e.g., "/api/tool/mytool").
    * @returns {Promise<Manifest>} A promise that resolves to the parsed manifest.
    * @throws {Error} If there's an error fetching data or if the manifest structure is invalid.
-   * @private
    */
-  private async _fetchAndParseManifest(apiPath: string): Promise<Manifest> {
-    const url = `${this._baseUrl}${apiPath}`;
+  async #fetchAndParseManifest(apiPath: string): Promise<Manifest> {
+    const url = `${this.#baseUrl}${apiPath}`;
     try {
-      const response: AxiosResponse = await this._session.get(url);
+      const headers = await this.#resolveClientHeaders();
+      const config: AxiosRequestConfig = {headers};
+      const response: AxiosResponse = await this.#session.get(url, config);
       const responseData = response.data;
 
       try {
@@ -139,42 +119,17 @@ class ToolboxClient {
   }
 
   /**
-   * Add headers to be included in each request sent through this client.
-   *
-   * @param {ClientHeadersConfig} headers - Headers to include in each request.
-   * Keys are header names, and values are functions (sync or async) that return the header string.
-   * @throws {Error} If any of the header names are already registered in the client.
-   */
-  public addHeaders(headers: ClientHeadersConfig): void {
-    const incomingHeaderKeys = Object.keys(headers);
-    const existingHeaderKeys = Object.keys(this._clientHeaders);
-
-    const duplicates = incomingHeaderKeys.filter(key =>
-      existingHeaderKeys.includes(key)
-    );
-
-    if (duplicates.length > 0) {
-      throw new Error(
-        `Client header(s) \`${duplicates.join(', ')}\` already registered in the client.`
-      );
-    }
-
-    this._clientHeaders = {...this._clientHeaders, ...headers};
-  }
-
-  /**
    * Creates a ToolboxTool instance from its schema.
    * @param {string} toolName - The name of the tool.
    * @param {ToolSchemaFromManifest} toolSchema - The schema definition of the tool from the manifest.
-   * @param {BoundParams} [allBoundParams] - A map of all candidate parameters to bind.
+   * @param {BoundParams} [boundParams] - A map of all candidate parameters to bind.
    * @returns {ReturnType<typeof ToolboxTool>} A ToolboxTool function.
-   * @private
    */
-  private _createToolInstance(
+  #createToolInstance(
     toolName: string,
     toolSchema: ToolSchemaFromManifest,
-    authTokenGetters?: AuthTokenGetters | null,
-    allBoundParams?: BoundParams | null
+    authTokenGetters: AuthTokenGetters = [],
+    allBoundParams: BoundParams = [],
   ): {
     tool: ReturnType<typeof ToolboxTool>;
     usedAuthKeys: Set<string>;
@@ -218,7 +173,6 @@ class ToolboxClient {
     const usedBoundKeys = new Set(Object.keys(boundParams));
 
     return {tool, usedAuthKeys, usedBoundKeys};
-  }
 
   /**
    * Asynchronously loads a tool from the server.
@@ -228,6 +182,7 @@ class ToolboxClient {
    *
    * @param {BoundParams} [boundParams] - Optional parameters to pre-bind to the tool.
    * @param {string} name - The unique name or identifier of the tool to load.
+   * @param {BoundParams} [boundParams] - Optional parameters to pre-bind to the tool.
    * @returns {Promise<ReturnType<typeof ToolboxTool>>} A promise that resolves
    * to a ToolboxTool function, ready for execution.
    * @throws {Error} If the tool is not found in the manifest, the manifest structure is invalid,
@@ -235,11 +190,11 @@ class ToolboxClient {
    */
   async loadTool(
     name: string,
-    authTokenGetters: AuthTokenGetters | null = {},
+    authTokenGetters: AuthTokenGetters = [],
     boundParams: BoundParams = {}
   ): Promise<ReturnType<typeof ToolboxTool>> {
     const apiPath = `/api/tool/${name}`;
-    const manifest = await this._fetchAndParseManifest(apiPath);
+    const manifest = await this.#fetchAndParseManifest(apiPath);
 
     if (
       manifest.tools &&

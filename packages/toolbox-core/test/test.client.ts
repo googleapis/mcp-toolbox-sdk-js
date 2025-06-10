@@ -82,14 +82,22 @@ describe('ToolboxClient', () => {
   const testBaseUrl = 'http://api.example.com';
   let consoleErrorSpy: jest.SpyInstance;
   let mockSessionGet: jest.Mock;
+  let autoCreatedSession: AxiosInstance;
 
   beforeEach(() => {
     jest.resetAllMocks();
 
     mockSessionGet = jest.fn();
-    mockedAxios.create.mockReturnValue({
+    autoCreatedSession = {
       get: mockSessionGet,
-    } as unknown as AxiosInstance);
+      post: jest.fn(),
+      defaults: {headers: {} as import('axios').HeadersDefaults},
+      interceptors: {
+        request: {use: jest.fn()},
+        response: {use: jest.fn()},
+      } as unknown as import('axios').AxiosInstance['interceptors'],
+    } as unknown as AxiosInstance;
+    mockedAxios.create.mockReturnValue(autoCreatedSession);
 
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
@@ -100,22 +108,17 @@ describe('ToolboxClient', () => {
 
   describe('constructor', () => {
     it('should set baseUrl and create a new session if one is not provided', () => {
-      const client = new ToolboxClient(testBaseUrl);
+      new ToolboxClient(testBaseUrl);
 
-      expect(client['_baseUrl']).toBe(testBaseUrl);
       expect(mockedAxios.create).toHaveBeenCalledTimes(1);
       expect(mockedAxios.create).toHaveBeenCalledWith({baseURL: testBaseUrl});
-      expect(client['_session'].get).toBe(mockSessionGet);
     });
 
     it('should set baseUrl and use the provided session if one is given', () => {
       const customMockSession = {
         get: mockSessionGet,
       } as unknown as AxiosInstance;
-      const client = new ToolboxClient(testBaseUrl, customMockSession);
-
-      expect(client['_baseUrl']).toBe(testBaseUrl);
-      expect(client['_session']).toBe(customMockSession);
+      new ToolboxClient(testBaseUrl, customMockSession);
       expect(mockedAxios.create).not.toHaveBeenCalled();
     });
   });
@@ -173,6 +176,9 @@ describe('ToolboxClient', () => {
           getName: jest.fn().mockReturnValue(toolName),
           getDescription: jest.fn().mockReturnValue(toolDefinition.description),
           getParamSchema: jest.fn().mockReturnValue(zodParamsSchema),
+          boundParams: {},
+          bindParams: jest.fn().mockReturnThis(),
+          bindParam: jest.fn().mockReturnThis(),
         }
       );
 
@@ -212,13 +218,51 @@ describe('ToolboxClient', () => {
         mockToolDefinition.parameters as unknown as ParameterSchema[] // Cast if createZodSchemaFromParams expects ParameterSchema[]
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
-        client['_session'],
+        autoCreatedSession,
         testBaseUrl,
         toolName,
         mockToolDefinition.description,
-        zodParamsSchema
+        zodParamsSchema,
+        {} // boundParams defaults to empty object
       );
       expect(loadedTool).toBe(toolInstance);
+    });
+
+    it('should successfully load a tool with valid bound parameters', async () => {
+      const mockToolDefinition = {
+        description: 'Performs calculations',
+        parameters: [
+          {name: 'expression', type: 'string', description: 'Math expression'},
+          {name: 'precision', type: 'number', description: 'Decimal places'},
+        ],
+      };
+      const boundParams = {expression: '2+2'};
+      setupMocksForSuccessfulLoad(mockToolDefinition);
+
+      await client.loadTool(toolName, boundParams);
+
+      // Assert that the factory was called with the applicable bound parameters
+      expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
+        autoCreatedSession,
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        boundParams
+      );
+    });
+
+    it('should throw an error if unused bound parameters are provided', async () => {
+      const mockToolDefinition = {
+        description: 'A tool',
+        parameters: [{name: 'param1', type: 'string', description: 'A param'}],
+      };
+      const boundParams = {param1: 'value1', unusedParam: 'value2'};
+      setupMocksForSuccessfulLoad(mockToolDefinition);
+
+      await expect(client.loadTool(toolName, boundParams)).rejects.toThrow(
+        `Validation failed for tool '${toolName}': unused bound parameters: unusedParam.`
+      );
     });
 
     it('should throw an error if manifest parsing fails', async () => {
@@ -336,6 +380,9 @@ describe('ToolboxClient', () => {
           getName: jest.fn().mockReturnValue(tName),
           getDescription: jest.fn().mockReturnValue(tDef.description),
           getParamSchema: jest.fn().mockReturnValue(zodParamsSchemas[tName]),
+          boundParams: {},
+          bindParams: jest.fn().mockReturnThis(),
+          bindParam: jest.fn().mockReturnThis(),
         });
       });
 
@@ -409,23 +456,80 @@ describe('ToolboxClient', () => {
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledTimes(2);
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
-        client['_session'],
+        autoCreatedSession,
         testBaseUrl,
         'toolA',
         mockToolDefinitions.toolA.description,
-        zodParamsSchemas.toolA
+        zodParamsSchemas.toolA,
+        {}
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
-        client['_session'],
+        autoCreatedSession,
         testBaseUrl,
         'toolB',
         mockToolDefinitions.toolB.description,
-        zodParamsSchemas.toolB
+        zodParamsSchemas.toolB,
+        {}
       );
       expect(loadedTools).toEqual(
         expect.arrayContaining([toolInstances.toolA, toolInstances.toolB])
       );
       expect(loadedTools.length).toBe(2);
+    });
+
+    it('should successfully load a toolset with bound parameters applicable to its tools', async () => {
+      const toolsetName = 'my-toolset';
+      const mockToolDefinitions: Record<string, InferredZodTool> = {
+        toolA: {
+          description: 'Tool A',
+          parameters: [{name: 'paramA', type: 'string'} as ParameterSchema],
+        },
+        toolB: {
+          description: 'Tool B',
+          parameters: [{name: 'paramB', type: 'integer'} as ParameterSchema],
+        },
+      };
+      const boundParams = {paramA: 'valueA', paramB: 123};
+
+      setupMocksForSuccessfulToolsetLoad(mockToolDefinitions);
+      await client.loadToolset(toolsetName, boundParams);
+
+      expect(MockedToolboxToolFactory).toHaveBeenCalledTimes(2);
+      expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
+        autoCreatedSession,
+        expect.anything(),
+        'toolA',
+        expect.anything(),
+        expect.anything(),
+        boundParams
+      );
+      expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
+        autoCreatedSession,
+        expect.anything(),
+        'toolB',
+        expect.anything(),
+        expect.anything(),
+        boundParams
+      );
+    });
+
+    it('should throw an error if bound parameters cannot be applied to any tool in the set', async () => {
+      const toolsetName = 'my-toolset';
+      const mockToolDefinitions: Record<string, InferredZodTool> = {
+        toolA: {
+          description: 'Tool A',
+          parameters: [{name: 'paramA', type: 'string'} as ParameterSchema],
+        },
+      };
+      const boundParams = {paramA: 'valueA', unusedParam: 'value2'};
+
+      setupMocksForSuccessfulToolsetLoad(mockToolDefinitions);
+
+      await expect(
+        client.loadToolset(toolsetName, boundParams)
+      ).rejects.toThrow(
+        `Validation failed for toolset '${toolsetName}': unused bound parameters could not be applied to any tool: unusedParam.`
+      );
     });
 
     it('should request the default toolset if no name is provided', async () => {

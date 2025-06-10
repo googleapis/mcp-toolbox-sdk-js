@@ -26,7 +26,7 @@ import {
 } from './protocol.js';
 import {logApiError} from './errorUtils.js';
 import {ZodError} from 'zod';
-import {BoundParams, identifyAuthRequirements} from './utils.js';
+import {BoundParams, identifyAuthRequirements, resolveValue} from './utils.js';
 import {AuthTokenGetters, RequiredAuthnParams} from './tool.js';
 
 type Manifest = import('zod').infer<typeof ZodManifestSchema>;
@@ -128,8 +128,8 @@ class ToolboxClient {
   #createToolInstance(
     toolName: string,
     toolSchema: ToolSchemaFromManifest,
-    authTokenGetters: AuthTokenGetters = [],
-    allBoundParams: BoundParams = [],
+    authTokenGetters: AuthTokenGetters = {},
+    boundParams: BoundParams = {}
   ): {
     tool: ReturnType<typeof ToolboxTool>;
     usedAuthKeys: Set<string>;
@@ -137,13 +137,13 @@ class ToolboxClient {
   } {
     const params: ParameterSchema[] = [];
     const authParams: RequiredAuthnParams = {};
-    const boundParams: BoundParams = {};
+    const currBoundParams: BoundParams = {};
 
     for (const p of toolSchema.parameters) {
       if (p.authSources && p.authSources.length > 0) {
         authParams[p.name] = p.authSources;
-      } else if (allBoundParams && p.name in allBoundParams) {
-        boundParams[p.name] = allBoundParams[p.name];
+      } else if (boundParams && p.name in boundParams) {
+        currBoundParams[p.name] = boundParams[p.name];
       } else {
         params.push(p);
       }
@@ -159,20 +159,22 @@ class ToolboxClient {
     const paramZodSchema = createZodSchemaFromParams(params);
 
     const tool = ToolboxTool(
-      this._session,
-      this._baseUrl,
+      this.#session,
+      this.#baseUrl,
       toolName,
       toolSchema.description,
       paramZodSchema,
-      boundParams,
-      authTokenGetters || {},
+      authTokenGetters,
       remainingAuthnParams,
-      remainingAuthzTokens
+      remainingAuthzTokens,
+      currBoundParams,
+      this.#clientHeaders
     );
 
-    const usedBoundKeys = new Set(Object.keys(boundParams));
+    const usedBoundKeys = new Set(Object.keys(currBoundParams));
 
     return {tool, usedAuthKeys, usedBoundKeys};
+  }
 
   /**
    * Asynchronously loads a tool from the server.
@@ -190,7 +192,7 @@ class ToolboxClient {
    */
   async loadTool(
     name: string,
-    authTokenGetters: AuthTokenGetters = [],
+    authTokenGetters: AuthTokenGetters = {},
     boundParams: BoundParams = {}
   ): Promise<ReturnType<typeof ToolboxTool>> {
     const apiPath = `/api/tool/${name}`;
@@ -201,16 +203,14 @@ class ToolboxClient {
       Object.prototype.hasOwnProperty.call(manifest.tools, name)
     ) {
       const specificToolSchema = manifest.tools[name];
-      const {tool, usedAuthKeys, usedBoundKeys} = this._createToolInstance(
+      const {tool, usedAuthKeys, usedBoundKeys} = this.#createToolInstance(
         name,
         specificToolSchema,
         authTokenGetters || undefined,
         boundParams
       );
 
-      const providedAuthKeys = new Set(
-        authTokenGetters ? Object.keys(authTokenGetters) : []
-      );
+      const providedAuthKeys = new Set(Object.keys(authTokenGetters));
       const providedBoundKeys = new Set(Object.keys(boundParams));
       const unusedAuth = [...providedAuthKeys].filter(
         key => !usedAuthKeys.has(key)
@@ -246,7 +246,7 @@ class ToolboxClient {
    * @param {string | null} [name] - Name of the toolset to load. If null or undefined, loads the default toolset.
    * @param {AuthTokenGetters} [authTokenGetters] - Optional map of auth service names to token getters.
    * @param {BoundParams} [boundParams] - Optional parameters to pre-bind to the tools in the toolset.
-   * @param {boolean} [strict=false] - If true, throws an error if any provided auth token or bound param is not used by at least one tool.
+   * @param {strict} [Boolean] - If true, throws an error if any provided auth token or bound param is not used by at least one tool.
    * @returns {Promise<Array<ReturnType<typeof ToolboxTool>>>} A promise that resolves
    * to a list of ToolboxTool functions, ready for execution.
    * @throws {Error} If the manifest structure is invalid or if there's an error fetching data from the API.
@@ -260,7 +260,7 @@ class ToolboxClient {
     const toolsetName = name || '';
     const apiPath = `/api/toolset/${toolsetName}`;
 
-    const manifest = await this._fetchAndParseManifest(apiPath);
+    const manifest = await this.#fetchAndParseManifest(apiPath);
     const tools: Array<ReturnType<typeof ToolboxTool>> = [];
 
     const overallUsedAuthKeys: Set<string> = new Set();
@@ -271,10 +271,10 @@ class ToolboxClient {
     const providedBoundKeys = new Set(Object.keys(boundParams));
 
     for (const [toolName, toolSchema] of Object.entries(manifest.tools)) {
-      const {tool, usedAuthKeys, usedBoundKeys} = this._createToolInstance(
+      const {tool, usedAuthKeys, usedBoundKeys} = this.#createToolInstance(
         toolName,
         toolSchema,
-        authTokenGetters,
+        authTokenGetters || {},
         boundParams
       );
       tools.push(tool);

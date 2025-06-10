@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import {ZodObject, ZodError, ZodRawShape} from 'zod';
-import {AxiosInstance, AxiosRequestConfig, AxiosResponse} from 'axios';
+import {AxiosInstance, AxiosResponse} from 'axios';
+
 import {logApiError} from './errorUtils.js';
 import {
   BoundParams,
@@ -28,6 +29,15 @@ export type AuthTokenGetters = Record<string, AuthTokenGetter>;
 export type RequiredAuthnParams = Record<string, string[]>;
 
 /**
+ * A helper function to get the formatted auth token header name.
+ * @param {string} authTokenName - The name of the authentication service.
+ * @returns {string} The formatted header name.
+ */
+function getAuthHeaderName(authTokenName: string): string {
+  return `${authTokenName}_token`;
+}
+
+/**
  * Creates a callable tool function representing a specific tool on a remote
  * Toolbox server.
  *
@@ -36,10 +46,10 @@ export type RequiredAuthnParams = Record<string, string[]>;
  * @param {string} name - The name of the remote tool.
  * @param {string} description - A description of the remote tool.
  * @param {ZodObject<any>} paramSchema - The Zod schema for validating the tool's parameters.
- * @param {BoundParams} [boundParams] - Optional parameters to pre-bind to the tool.
  * @param {AuthTokenGetters} [authTokenGetters] - Optional map of auth service names to token getters.
  * @param {RequiredAuthnParams} [requiredAuthnParams] - Optional map of auth params that still need satisfying.
  * @param {string[]} [requiredAuthzTokens] - Optional list of auth tokens that still need satisfying.
+ * @param {BoundParams} [boundParams] - Optional parameters to pre-bind to the tool.
  * @param {ClientHeadersConfig} [clientHeaders] - Optional client-specific headers.
  * @returns {CallableTool & CallableToolProperties} An async function that, when
  * called, invokes the tool with the provided arguments.
@@ -50,12 +60,32 @@ function ToolboxTool(
   name: string,
   description: string,
   paramSchema: ZodObject<ZodRawShape>,
-  boundParams: BoundParams = {},
   authTokenGetters: AuthTokenGetters = {},
   requiredAuthnParams: RequiredAuthnParams = {},
-  requiredAuthzTokens: string[] = []
+  requiredAuthzTokens: string[] = [],
+  boundParams: BoundParams = {},
   clientHeaders: ClientHeadersConfig = {}
 ) {
+  if (
+    (Object.keys(authTokenGetters).length > 0 ||
+      Object.keys(clientHeaders).length > 0) &&
+    !baseUrl.startsWith('https://')
+  ) {
+    console.warn(
+      'Sending ID token over HTTP. User data may be exposed. Use HTTPS for secure communication.'
+    );
+  }
+
+  const requestHeaderNames = Object.keys(clientHeaders);
+  const authTokenNames = Object.keys(authTokenGetters).map(getAuthHeaderName);
+  const duplicates = requestHeaderNames.filter(h => authTokenNames.includes(h));
+
+  if (duplicates.length > 0) {
+    throw new Error(
+      `Client header(s) \`${duplicates.join(', ')}\` already registered in client. Cannot register the same headers in the client as well as tool.`
+    );
+  }
+
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
   const boundKeys = Object.keys(boundParams);
   const userParamSchema = paramSchema.omit(
@@ -116,7 +146,17 @@ function ToolboxTool(
           `Auth token getter for '${authService}' did not return a string.`
         );
       }
-      headers[`${authService}_token`] = token;
+      headers[getAuthHeaderName(authService)] = token;
+    }
+
+    for (const [headerName, headerValue] of Object.entries(clientHeaders)) {
+      const resolvedHeaderValue = await resolveValue(headerValue);
+      if (typeof resolvedHeaderValue !== 'string') {
+        throw new Error(
+          `Client header '${headerName}' did not resolve to a string.`
+        );
+      }
+      headers[headerName] = resolvedHeaderValue;
     }
 
     try {
@@ -136,6 +176,7 @@ function ToolboxTool(
   callable.authTokenGetters = authTokenGetters;
   callable.requiredAuthnParams = requiredAuthnParams;
   callable.requiredAuthzTokens = requiredAuthzTokens;
+  callable.clientHeaders = clientHeaders;
 
   callable.getName = function () {
     return this.toolName;
@@ -161,6 +202,17 @@ function ToolboxTool(
       );
     }
 
+    const requestHeaderNames = Object.keys(this.clientHeaders);
+    const authTokenNames = incomingServices.map(getAuthHeaderName);
+    const headerDuplicates = requestHeaderNames.filter(h =>
+      authTokenNames.includes(h)
+    );
+    if (headerDuplicates.length > 0) {
+      throw new Error(
+        `Client header(s) \`${headerDuplicates.join(', ')}\` already registered in client. Cannot register the same headers in the client as well as tool.`
+      );
+    }
+
     const combinedGetters = {...this.authTokenGetters, ...newAuthTokenGetters};
 
     const [newReqAuthnParams, newReqAuthzTokens, usedServices] =
@@ -183,10 +235,11 @@ function ToolboxTool(
       this.toolName,
       this.description,
       this.params,
-      this.boundParams,
       combinedGetters,
       newReqAuthnParams,
-      newReqAuthzTokens
+      newReqAuthzTokens,
+      this.boundParams,
+      this.clientHeaders
     );
   };
 
@@ -219,11 +272,11 @@ function ToolboxTool(
       this.toolName,
       this.description,
       this.params,
-      newBoundParams,
       this.authTokenGetters,
       this.requiredAuthnParams,
-      this.requiredAuthzTokens
-      clientHeaders
+      this.requiredAuthzTokens,
+      newBoundParams,
+      this.clientHeaders
     );
   };
 

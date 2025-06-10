@@ -34,12 +34,13 @@ jest.mock('../src/toolbox_core/utils', () => ({
 
 describe('ToolboxTool', () => {
   // Common constants for the tool
-  const baseURL = 'http://api.example.com';
+  const baseURL = 'https://api.example.com';
   const toolName = 'myTestTool';
   const toolDescription = 'This is a description for the test tool.';
 
   // Variables to be initialized in beforeEach
   let basicParamSchema: ZodObject<ZodRawShape>;
+  let consoleWarnSpy: jest.SpyInstance;
   let consoleErrorSpy: jest.SpyInstance;
   let tool: ReturnType<typeof ToolboxTool>;
 
@@ -55,27 +56,27 @@ describe('ToolboxTool', () => {
       limit: z.number().optional(),
     });
 
-    // Spy on console.error to prevent logging and allow assertions
+    // Spy on console to prevent logging and allow assertions
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
-    // Restore the original console.error
+    // Restore the original console methods
+    consoleWarnSpy.mockRestore();
     consoleErrorSpy.mockRestore();
     jest.clearAllMocks();
   });
 
   describe('Factory Properties and Getters', () => {
     beforeEach(() => {
-      // Note: The implementation of ToolboxTool should handle `boundParams` being
-      // undefined in the initial call, defaulting it to an empty object.
       tool = ToolboxTool(
         mockSession,
         baseURL,
         toolName,
         toolDescription,
         basicParamSchema,
-        {} // Explicitly pass empty object for clarity
+        {}
       );
     });
 
@@ -99,6 +100,61 @@ describe('ToolboxTool', () => {
 
     it('getParamSchema() should return the parameter schema', () => {
       expect(tool.getParamSchema()).toBe(basicParamSchema);
+    });
+
+    it('should warn when using an HTTP URL with authTokenGetters', () => {
+      const httpBaseURL = 'http://api.insecure.com';
+      ToolboxTool(
+        mockSession,
+        httpBaseURL,
+        toolName,
+        toolDescription,
+        basicParamSchema,
+        {service1: () => 'token'}
+      );
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Sending ID token over HTTP. User data may be exposed. Use HTTPS for secure communication.'
+      );
+    });
+
+    it('should warn when using an HTTP URL with clientHeaders', () => {
+      const httpBaseURL = 'http://api.insecure.com';
+      ToolboxTool(
+        mockSession,
+        httpBaseURL,
+        toolName,
+        toolDescription,
+        basicParamSchema,
+        {},
+        {},
+        [],
+        {},
+        {'x-api-key': 'key'}
+      );
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Sending ID token over HTTP. User data may be exposed. Use HTTPS for secure communication.'
+      );
+    });
+
+    it('should throw an error if client headers and auth tokens have conflicting names', () => {
+      const authTokenGetters = {service1: () => 'token'};
+      const clientHeaders = {service1_token: 'some-other-token'}; // Conflicts with service1
+      expect(() => {
+        ToolboxTool(
+          mockSession,
+          baseURL,
+          toolName,
+          toolDescription,
+          basicParamSchema,
+          authTokenGetters,
+          {},
+          [],
+          {},
+          clientHeaders
+        );
+      }).toThrow(
+        'Client header(s) `service1_token` already registered in client. Cannot register the same headers in the client as well as tool.'
+      );
     });
   });
 
@@ -135,16 +191,9 @@ describe('ToolboxTool', () => {
       );
       const invalidArgs = {query: ''}; // Fails because of empty string
 
-      try {
-        await currentTool(invalidArgs);
-        throw new Error(
-          `Expected currentTool to throw a Zod validation error for tool "${toolName}", but it did not.`
-        );
-      } catch (e) {
-        expect((e as Error).message).toBe(
-          `Argument validation failed for tool "${toolName}":\n - query: Query cannot be empty`
-        );
-      }
+      await expect(currentTool(invalidArgs)).rejects.toThrow(
+        `Argument validation failed for tool "${toolName}":\n - query: Query cannot be empty`
+      );
       expect(mockAxiosPost).not.toHaveBeenCalled();
     });
 
@@ -162,24 +211,11 @@ describe('ToolboxTool', () => {
       );
       const invalidArgs = {name: '', age: -5};
 
-      try {
-        await currentTool(invalidArgs);
-        throw new Error(
-          'Expected currentTool to throw a Zod validation error, but it did not.'
-        );
-      } catch (e) {
-        expect((e as Error).message).toEqual(
-          expect.stringContaining(
-            `Argument validation failed for tool "${toolName}":`
-          )
-        );
-        expect((e as Error).message).toEqual(
-          expect.stringContaining('name: Name is required')
-        );
-        expect((e as Error).message).toEqual(
-          expect.stringContaining('age: Age must be positive')
-        );
-      }
+      await expect(currentTool(invalidArgs)).rejects.toThrow(
+        new RegExp(
+          `Argument validation failed for tool "${toolName}":\\s*-\\s*name: Name is required\\s*-\\s*age: Age must be positive`
+        )
+      );
       expect(mockAxiosPost).not.toHaveBeenCalled();
     });
 
@@ -200,16 +236,9 @@ describe('ToolboxTool', () => {
       );
       const callArgs = {query: 'some query'};
 
-      try {
-        await currentTool(callArgs);
-        throw new Error(
-          'Expected currentTool to throw a non-Zod error during parsing, but it did not.'
-        );
-      } catch (e) {
-        expect((e as Error).message).toBe(
-          `Argument validation failed: ${String(customError)}`
-        );
-      }
+      await expect(currentTool(callArgs)).rejects.toThrow(
+        `Argument validation failed: ${String(customError)}`
+      );
       expect(mockAxiosPost).not.toHaveBeenCalled();
     });
 
@@ -245,21 +274,9 @@ describe('ToolboxTool', () => {
         toolDescription,
         basicParamSchema
       );
-      try {
-        await currentTool();
-        throw new Error(
-          `Expected currentTool to throw a Zod validation error for tool "${toolName}" when no args provided, but it did not.`
-        );
-      } catch (e) {
-        expect((e as Error).message).toEqual(
-          expect.stringContaining(
-            'Argument validation failed for tool "myTestTool":'
-          )
-        );
-        expect((e as Error).message).toEqual(
-          expect.stringContaining('query: Required')
-        );
-      }
+      await expect(currentTool()).rejects.toThrow(
+        'Argument validation failed for tool "myTestTool":\n - query: Required'
+      );
       expect(mockAxiosPost).not.toHaveBeenCalled();
     });
   });
@@ -297,14 +314,8 @@ describe('ToolboxTool', () => {
       const apiError = new Error('API request failed');
       mockAxiosPost.mockRejectedValueOnce(apiError);
 
-      try {
-        await tool(validArgs);
-        throw new Error(
-          'Expected tool call to throw an API error with response data, but it did not.'
-        );
-      } catch (e) {
-        expect(e).toBe(apiError);
-      }
+      await expect(tool(validArgs)).rejects.toThrow(apiError);
+
       expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs, {
         headers: {},
       });
@@ -335,9 +346,18 @@ describe('ToolboxTool', () => {
       expect(tool.boundParams).toEqual({});
     });
 
-    it('should create a new tool with a single bound parameter using bindParam', () => {
+    it('should create a new tool with a single bound parameter using bindParam and use it in the call', async () => {
       const boundTool = tool.bindParam('limit', 20);
       expect(boundTool.boundParams).toEqual({limit: 20});
+
+      // Also test execution
+      mockAxiosPost.mockResolvedValueOnce({data: 'success'});
+      await boundTool({query: 'single bind test'});
+      expect(mockAxiosPost).toHaveBeenCalledWith(
+        expectedUrl,
+        {query: 'single bind test', limit: 20},
+        {headers: {}}
+      );
     });
 
     it('should merge bound parameters with call arguments in the final payload', async () => {
@@ -417,10 +437,11 @@ describe('ToolboxTool', () => {
         toolName,
         toolDescription,
         basicParamSchema,
-        {},
-        {},
+        {}, // authTokenGetters
         initialRequiredAuthn,
-        initialRequiredAuthz
+        initialRequiredAuthz,
+        {}, // boundParams
+        {} // clientHeaders
       );
     });
 
@@ -507,6 +528,7 @@ describe('ToolboxTool', () => {
         'service1',
         badTokenGetter as unknown as () => string
       );
+      // Manually clear requirements to bypass the initial check
       authedTool.requiredAuthnParams = {};
       authedTool.requiredAuthzTokens = [];
 
@@ -533,13 +555,34 @@ describe('ToolboxTool', () => {
       (utils.identifyAuthRequirements as jest.Mock).mockReturnValue([
         initialRequiredAuthn,
         initialRequiredAuthz,
-        new Set(),
+        new Set(), // No services from the getter were used
       ]);
 
       expect(() =>
         tool.addAuthTokenGetter('unusedService', () => 'token')
       ).toThrow(
         `Authentication source(s) \`unusedService\` unused by tool \`${toolName}\`.`
+      );
+    });
+
+    it('should throw an error if adding an auth token conflicts with a client header', () => {
+      const toolWithClientHeader = ToolboxTool(
+        mockSession,
+        baseURL,
+        toolName,
+        toolDescription,
+        basicParamSchema,
+        {},
+        {},
+        [],
+        {},
+        {service1_token: 'api-key'} // This will conflict
+      );
+
+      expect(() =>
+        toolWithClientHeader.addAuthTokenGetter('service1', () => 'token')
+      ).toThrow(
+        'Client header(s) `service1_token` already registered in client. Cannot register the same headers in the client as well as tool.'
       );
     });
   });

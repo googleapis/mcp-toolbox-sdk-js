@@ -100,9 +100,9 @@ class ToolboxClient {
    * @throws {Error} If there's an error fetching data or if the manifest structure is invalid.
    */
   async #fetchAndParseManifest(apiPath: string): Promise<Manifest> {
-    const url = `${this.#baseUrl}${apiPath}`;
+    const url = `${this._baseUrl}${apiPath}`;
     try {
-      const response: AxiosResponse = await this.#session.get(url);
+      const response: AxiosResponse = await this._session.get(url);
       const responseData = response.data;
 
       try {
@@ -160,8 +160,8 @@ class ToolboxClient {
 
     const paramZodSchema = createZodSchemaFromParams(toolSchema.parameters);
     const tool = ToolboxTool(
-      this.#session,
-      this.#baseUrl,
+      this._session,
+      this._baseUrl,
       toolName,
       toolSchema.description,
       paramZodSchema,

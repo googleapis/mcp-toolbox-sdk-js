@@ -91,7 +91,7 @@ class ToolboxClient {
   #createToolInstance(
     toolName: string,
     toolSchema: ToolSchemaFromManifest,
-    boundParams?: BoundParams
+    boundParams: BoundParams = {}
   ): {
     tool: ReturnType<typeof ToolboxTool>;
     usedBoundKeys: Set<string>;
@@ -100,12 +100,10 @@ class ToolboxClient {
     const applicableBoundParams: Record<string, BoundValue> = {};
     const usedBoundKeys = new Set<string>();
 
-    if (boundParams) {
-      for (const key in boundParams) {
-        if (toolParamNames.has(key)) {
-          applicableBoundParams[key] = boundParams[key];
-          usedBoundKeys.add(key);
-        }
+    for (const key in boundParams) {
+      if (toolParamNames.has(key)) {
+        applicableBoundParams[key] = boundParams[key];
+        usedBoundKeys.add(key);
       }
     }
 

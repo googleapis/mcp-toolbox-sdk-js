@@ -185,35 +185,18 @@ that fresh credentials or header values can be used.
 
 ### Configuration
 
-You can configure these dynamic headers in two ways:
+You can configure these dynamic headers as seen below:
 
-1. **During Client Initialization**
+```javascript
+import { ToolboxClient } from '@toolbox/core';
+import {getGoogleIdToken} from '@toolbox/core/auth'
 
-    ```javascript
-    import { ToolboxClient } from '@toolbox/core';
-    import {getGoogleIdToken} from '@toolbox/core/auth'
+const URL = "http://toolbox-service-url";
+const getGoogleIdTokenGetter = () => getGoogleIdToken(URL);
+const client = new ToolboxClient(URL, null, {"Authorization": getGoogleIdTokenGetter});
 
-    const URL = "http://toolbox-service-url";
-    const getGoogleIdTokenGetter = () => getGoogleIdToken(URL);
-    const client = new ToolboxClient(URL, null, {"Authorization": getGoogleIdTokenGetter});
-
-    // Use the client as usual
-    ```
-
-1. **After Client Initialization**
-
-    ```javascript
-    import { ToolboxClient } from '@toolbox/core';
-    import {getGoogleIdToken} from '@toolbox/core/auth'
-
-    const URL = "http://toolbox-service-url";
-    const getGoogleIdTokenGetter = () => getGoogleIdToken(URL);
-
-    let client = new ToolboxClient(URL);
-    client.addHeaders({"Authorization": getGoogleIdTokenGetter});
-
-    // Use the client as usual
-    ```
+// Use the client as usual
+```
 
 ### Authenticating with Google Cloud Servers
 

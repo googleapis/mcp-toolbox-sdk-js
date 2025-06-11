@@ -182,9 +182,9 @@ class ToolboxClient {
    * returns a callable (`ToolboxTool`) that can be used to invoke the
    * tool remotely.
    *
-   * @param {BoundParams} [boundParams] - Optional parameters to pre-bind to the tool.
    * @param {string} name - The unique name or identifier of the tool to load.
-   * @param {BoundParams} [boundParams] - Optional parameters to pre-bind to the tool.
+   * @param {AuthTokenGetters | null} [authTokenGetters] - Optional map of auth service names to token getters. Can be null.
+   * @param {BoundParams | null} [boundParams] - Optional parameters to pre-bind to the tool.
    * @returns {Promise<ReturnType<typeof ToolboxTool>>} A promise that resolves
    * to a ToolboxTool function, ready for execution.
    * @throws {Error} If the tool is not found in the manifest, the manifest structure is invalid,
@@ -192,8 +192,8 @@ class ToolboxClient {
    */
   async loadTool(
     name: string,
-    authTokenGetters: AuthTokenGetters = {},
-    boundParams: BoundParams = {}
+    authTokenGetters: AuthTokenGetters | null = {},
+    boundParams: BoundParams | null = {}
   ): Promise<ReturnType<typeof ToolboxTool>> {
     const apiPath = `/api/tool/${name}`;
     const manifest = await this.#fetchAndParseManifest(apiPath);
@@ -207,11 +207,15 @@ class ToolboxClient {
         name,
         specificToolSchema,
         authTokenGetters || undefined,
-        boundParams
+        boundParams || {}
       );
 
-      const providedAuthKeys = new Set(Object.keys(authTokenGetters));
-      const providedBoundKeys = new Set(Object.keys(boundParams));
+      const providedAuthKeys = new Set(
+        authTokenGetters ? Object.keys(authTokenGetters) : []
+      );
+      const providedBoundKeys = new Set(
+        boundParams ? Object.keys(boundParams) : []
+      );
       const unusedAuth = [...providedAuthKeys].filter(
         key => !usedAuthKeys.has(key)
       );
@@ -244,9 +248,9 @@ class ToolboxClient {
    * Asynchronously fetches a toolset and loads all tools defined within it.
    *
    * @param {string | null} [name] - Name of the toolset to load. If null or undefined, loads the default toolset.
-   * @param {AuthTokenGetters} [authTokenGetters] - Optional map of auth service names to token getters.
-   * @param {BoundParams} [boundParams] - Optional parameters to pre-bind to the tools in the toolset.
-   * @param {strict} [Boolean] - If true, throws an error if any provided auth token or bound param is not used by at least one tool.
+   * @param {AuthTokenGetters | null} [authTokenGetters] - Optional map of auth service names to token getters.
+   * @param {BoundParams | null} [boundParams] - Optional parameters to pre-bind to the tools in the toolset.
+   * @param {boolean} [strict=false] - If true, throws an error if any provided auth token or bound param is not used by at least one tool.
    * @returns {Promise<Array<ReturnType<typeof ToolboxTool>>>} A promise that resolves
    * to a list of ToolboxTool functions, ready for execution.
    * @throws {Error} If the manifest structure is invalid or if there's an error fetching data from the API.
@@ -254,8 +258,8 @@ class ToolboxClient {
   async loadToolset(
     name?: string,
     authTokenGetters: AuthTokenGetters | null = {},
-    boundParams: BoundParams = {},
-    strict: Boolean = false
+    boundParams: BoundParams | null = {},
+    strict = false
   ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
     const toolsetName = name || '';
     const apiPath = `/api/toolset/${toolsetName}`;
@@ -268,14 +272,16 @@ class ToolboxClient {
     const providedAuthKeys = new Set(
       authTokenGetters ? Object.keys(authTokenGetters) : []
     );
-    const providedBoundKeys = new Set(Object.keys(boundParams));
+    const providedBoundKeys = new Set(
+      boundParams ? Object.keys(boundParams) : []
+    );
 
     for (const [toolName, toolSchema] of Object.entries(manifest.tools)) {
       const {tool, usedAuthKeys, usedBoundKeys} = this.#createToolInstance(
         toolName,
         toolSchema,
         authTokenGetters || {},
-        boundParams
+        boundParams || {}
       );
       tools.push(tool);
 

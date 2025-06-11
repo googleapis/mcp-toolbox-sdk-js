@@ -183,7 +183,7 @@ class ToolboxClient {
    * tool remotely.
    *
    * @param {string} name - The unique name or identifier of the tool to load.
-   * @param {AuthTokenGetters | null} [authTokenGetters] - Optional map of auth service names to token getters. Can be null.
+   * @param {AuthTokenGetters | null} [authTokenGetters] - Optional map of auth service names to token getters.
    * @param {BoundParams | null} [boundParams] - Optional parameters to pre-bind to the tool.
    * @returns {Promise<ReturnType<typeof ToolboxTool>>} A promise that resolves
    * to a ToolboxTool function, ready for execution.

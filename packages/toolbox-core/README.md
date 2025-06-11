@@ -1,6 +1,6 @@
 ![MCP Toolbox Logo](https://raw.githubusercontent.com/googleapis/genai-toolbox/main/logo.png)
 
-# MCP Toolbox Core SDK
+# MCP Toolbox SDKs for Javascript
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
@@ -15,7 +15,7 @@ involving Large Language Models (LLMs).
 
 <!-- TOC ignore:true -->
 <!-- TOC -->
-
+- [Supported Environments](#supported-environments)
 - [Installation](#installation)
 - [Quickstart](#quickstart)
 - [Usage](#usage)
@@ -49,16 +49,24 @@ involving Large Language Models (LLMs).
 
 <!-- /TOC -->
 
+# Supported Environments
+
+This SDK is a standard Node.js package built with TypeScript, ensuring broad
+compatibility with the modern JavaScript ecosystem.
+
+- Node.js: Actively supported on Node.js v18.x and higher. The package is
+  compatible with both modern ES Modules (import) and legacy CommonJS
+  (require).
+- TypeScript: The SDK is written in TypeScript and ships with its own type
+  declarations, providing a first-class development experience with
+  autocompletion and type-checking out of the box.
+- JavaScript: Fully supports modern JavaScript in Node.js environments.
+
 ## Installation
 
 ```bash
 npm install @toolbox/core
 ```
-
-> [!NOTE]
->
-> - The primary `ToolboxClient` is asynchronous and requires using `await` for
->   loading and invoking tools, as shown in most examples.
 
 ## Quickstart
 
@@ -66,16 +74,24 @@ Here's a minimal example to get you started. Ensure your Toolbox service is runn
 
 ```javascript
 
-import { ToolboxClient } from '@toolbox/core';
+import { ToolboxClient } from '@toolbox/core';  
+const client = new ToolboxClient(URL);  
 
-try {
-    const client = new ToolboxClient(URL);
-    const tools = await client.loadToolset();
-    // Use tools
-} catch (error) {
-    console.error("unable to load toolset:", error);
-}
+async function quickstart() {  
+  try {  
+      const tools = await client.loadToolset();  
+      // Use tools  
+  } catch (error) {  
+      console.error("unable to load toolset:", error.message);  
+  }  
+}  
+quickstart();  
 ```
+
+> [!NOTE]
+> This guide uses modern ES Module (`import`) syntax. If your project uses
+> CommonJS, you can import the library using require: `const { ToolboxClient }
+> = require('@toolbox/core')`;.
 
 ## Usage
 
@@ -86,6 +102,8 @@ Toolbox service.
 import { ToolboxClient } from '@toolbox/core';
 
 // Replace with the actual URL where your Toolbox service is running
+const URL = 'http://127.0.0.1:5000';
+
 let client = new ToolboxClient(URL);
 const tools = await client.loadToolset();
 
@@ -175,10 +193,11 @@ make calls (like `load_tool`) will likely fail with `Unauthorized` errors.
 
 ### How it works
 
-The `ToolboxClient` allows you to specify functions (or coroutines for the async
-client) that dynamically generate HTTP headers for every request sent to the
-Toolbox server. The most common use case is to add an Authorization header with
-a bearer token (e.g., a Google ID token).
+The `ToolboxClient` allows you to specify functions that dynamically generate
+HTTP headers for every request sent to the Toolbox server. The most common use
+case is to add an [Authorization
+header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Authorization)
+with a bearer token (e.g., a Google ID token).
 
 These header-generating functions are called just before each request, ensuring
 that fresh credentials or header values can be used.
@@ -191,7 +210,7 @@ You can configure these dynamic headers as seen below:
 import { ToolboxClient } from '@toolbox/core';
 import {getGoogleIdToken} from '@toolbox/core/auth'
 
-const URL = "http://toolbox-service-url";
+const URL = 'http://127.0.0.1:5000';
 const getGoogleIdTokenGetter = () => getGoogleIdToken(URL);
 const client = new ToolboxClient(URL, null, {"Authorization": getGoogleIdTokenGetter});
 
@@ -221,7 +240,7 @@ For Toolbox servers hosted on Google Cloud (e.g., Cloud Run) and requiring
     import { ToolboxClient } from '@toolbox/core';
     import {getGoogleIdToken} from '@toolbox/core/auth'
 
-    const URL = "http://toolbox-service-url";
+    const URL = 'http://127.0.0.1:5000';
     const getGoogleIdTokenGetter = () => getGoogleIdToken(URL);
     const client = new ToolboxClient(URL, null, {"Authorization": getGoogleIdTokenGetter});
 
@@ -300,17 +319,18 @@ You can add the token retriever function to a tool object *after* it has been
 loaded. This modifies the specific tool instance.
 
 ```javascript
-    let client = new ToolboxClient(URL);
-    let tool = await client.loadTool("my-tool")
+const URL = 'http://127.0.0.1:5000';
+let client = new ToolboxClient(URL);
+let tool = await client.loadTool("my-tool")
 
-    const authTool = tool.addAuthTokenGetter("my_auth", get_auth_token)  // Single token
+const authTool = tool.addAuthTokenGetter("my_auth", get_auth_token)  // Single token
 
-    // OR
+// OR
 
-    const multiAuthTool = tool.addAuthTokenGetters({
-        "my_auth_1": getAuthToken1,
-        "my_auth_2": getAuthToken2,
-    })  // Multiple tokens
+const multiAuthTool = tool.addAuthTokenGetters({
+    "my_auth_1": getAuthToken1,
+    "my_auth_2": getAuthToken2,
+})  // Multiple tokens
 ```
 
 #### Option B: Add Authentication While Loading Tools
@@ -343,11 +363,12 @@ async function getAuthToken() {
     return "YOUR_ID_TOKEN" // Placeholder
 }
 
-let client = new ToolboxClient("http://127.0.0.1:5000")
-const tool = await client.loadTool("my-tool")
-const authTool = tool.addAuthTokenGetters({"my_auth": getAuthToken})
-const result = await authTool({input:"some input"})
-console.log(result)
+const URL = 'http://127.0.0.1:5000';
+let client = new ToolboxClient(URL);
+const tool = await client.loadTool("my-tool");
+const authTool = tool.addAuthTokenGetters({"my_auth": getAuthToken});
+const result = await authTool({input:"some input"});
+console.log(result);
 ```
 
 ## Binding Parameter Values
@@ -380,14 +401,15 @@ specific tool instance.
 
 import { ToolboxClient } from '@toolbox/core';
 
-let client = new ToolboxClient("http://127.0.0.1:5000")
-const tool = await client.loadTool("my-tool")
+const URL = 'http://127.0.0.1:5000';
+let client = new ToolboxClient(URL);
+const tool = await client.loadTool("my-tool");
 
-const boundTool = tool.bindParam("param", "value")
+const boundTool = tool.bindParam("param", "value");
 
 // OR
 
-const boundTool = tool.bindParams({"param": "value"})
+const boundTool = tool.bindParams({"param": "value"});
 ```
 
 ### Option B: Binding Parameters While Loading Tools

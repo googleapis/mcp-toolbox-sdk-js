@@ -42,6 +42,7 @@ involving Large Language Models (LLMs).
   - [Option A: Binding Parameters to a Loaded Tool](#option-a-binding-parameters-to-a-loaded-tool)
   - [Option B: Binding Parameters While Loading Tools](#option-b-binding-parameters-while-loading-tools)
   - [Binding Dynamic Values](#binding-dynamic-values)
+- [Using with Orchestration Frameworks](#using-with-orchestration-frameworks)
 - [Contributing](#contributing)
 - [License](#license)
 - [Support](#support)
@@ -448,7 +449,11 @@ const dynamicBoundTool = tool.bindParam("param", getDynamicValue)
 
 # Using with Orchestration Frameworks
 
-## Langchain
+<details open>
+
+<summary>Langchain</summary>
+
+[LangchainJS](https://js.langchain.com/docs/introduction/)
 
 ```javascript
 import {ToolboxClient} from "@toolbox/core"
@@ -468,9 +473,16 @@ await multiplyNumbers.invoke({ a: 2, b: 3 });
 
 The `multiplyNumbers` tool is compatible with [Langchain/Langraph
 agents](http://js.langchain.com/docs/concepts/agents/)
-such as [React Agents](https://langchain-ai.github.io/langgraphjs/reference/functions/langgraph_prebuilt.createReactAgent.html).
+such as [React
+Agents](https://langchain-ai.github.io/langgraphjs/reference/functions/langgraph_prebuilt.createReactAgent.html).
 
-## LlamaIndex
+</details>
+
+<details>
+
+<summary>LlamaIndex</summary>
+
+[LlamaindexTS](https://ts.llamaindex.ai/)
 
 ```javascript
 import {ToolboxClient} from "@toolbox/core"
@@ -494,8 +506,13 @@ The `multiplyNumbers` tool is compatible with LlamaIndex
 and [agent
 workflows](https://ts.llamaindex.ai/docs/llamaindex/modules/agents/agent_workflow).
 
-## Genkit
+</details>
 
+<details>
+
+<summary>Genkit</summary>
+
+[GenkitJS](https://genkit.dev/docs/get-started/#_top)
 ```javascript
 import {ToolboxClient} from "@toolbox/core"
 import { genkit, z } from 'genkit';
@@ -523,6 +540,8 @@ await ai.generate({
   tools: [multiplyNumbers],
 });
 ```
+
+</details>
 
 # Contributing
 

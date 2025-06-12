@@ -315,7 +315,6 @@ describe('ToolboxTool', () => {
       mockAxiosPost.mockRejectedValueOnce(apiError);
 
       await expect(tool(validArgs)).rejects.toThrow(apiError);
-
       expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs, {
         headers: {},
       });

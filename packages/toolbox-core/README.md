@@ -467,8 +467,8 @@ await multiplyNumbers.invoke({ a: 2, b: 3 });
 ```
 
 The `multiplyNumbers` tool is compatible with [Langchain/Langraph
-agents](https://langchain-ai.github.io/langgraphjs/reference/functions/langgraph_prebuilt.createReactAgent.html)
-such as React Agents.
+agents](http://js.langchain.com/docs/concepts/agents/)
+such as [React Agents](https://langchain-ai.github.io/langgraphjs/reference/functions/langgraph_prebuilt.createReactAgent.html).
 
 ## LlamaIndex
 

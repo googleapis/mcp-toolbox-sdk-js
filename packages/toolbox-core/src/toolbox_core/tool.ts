@@ -139,16 +139,6 @@ function ToolboxTool(
     const payload = {...validatedUserArgs, ...resolvedBoundParams};
 
     const headers: Record<string, string> = {};
-    for (const [authService, tokenGetter] of Object.entries(authTokenGetters)) {
-      const token = await resolveValue(tokenGetter);
-      if (typeof token !== 'string') {
-        throw new Error(
-          `Auth token getter for '${authService}' did not return a string.`
-        );
-      }
-      headers[getAuthHeaderName(authService)] = token;
-    }
-
     for (const [headerName, headerValue] of Object.entries(clientHeaders)) {
       const resolvedHeaderValue = await resolveValue(headerValue);
       if (typeof resolvedHeaderValue !== 'string') {
@@ -157,6 +147,15 @@ function ToolboxTool(
         );
       }
       headers[headerName] = resolvedHeaderValue;
+    }
+    for (const [authService, tokenGetter] of Object.entries(authTokenGetters)) {
+      const token = await resolveValue(tokenGetter);
+      if (typeof token !== 'string') {
+        throw new Error(
+          `Auth token getter for '${authService}' did not return a string.`
+        );
+      }
+      headers[getAuthHeaderName(authService)] = token;
     }
 
     try {

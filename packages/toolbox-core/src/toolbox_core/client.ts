@@ -26,7 +26,7 @@ import {
 } from './protocol.js';
 import {logApiError} from './errorUtils.js';
 import {ZodError} from 'zod';
-import {BoundParams, BoundValue, identifyAuthRequirements, resolveValue} from './utils.js';
+import {BoundParams, identifyAuthRequirements, resolveValue} from './utils.js';
 import {AuthTokenGetters, RequiredAuthnParams} from './tool.js';
 
 type Manifest = import('zod').infer<typeof ZodManifestSchema>;

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import {ZodObject, ZodError, ZodRawShape} from 'zod';
-import {AxiosInstance, AxiosRequestConfig, AxiosResponse} from 'axios';
+import {AxiosInstance, AxiosResponse} from 'axios';
 
 import {logApiError} from './errorUtils.js';
 import {

@@ -325,11 +325,6 @@ describe('ToolboxClient', () => {
     });
 
     it('should throw an error if manifest.tools key is missing', async () => {
-      const mockManifestWithoutTools = {
-        serverVersion: '1.0.0',
-        tools: undefined,
-      };
-
       await expect(client.loadTool(toolName)).rejects.toThrow(
         `Invalid manifest structure received from ${expectedApiUrl}: Unknown validation error.`
       );

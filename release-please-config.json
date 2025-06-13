@@ -12,7 +12,7 @@
     ],
     "packages": {
       "packages/toolbox-core": {
-        "component": "toolbox-core"
+        "component": "core"
       }
     },
     "plugins": [

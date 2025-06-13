@@ -14,7 +14,6 @@ custom logic) managed by the Toolbox into your workflows, especially those
 involving Large Language Models (LLMs).
 
 <!-- TOC ignore:true -->
-<!-- TOC -->
 - [Supported Environments](#supported-environments)
 - [Installation](#installation)
 - [Quickstart](#quickstart)
@@ -43,6 +42,7 @@ involving Large Language Models (LLMs).
   - [Option A: Binding Parameters to a Loaded Tool](#option-a-binding-parameters-to-a-loaded-tool)
   - [Option B: Binding Parameters While Loading Tools](#option-b-binding-parameters-while-loading-tools)
   - [Binding Dynamic Values](#binding-dynamic-values)
+- [Using with Orchestration Frameworks](#using-with-orchestration-frameworks)
 - [Contributing](#contributing)
 - [License](#license)
 - [Support](#support)
@@ -446,6 +446,102 @@ const dynamicBoundTool = tool.bindParam("param", getDynamicValue)
 
 > [!IMPORTANT]
 > You don't need to modify tool configurations to bind parameter values.
+
+# Using with Orchestration Frameworks
+
+<details open>
+
+<summary>Langchain</summary>
+
+[LangchainJS](https://js.langchain.com/docs/introduction/)
+
+```javascript
+import {ToolboxClient} from "@toolbox/core"
+import { tool } from "@langchain/core/tools";
+
+let client = ToolboxClient(URL)
+multiplyTool = await client.loadTool("multiply")
+
+const multiplyNumbers = tool(multiplyTool, {
+    name: multiplyTool.getName(),
+    description: multiplyTool.getDescription(),
+    schema: multiplyTool.getParams()
+});
+
+await multiplyNumbers.invoke({ a: 2, b: 3 });
+```
+
+The `multiplyNumbers` tool is compatible with [Langchain/Langraph
+agents](http://js.langchain.com/docs/concepts/agents/)
+such as [React
+Agents](https://langchain-ai.github.io/langgraphjs/reference/functions/langgraph_prebuilt.createReactAgent.html).
+
+</details>
+
+<details>
+
+<summary>LlamaIndex</summary>
+
+[LlamaindexTS](https://ts.llamaindex.ai/)
+
+```javascript
+import {ToolboxClient} from "@toolbox/core"
+import { tool } from "llamaindex";
+
+let client = ToolboxClient(URL)
+multiplyTool = await client.loadTool("multiply")
+
+const multiplyNumbers = tool({
+    name: multiplyTool.getName(),
+    description: multiplyTool.getDescription(),
+    parameters: multiplyTool.getParams(),
+    execute: mutliplyTool
+});
+
+await multiplyNumbers.call({ a: 2, b: 3 });
+```
+
+The `multiplyNumbers` tool is compatible with LlamaIndex
+[agents](https://ts.llamaindex.ai/docs/llamaindex/migration/deprecated/agent)
+and [agent
+workflows](https://ts.llamaindex.ai/docs/llamaindex/modules/agents/agent_workflow).
+
+</details>
+
+<details>
+
+<summary>Genkit</summary>
+
+[GenkitJS](https://genkit.dev/docs/get-started/#_top)
+```javascript
+import {ToolboxClient} from "@toolbox/core"
+import { genkit, z } from 'genkit';
+import { googleAI } from '@genkit-ai/googleai';
+
+
+let client = ToolboxClient(URL)
+multiplyTool = await client.loadTool("multiply")
+
+const ai = genkit({
+  plugins: [googleAI()],
+  model: googleAI.model('gemini-1.5-pro'),
+});
+
+const multiplyNumbers = ai.defineTool({
+    name: multiplyTool.getName(),
+    description: multiplyTool.getDescription(),
+    inputSchema: multiplyTool.getParams(),
+  },
+  multiplyTool,
+);
+
+await ai.generate({
+  prompt: 'Can you multiply 5 and 7?',
+  tools: [multiplyNumbers],
+});
+```
+
+</details>
 
 # Contributing
 

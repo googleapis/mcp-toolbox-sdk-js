@@ -391,7 +391,7 @@ describe('ToolboxTool', () => {
       const boundTool = tool.bindParams({query: 'a valid query'});
       mockAxiosPost.mockResolvedValueOnce({data: 'success'});
       // This call is valid because 'query' is bound, and no invalid args are passed
-      await expect(boundTool()).resolves.toBe(JSON.stringify('success'));
+      await expect(boundTool()).resolves.toBe('success');
     });
 
     it('should throw an error when trying to re-bind an already bound parameter', () => {

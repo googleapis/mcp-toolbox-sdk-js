@@ -37,11 +37,10 @@ describe('ToolboxClient E2E Tests', () => {
   describe('invokeTool', () => {
     it('should invoke the getNRowsTool', async () => {
       const response = await getNRowsTool({num_rows: '2'});
-      const result = response['result'];
-      expect(typeof result).toBe('string');
-      expect(result).toContain('row1');
-      expect(result).toContain('row2');
-      expect(result).not.toContain('row3');
+      expect(typeof response).toBe('string');
+      expect(response).toContain('row1');
+      expect(response).toContain('row2');
+      expect(response).not.toContain('row3');
     });
 
     it('should invoke the getNRowsTool with missing params', async () => {
@@ -136,29 +135,26 @@ describe('ToolboxClient E2E Tests', () => {
     it('should successfully bind a parameter with bindParam and invoke', async () => {
       const newTool = getNRowsTool.bindParam('num_rows', '3');
       const response = await newTool(); // Invoke with no args
-      const result = response['result'];
-      expect(result).toContain('row1');
-      expect(result).toContain('row2');
-      expect(result).toContain('row3');
-      expect(result).not.toContain('row4');
+      expect(response).toContain('row1');
+      expect(response).toContain('row2');
+      expect(response).toContain('row3');
+      expect(response).not.toContain('row4');
     });
 
     it('should successfully bind parameters with bindParams and invoke', async () => {
       const newTool = getNRowsTool.bindParams({num_rows: '3'});
       const response = await newTool(); // Invoke with no args
-      const result = response['result'];
-      expect(result).toContain('row1');
-      expect(result).toContain('row2');
-      expect(result).toContain('row3');
-      expect(result).not.toContain('row4');
+      expect(response).toContain('row1');
+      expect(response).toContain('row2');
+      expect(response).toContain('row3');
+      expect(response).not.toContain('row4');
     });
 
     it('should successfully bind a synchronous function value', async () => {
       const newTool = getNRowsTool.bindParams({num_rows: () => '1'});
       const response = await newTool();
-      const result = response['result'];
-      expect(result).toContain('row1');
-      expect(result).not.toContain('row2');
+      expect(response).toContain('row1');
+      expect(response).not.toContain('row2');
     });
 
     it('should successfully bind an asynchronous function value', async () => {
@@ -169,11 +165,8 @@ describe('ToolboxClient E2E Tests', () => {
 
       const newTool = getNRowsTool.bindParams({num_rows: asyncNumProvider});
       const response = await newTool();
-      const result = response['result'];
-
-      expect(result).toContain('row1');
-
-      expect(result).not.toContain('row2');
+      expect(response).toContain('row1');
+      expect(response).not.toContain('row2');
     });
 
     it('should successfully bind parameters at load time', async () => {
@@ -181,11 +174,10 @@ describe('ToolboxClient E2E Tests', () => {
         num_rows: '3',
       });
       const response = await tool();
-      const result = response['result'];
-      expect(result).toContain('row1');
-      expect(result).toContain('row2');
-      expect(result).toContain('row3');
-      expect(result).not.toContain('row4');
+      expect(response).toContain('row1');
+      expect(response).toContain('row2');
+      expect(response).toContain('row3');
+      expect(response).not.toContain('row4');
     });
 
     it('should throw an error when re-binding an existing parameter', () => {
@@ -268,7 +260,7 @@ describe('ToolboxClient E2E Tests', () => {
         'my-test-auth': authToken1Getter,
       });
       const response = await authTool({id: '2'});
-      expect(response.result).toContain('row2');
+      expect(response).toContain('row2');
     });
 
     it('should succeed when running a tool with correct async auth', async () => {
@@ -280,7 +272,7 @@ describe('ToolboxClient E2E Tests', () => {
         'my-test-auth': getAsyncToken,
       });
       const response = await authTool({id: '2'});
-      expect(response.result).toContain('row2');
+      expect(response).toContain('row2');
     });
 
     it('should fail when a tool with a param requiring auth is run without auth', async () => {
@@ -295,9 +287,9 @@ describe('ToolboxClient E2E Tests', () => {
         'my-test-auth': authToken1Getter,
       });
       const response = await tool();
-      expect(response.result).toContain('row4');
-      expect(response.result).toContain('row5');
-      expect(response.result).toContain('row6');
+      expect(response).toContain('row4');
+      expect(response).toContain('row5');
+      expect(response).toContain('row6');
     });
 
     it('should fail when a tool with a param requiring auth is run with insufficient auth claims', async () => {

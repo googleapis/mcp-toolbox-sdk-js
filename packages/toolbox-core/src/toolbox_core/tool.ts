@@ -162,7 +162,9 @@ function ToolboxTool(
       const response: AxiosResponse = await session.post(toolUrl, payload, {
         headers,
       });
-      return JSON.stringify(response.data);
+      return typeof response.data === 'string'
+        ? response.data
+        : JSON.stringify(response.data);
     } catch (error) {
       logApiError(`Error posting data to ${toolUrl}:`, error);
       throw error;

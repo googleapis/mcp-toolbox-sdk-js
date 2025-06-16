@@ -1,9 +1,9 @@
 {
-    "extends": "./tsconfig.json", // Extend your existing base TypeScript config
+    "extends": "./tsconfig.json",
     "compilerOptions": {
-        "module": "CommonJS",      // Crucially, set module to CommonJS
-        "outDir": "./build/cjs",   // Output to a separate CJS directory
-        "declaration": false,      // .d.ts files are handled by the ESM build
-        "target": "ES2019"         // Or a target that supports your Node.js engine
+        "module": "CommonJS",
+        "outDir": "./build/cjs",
+        "declaration": false,
+        "target": "ES2019"
     }
 }

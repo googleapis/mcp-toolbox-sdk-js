@@ -18,10 +18,12 @@
     "exports": {
         ".": {
             "import": "./build/client.js",
+            "require": "./build/cjs/client.js",
             "types": "./build/client.d.ts"
         },
         "./auth": {
             "import": "./build/authMethods.js",
+            "require": "./build/cjs/authMethods.js",
             "types": "./build/authMethods.d.ts"
         }
     },
@@ -39,7 +41,9 @@
     "scripts": {
         "fix": "gts fix",
         "lint": "gts check",
-        "compile": "tsc -p .",
+        "compile": "npm run compile:esm && npm run compile:cjs",
+        "compile:esm": "tsc -p tsconfig.esm.json",
+        "compile:cjs": "tsc -p tsconfig.cjs.json",
         "prepare": "npm run compile",
         "test:unit": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json",
         "test:e2e": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.e2e.config.json --runInBand",

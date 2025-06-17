@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { GoogleAuth } from 'google-auth-library';
-import { IdTokenClient } from 'google-auth-library/build/src/auth/idtokenclient';
+import {GoogleAuth} from 'google-auth-library';
+import {IdTokenClient} from 'google-auth-library/build/src/auth/idtokenclient';
 
 const auth = new GoogleAuth();
-const clientCache: { [key: string]: IdTokenClient } = {};
+const clientCache: {[key: string]: IdTokenClient} = {};
 
 export async function getGoogleIdToken(url: string) {
   let client = clientCache[url];

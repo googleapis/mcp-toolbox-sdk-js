@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { GoogleAuth } from 'google-auth-library';
+import {GoogleAuth} from 'google-auth-library';
 
 type GetGoogleIdToken = (url: string) => Promise<string>;
 
@@ -42,12 +42,12 @@ describe('getGoogleIdToken', () => {
     // With the mocks fully configured, dynamically require the modules.
     // This ensures our code runs against the fresh mocks we just set up.
     const authMethods = require('../src/toolbox_core/authMethods');
-    const { GoogleAuth: GA } = require('google-auth-library');
+    const {GoogleAuth: GA} = require('google-auth-library');
     getGoogleIdToken = authMethods.getGoogleIdToken;
     MockedGoogleAuth = GA;
 
     mockGetIdTokenClient.mockResolvedValue({
-      idTokenProvider: { fetchIdToken: mockFetchIdToken },
+      idTokenProvider: {fetchIdToken: mockFetchIdToken},
     });
     mockFetchIdToken.mockResolvedValue(mockToken);
   });

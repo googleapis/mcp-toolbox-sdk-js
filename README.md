@@ -47,7 +47,7 @@ within your JS applications or AI orchestration frameworks.
 
 Choosing the right package depends on how you are building your application:
 
-- [`@toolbox/core`](https://github.com/googleapis/mcp-toolbox-sdk-js/tree/main/packages/toolbox-core):
+- [`@mcp-toolbox/core`](https://github.com/googleapis/mcp-toolbox-sdk-js/tree/main/packages/toolbox-core):
   This is a framework agnostic way to connect the tools to popular frameworks
   like Langchain, LlamaIndex and Genkit.
 
@@ -76,7 +76,7 @@ To get started using Toolbox tools with an application, follow these general ste
 
     ```bash
     # For the core, framework-agnostic SDK
-    npm install @toolbox/core
+    npm install @mcp-toolbox/core
     ```
 
 3. **Use the SDK:**

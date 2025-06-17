@@ -90,5 +90,8 @@ describe('getGoogleIdToken', () => {
 
     // The client is only fetched once.
     expect(mockGetIdTokenClient).toHaveBeenCalledTimes(1);
+
+    // With our current mock, the token fetching method is called each time.
+    expect(mockFetchIdToken).toHaveBeenCalledTimes(3);
   });
 });

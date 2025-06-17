@@ -80,7 +80,7 @@ describe('getGoogleIdToken', () => {
   it('should fetch the token only once when called multiple times', async () => {
     const token1 = await getGoogleIdToken(mockUrl);
     const token2 = await getGoogleIdToken(mockUrl);
-    const token3 = await getGoogleIdToken(mockUrl);
+    await getGoogleIdToken(mockUrl);
 
     expect(token1).toBe(`Bearer ${mockToken}`);
     expect(token2).toBe(`Bearer ${mockToken}`);

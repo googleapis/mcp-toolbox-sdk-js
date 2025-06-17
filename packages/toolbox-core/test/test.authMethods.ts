@@ -12,40 +12,55 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {getGoogleIdToken} from '../src/toolbox_core/authMethods';
-import {GoogleAuth} from 'google-auth-library';
+import { GoogleAuth } from 'google-auth-library';
 
-jest.mock('google-auth-library', () => ({GoogleAuth: jest.fn()}));
+type GetGoogleIdToken = (url: string) => Promise<string>;
 
 describe('getGoogleIdToken', () => {
   const mockUrl = 'https://example.com';
   const mockToken = 'mock-id-token';
 
+  let getGoogleIdToken: GetGoogleIdToken;
+  let MockedGoogleAuth: jest.MockedClass<typeof GoogleAuth>;
   let mockGetIdTokenClient: jest.Mock;
   let mockFetchIdToken: jest.Mock;
 
   beforeEach(() => {
-    // Reset mocks before each test
-    mockFetchIdToken = jest.fn().mockResolvedValue(mockToken);
-    mockGetIdTokenClient = jest.fn().mockResolvedValue({
-      idTokenProvider: {
-        fetchIdToken: mockFetchIdToken,
-      },
-    });
-    (GoogleAuth as jest.MockedClass<typeof GoogleAuth>).mockImplementation(
-      () =>
-        ({
+    jest.resetModules();
+
+    mockFetchIdToken = jest.fn();
+    mockGetIdTokenClient = jest.fn();
+
+    jest.mock('google-auth-library', () => {
+      return {
+        GoogleAuth: jest.fn().mockImplementation(() => ({
           getIdTokenClient: mockGetIdTokenClient,
-        }) as unknown as GoogleAuth
-    );
+        })),
+      };
+    });
+
+    // With the mocks fully configured, dynamically require the modules.
+    // This ensures our code runs against the fresh mocks we just set up.
+    const authMethods = require('../src/toolbox_core/authMethods');
+    const { GoogleAuth: GA } = require('google-auth-library');
+    getGoogleIdToken = authMethods.getGoogleIdToken;
+    MockedGoogleAuth = GA;
+
+    mockGetIdTokenClient.mockResolvedValue({
+      idTokenProvider: { fetchIdToken: mockFetchIdToken },
+    });
+    mockFetchIdToken.mockResolvedValue(mockToken);
   });
 
   it('should return a Bearer token on successful fetch', async () => {
     const token = await getGoogleIdToken(mockUrl);
     expect(token).toBe(`Bearer ${mockToken}`);
-    expect(GoogleAuth).toHaveBeenCalledTimes(1);
+
+    expect(MockedGoogleAuth).toHaveBeenCalledTimes(1);
     expect(mockGetIdTokenClient).toHaveBeenCalledWith(mockUrl);
+    expect(mockGetIdTokenClient).toHaveBeenCalledTimes(1);
     expect(mockFetchIdToken).toHaveBeenCalledWith(mockUrl);
+    expect(mockFetchIdToken).toHaveBeenCalledTimes(1);
   });
 
   it('should propagate errors from getIdTokenClient', async () => {
@@ -60,5 +75,20 @@ describe('getGoogleIdToken', () => {
     mockFetchIdToken.mockRejectedValue(new Error(errorMessage));
 
     await expect(getGoogleIdToken(mockUrl)).rejects.toThrow(errorMessage);
+  });
+
+  it('should fetch the token only once when called multiple times', async () => {
+    const token1 = await getGoogleIdToken(mockUrl);
+    const token2 = await getGoogleIdToken(mockUrl);
+    const token3 = await getGoogleIdToken(mockUrl);
+
+    expect(token1).toBe(`Bearer ${mockToken}`);
+    expect(token2).toBe(`Bearer ${mockToken}`);
+
+    // `GoogleAuth` constructor was only ever called once.
+    expect(MockedGoogleAuth).toHaveBeenCalledTimes(1);
+
+    // The client is only fetched once.
+    expect(mockGetIdTokenClient).toHaveBeenCalledTimes(1);
   });
 });

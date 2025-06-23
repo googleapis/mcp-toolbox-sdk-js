@@ -58,7 +58,7 @@ README for detailed installation and usage instructions:
 
 | Package | Target Use Case | Integration | Path | Details (README) | Npm Version |
 | :------ | :---------- | :---------- | :---------------------- | :---------- | :--------- 
-| `toolbox-core` | Framework-agnostic / Custom applications | Use directly / Custom | `packages/toolbox-core/` | 📄 [View README](https://github.com/googleapis/mcp-toolbox-sdk-js/blob/main/packages/toolbox-core/README.md) | 0.1.0 |
+| `toolbox-core` | Framework-agnostic / Custom applications | Use directly / Custom | `packages/toolbox-core/` | 📄 [View README](https://github.com/googleapis/mcp-toolbox-sdk-js/blob/main/packages/toolbox-core/README.md) | ![npm](https://img.shields.io/npm/v/@toolbox-sdk/core) |
 
 ## Getting Started
 

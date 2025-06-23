@@ -1,7 +1,7 @@
 # Development
 
 This guide provides instructions for setting up your development environment to
-contribute to the `@mcp-toolbox/core` package, which is part of the
+contribute to the `@toolbox-sdk/core` package, which is part of the
 `mcp-toolbox-sdk-js` monorepo.
 
 ## Prerequisites
@@ -33,8 +33,8 @@ These steps will guide you through setting up the monorepo and this specific pac
     ```
 
 4. Local Testing
-    If you need to test changes in `@mcp-toolbox/core` against another local project
-    or another package that consumes `@mcp-toolbox/core`, you can use npm link
+    If you need to test changes in `@toolbox-sdk/core` against another local project
+    or another package that consumes `@toolbox-sdk/core`, you can use npm link
 
     * In packages/toolbox-core
 
@@ -45,10 +45,10 @@ These steps will guide you through setting up the monorepo and this specific pac
     * In your consuming project
 
         ```bash
-        npm link @mcp-toolbox/core
+        npm link @toolbox-sdk/core
         ```  
 
-    This creates a symbolic link, allowing changes in `@mcp-toolbox/core` to be
+    This creates a symbolic link, allowing changes in `@toolbox-sdk/core` to be
     immediately reflected in the consuming project without reinstallation.
 
     Don't forget to npm unlink / yarn unlink when done!

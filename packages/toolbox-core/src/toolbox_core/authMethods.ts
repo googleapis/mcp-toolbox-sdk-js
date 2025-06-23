@@ -17,8 +17,8 @@ This module provides functions to obtain Google ID tokens, formatted as "Bearer"
 for use in the "Authorization" header of HTTP requests.
 
 Example User Experience:
-import { ToolboxClient } from '@toolbox/core';
-import { getGoogleIdToken } from '@toolbox/core/auth'
+import { ToolboxClient } from '@toolbox-sdk/core';
+import { getGoogleIdToken } from '@toolbox-sdk/core/auth'
 
 const URL = 'http://some-url'
 const getGoogleIdTokenGetter = () => getGoogleIdToken(URL);

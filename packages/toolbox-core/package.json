@@ -1,5 +1,5 @@
 {
-    "name": "@mcp-toolbox/core",
+    "name": "@toolbox-sdk/core",
     "version": "0.1.0",
     "type": "module",
     "description": "JavaScript Base SDK for interacting with the Toolbox service",

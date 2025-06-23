@@ -65,7 +65,7 @@ compatibility with the modern JavaScript ecosystem.
 ## Installation
 
 ```bash
-npm install @mcp-toolbox/core
+npm install @toolbox-sdk/core
 ```
 
 ## Quickstart
@@ -74,7 +74,7 @@ Here's a minimal example to get you started. Ensure your Toolbox service is runn
 
 ```javascript
 
-import { ToolboxClient } from '@mcp-toolbox/core';  
+import { ToolboxClient } from '@toolbox-sdk/core';  
 const client = new ToolboxClient(URL);  
 
 async function quickstart() {  
@@ -91,7 +91,7 @@ quickstart();
 > [!NOTE]
 > This guide uses modern ES Module (`import`) syntax. If your project uses
 > CommonJS, you can import the library using require: `const { ToolboxClient }
-> = require('@mcp-toolbox/core')`;.
+> = require('@toolbox-sdk/core')`;.
 
 ## Usage
 
@@ -99,7 +99,7 @@ Import and initialize a Toolbox client, pointing it to the URL of your running
 Toolbox service.
 
 ```javascript
-import { ToolboxClient } from '@mcp-toolbox/core';
+import { ToolboxClient } from '@toolbox-sdk/core';
 
 // Replace with the actual URL where your Toolbox service is running
 const URL = 'http://127.0.0.1:5000';
@@ -207,8 +207,8 @@ that fresh credentials or header values can be used.
 You can configure these dynamic headers as seen below:
 
 ```javascript
-import { ToolboxClient } from '@mcp-toolbox/core';
-import {getGoogleIdToken} from '@mcp-toolbox/core/auth'
+import { ToolboxClient } from '@toolbox-sdk/core';
+import {getGoogleIdToken} from '@toolbox-sdk/core/auth'
 
 const URL = 'http://127.0.0.1:5000';
 const getGoogleIdTokenGetter = () => getGoogleIdToken(URL);
@@ -237,8 +237,8 @@ For Toolbox servers hosted on Google Cloud (e.g., Cloud Run) and requiring
 3. **Connect to the Toolbox Server**
 
     ```javascript
-    import { ToolboxClient } from '@mcp-toolbox/core';
-    import {getGoogleIdToken} from '@mcp-toolbox/core/auth'
+    import { ToolboxClient } from '@toolbox-sdk/core';
+    import {getGoogleIdToken} from '@toolbox-sdk/core/auth'
 
     const URL = 'http://127.0.0.1:5000';
     const getGoogleIdTokenGetter = () => getGoogleIdToken(URL);
@@ -355,7 +355,7 @@ const authTools = await toolbox.loadToolset({"myAuth": getAuthToken})
 ### Complete Authentication Example
 
 ```javascript
-import { ToolboxClient } from '@mcp-toolbox/core';
+import { ToolboxClient } from '@toolbox-sdk/core';
 
 async function getAuthToken() {
     // ... Logic to retrieve ID token (e.g., from local storage, OAuth flow)
@@ -399,7 +399,7 @@ specific tool instance.
 
 ```javascript
 
-import { ToolboxClient } from '@mcp-toolbox/core';
+import { ToolboxClient } from '@toolbox-sdk/core';
 
 const URL = 'http://127.0.0.1:5000';
 let client = new ToolboxClient(URL);
@@ -456,7 +456,7 @@ const dynamicBoundTool = tool.bindParam("param", getDynamicValue)
 [LangchainJS](https://js.langchain.com/docs/introduction/)
 
 ```javascript
-import {ToolboxClient} from "@mcp-toolbox/core"
+import {ToolboxClient} from "@toolbox-sdk/core"
 import { tool } from "@langchain/core/tools";
 
 let client = ToolboxClient(URL)
@@ -485,7 +485,7 @@ Agents](https://langchain-ai.github.io/langgraphjs/reference/functions/langgraph
 [LlamaindexTS](https://ts.llamaindex.ai/)
 
 ```javascript
-import {ToolboxClient} from "@mcp-toolbox/core"
+import {ToolboxClient} from "@toolbox-sdk/core"
 import { tool } from "llamaindex";
 
 let client = ToolboxClient(URL)
@@ -514,7 +514,7 @@ workflows](https://ts.llamaindex.ai/docs/llamaindex/modules/agents/agent_workflo
 
 [GenkitJS](https://genkit.dev/docs/get-started/#_top)
 ```javascript
-import {ToolboxClient} from "@mcp-toolbox/core"
+import {ToolboxClient} from "@toolbox-sdk/core"
 import { genkit, z } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
 

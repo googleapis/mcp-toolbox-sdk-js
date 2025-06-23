@@ -73,7 +73,7 @@ body:
       value: |
         1. Client: <name and link to the SDK are you using>.
         2. Version: <what exact version of the SDK are you using> (`npm list <package-name>`)? e.g.
-          - @mcp-toolbox/core version 0.1.0
+          - @toolbox-sdk/core version 0.1.0
         3. Example: If possible, please include your code of configuration:
         
         ```js

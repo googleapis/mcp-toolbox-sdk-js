@@ -114,7 +114,7 @@ describe('ToolboxClient E2E Tests', () => {
         'get-row-by-id-auth',
         'get-row-by-id',
         'get-n-rows',
-        'search-rows'
+        'search-rows',
       ]);
       expect(loadedToolNames).toEqual(expectedDefaultTools);
 

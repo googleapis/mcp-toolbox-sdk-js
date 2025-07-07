@@ -42,4 +42,4 @@ options:
   logging: CLOUD_LOGGING_ONLY
 substitutions:
   _VERSION: '22.16.0'
-  _TOOLBOX_VERSION: '0.7.0'
+  _TOOLBOX_VERSION: '0.8.0'

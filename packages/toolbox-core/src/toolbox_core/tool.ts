@@ -139,12 +139,15 @@ function ToolboxTool(
     const payload = {...validatedUserArgs, ...resolvedBoundParams};
 
     // Filter out null values from the payload
-    const filteredPayload = Object.entries(payload).reduce((acc, [key, value]) => {
-      if (value !== null && value !== undefined) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {} as Record<string, unknown>);
+    const filteredPayload = Object.entries(payload).reduce(
+      (acc, [key, value]) => {
+        if (value !== null && value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {} as Record<string, unknown>
+    );
 
     const headers: Record<string, string> = {};
     for (const [headerName, headerValue] of Object.entries(clientHeaders)) {
@@ -167,9 +170,13 @@ function ToolboxTool(
     }
 
     try {
-      const response: AxiosResponse = await session.post(toolUrl, filteredPayload, {
-        headers,
-      });
+      const response: AxiosResponse = await session.post(
+        toolUrl,
+        filteredPayload,
+        {
+          headers,
+        }
+      );
       return typeof response.data === 'string'
         ? response.data
         : JSON.stringify(response.data);

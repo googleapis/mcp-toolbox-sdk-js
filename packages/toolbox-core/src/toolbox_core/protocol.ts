@@ -132,6 +132,9 @@ export function createZodSchemaFromParams(
 ): ZodObject<ZodRawShape> {
   const shape: ZodRawShape = {};
   for (const param of params) {
+    if (param.authSources && param.authSources.length > 0) {
+      continue;
+    }
     shape[param.name] = buildZodShapeFromParam(param);
   }
   return z.object(shape).strict();

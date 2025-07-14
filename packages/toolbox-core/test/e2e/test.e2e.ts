@@ -354,7 +354,7 @@ describe('ToolboxClient E2E Tests', () => {
     it('should run tool with optional params omitted', async () => {
       const response = await searchRowsTool({email: 'twishabansal@google.com'});
       expect(typeof response).toBe('string');
-      expect(response).toContain('"email":"twishabansal@google.com"');
+      expect(response).toContain('\\"email\\":\\"twishabansal@google.com\\"');
       expect(response).not.toContain('row1');
       expect(response).toContain('row2');
       expect(response).not.toContain('row3');
@@ -369,7 +369,7 @@ describe('ToolboxClient E2E Tests', () => {
         data: 'row3',
       });
       expect(typeof response).toBe('string');
-      expect(response).toContain('"email":"twishabansal@google.com"');
+      expect(response).toContain('\\"email\\":\\"twishabansal@google.com\\"');
       expect(response).not.toContain('row1');
       expect(response).not.toContain('row2');
       expect(response).toContain('row3');
@@ -384,7 +384,7 @@ describe('ToolboxClient E2E Tests', () => {
         data: null,
       });
       expect(typeof response).toBe('string');
-      expect(response).toContain('"email":"twishabansal@google.com"');
+      expect(response).toContain('\\"email\\":\\"twishabansal@google.com\\"');
       expect(response).not.toContain('row1');
       expect(response).toContain('row2');
       expect(response).not.toContain('row3');
@@ -399,7 +399,7 @@ describe('ToolboxClient E2E Tests', () => {
         id: 1,
       });
       expect(typeof response).toBe('string');
-      expect(response).toBe('null');
+      expect(response).toBe('{"result":"null"}');
     });
 
     it('should run tool with optional id as null', async () => {
@@ -408,7 +408,7 @@ describe('ToolboxClient E2E Tests', () => {
         id: null,
       });
       expect(typeof response).toBe('string');
-      expect(response).toContain('"email":"twishabansal@google.com"');
+      expect(response).toContain('\\"email\\":\\"twishabansal@google.com\\"');
       expect(response).not.toContain('row1');
       expect(response).toContain('row2');
       expect(response).not.toContain('row3');
@@ -438,7 +438,7 @@ describe('ToolboxClient E2E Tests', () => {
         data: 'row2',
       });
       expect(typeof response).toBe('string');
-      expect(response).toContain('"email":"twishabansal@google.com"');
+      expect(response).toContain('\\"email\\":\\"twishabansal@google.com\\"');
       expect(response).not.toContain('row1');
       expect(response).toContain('row2');
       expect(response).not.toContain('row3');
@@ -454,7 +454,7 @@ describe('ToolboxClient E2E Tests', () => {
         data: 'row3',
       });
       expect(typeof response).toBe('string');
-      expect(response).toContain('"email":"twishabansal@google.com"');
+      expect(response).toContain('\\"email\\":\\"twishabansal@google.com\\"');
       expect(response).not.toContain('row1');
       expect(response).not.toContain('row2');
       expect(response).toContain('row3');
@@ -470,7 +470,7 @@ describe('ToolboxClient E2E Tests', () => {
         data: 'row3',
       });
       expect(typeof response).toBe('string');
-      expect(response).toBe('null');
+      expect(response).toBe('{"result":"null"}');
     });
 
     it('should return null when called with different data', async () => {
@@ -480,7 +480,7 @@ describe('ToolboxClient E2E Tests', () => {
         data: 'row4',
       });
       expect(typeof response).toBe('string');
-      expect(response).toBe('null');
+      expect(response).toBe('{"result":"null"}');
     });
 
     it('should return null when called with a different id', async () => {
@@ -490,7 +490,7 @@ describe('ToolboxClient E2E Tests', () => {
         data: 'row3',
       });
       expect(typeof response).toBe('string');
-      expect(response).toBe('null');
+      expect(response).toBe('{"result":"null"}');
     });
   });
 });

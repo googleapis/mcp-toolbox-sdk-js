@@ -18,7 +18,7 @@ import {ToolboxTool} from '../../src/toolbox_core/tool';
 import {AxiosError} from 'axios';
 import {CustomGlobal} from './types';
 import {authTokenGetter} from './utils';
-import {ZodOptionalDef} from 'zod';
+import {ZodOptional, ZodNullable, ZodTypeAny} from 'zod';
 
 describe('ToolboxClient E2E Tests', () => {
   let commonToolboxClient: ToolboxClient;
@@ -330,19 +330,25 @@ describe('ToolboxClient E2E Tests', () => {
       const {shape} = paramSchema;
 
       // Required param 'email'
+      expect(shape.email.isOptional()).toBe(false);
+      expect(shape.email.isNullable()).toBe(false);
       expect(shape.email._def.typeName).toBe('ZodString');
 
       // Optional param 'data'
-      expect(shape.data._def.typeName).toBe('ZodOptional');
-      expect((shape.data._def as ZodOptionalDef).innerType._def.typeName).toBe(
-        'ZodString'
-      );
+      expect(shape.data.isOptional()).toBe(true);
+      expect(shape.data.isNullable()).toBe(true);
+      expect(
+        (shape.data as ZodOptional<ZodNullable<ZodTypeAny>>).unwrap().unwrap()
+          ._def.typeName
+      ).toBe('ZodString');
 
       // Optional param 'id'
-      expect(shape.id._def.typeName).toBe('ZodOptional');
-      expect((shape.id._def as ZodOptionalDef).innerType._def.typeName).toBe(
-        'ZodNumber'
-      );
+      expect(shape.id.isOptional()).toBe(true);
+      expect(shape.id.isNullable()).toBe(true);
+      expect(
+        (shape.id as ZodOptional<ZodNullable<ZodTypeAny>>).unwrap().unwrap()
+          ._def.typeName
+      ).toBe('ZodNumber');
     });
 
     it('should run tool with optional params omitted', async () => {

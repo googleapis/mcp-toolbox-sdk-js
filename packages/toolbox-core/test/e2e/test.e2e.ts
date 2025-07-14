@@ -316,4 +316,172 @@ describe('ToolboxClient E2E Tests', () => {
       }
     });
   });
+
+  describe('Optional Params E2E Tests', () => {
+    let searchRowsTool: ReturnType<typeof ToolboxTool>;
+
+    beforeAll(async () => {
+      searchRowsTool = await commonToolboxClient.loadTool('search-rows');
+    });
+
+    it('should correctly identify required and optional parameters in the schema', () => {
+      const paramSchema = searchRowsTool.getParamSchema();
+      const {shape} = paramSchema;
+
+      // Required param 'email'
+      expect(shape.email._def.typeName).toBe('ZodString');
+
+      // Optional param 'data'
+      expect(shape.data._def.typeName).toBe('ZodNullish');
+      expect((shape.data._def as any).innerType._def.typeName).toBe(
+        'ZodString'
+      );
+
+      // Optional param 'id'
+      expect(shape.id._def.typeName).toBe('ZodNullish');
+      expect((shape.id._def as any).innerType._def.typeName).toBe('ZodNumber');
+    });
+
+    it('should run tool with optional params omitted', async () => {
+      const response = await searchRowsTool({email: 'twishabansal@google.com'});
+      expect(typeof response).toBe('string');
+      expect(response).toContain('"email":"twishabansal@google.com"');
+      expect(response).not.toContain('row1');
+      expect(response).toContain('row2');
+      expect(response).not.toContain('row3');
+      expect(response).not.toContain('row4');
+      expect(response).not.toContain('row5');
+      expect(response).not.toContain('row6');
+    });
+
+    it('should run tool with optional data provided', async () => {
+      const response = await searchRowsTool({
+        email: 'twishabansal@google.com',
+        data: 'row3',
+      });
+      expect(typeof response).toBe('string');
+      expect(response).toContain('"email":"twishabansal@google.com"');
+      expect(response).not.toContain('row1');
+      expect(response).not.toContain('row2');
+      expect(response).toContain('row3');
+      expect(response).not.toContain('row4');
+      expect(response).not.toContain('row5');
+      expect(response).not.toContain('row6');
+    });
+
+    it('should run tool with optional data as null', async () => {
+      const response = await searchRowsTool({
+        email: 'twishabansal@google.com',
+        data: null,
+      });
+      expect(typeof response).toBe('string');
+      expect(response).toContain('"email":"twishabansal@google.com"');
+      expect(response).not.toContain('row1');
+      expect(response).toContain('row2');
+      expect(response).not.toContain('row3');
+      expect(response).not.toContain('row4');
+      expect(response).not.toContain('row5');
+      expect(response).not.toContain('row6');
+    });
+
+    it('should run tool with optional id provided', async () => {
+      const response = await searchRowsTool({
+        email: 'twishabansal@google.com',
+        id: 1,
+      });
+      expect(typeof response).toBe('string');
+      expect(response).toBe('null');
+    });
+
+    it('should run tool with optional id as null', async () => {
+      const response = await searchRowsTool({
+        email: 'twishabansal@google.com',
+        id: null,
+      });
+      expect(typeof response).toBe('string');
+      expect(response).toContain('"email":"twishabansal@google.com"');
+      expect(response).not.toContain('row1');
+      expect(response).toContain('row2');
+      expect(response).not.toContain('row3');
+      expect(response).not.toContain('row4');
+      expect(response).not.toContain('row5');
+      expect(response).not.toContain('row6');
+    });
+
+    it('should fail when a required param is missing', async () => {
+      await expect(searchRowsTool({id: 5, data: 'row5'})).rejects.toThrow(
+        /Argument validation failed for tool "search-rows":\s*- email: Required/
+      );
+    });
+
+    it('should fail when a required param is null', async () => {
+      await expect(
+        searchRowsTool({email: null, id: 5, data: 'row5'})
+      ).rejects.toThrow(
+        /Argument validation failed for tool "search-rows":\s*- email: Expected string, received null/
+      );
+    });
+
+    it('should run tool with all default params', async () => {
+      const response = await searchRowsTool({
+        email: 'twishabansal@google.com',
+        id: 0,
+        data: 'row2',
+      });
+      expect(typeof response).toBe('string');
+      expect(response).toContain('"email":"twishabansal@google.com"');
+      expect(response).not.toContain('row1');
+      expect(response).toContain('row2');
+      expect(response).not.toContain('row3');
+      expect(response).not.toContain('row4');
+      expect(response).not.toContain('row5');
+      expect(response).not.toContain('row6');
+    });
+
+    it('should run tool with all valid params', async () => {
+      const response = await searchRowsTool({
+        email: 'twishabansal@google.com',
+        id: 3,
+        data: 'row3',
+      });
+      expect(typeof response).toBe('string');
+      expect(response).toContain('"email":"twishabansal@google.com"');
+      expect(response).not.toContain('row1');
+      expect(response).not.toContain('row2');
+      expect(response).toContain('row3');
+      expect(response).not.toContain('row4');
+      expect(response).not.toContain('row5');
+      expect(response).not.toContain('row6');
+    });
+
+    it('should return null when called with a different email', async () => {
+      const response = await searchRowsTool({
+        email: 'anubhavdhawan@google.com',
+        id: 3,
+        data: 'row3',
+      });
+      expect(typeof response).toBe('string');
+      expect(response).toBe('null');
+    });
+
+    it('should return null when called with different data', async () => {
+      const response = await searchRowsTool({
+        email: 'twishabansal@google.com',
+        id: 3,
+        data: 'row4',
+      });
+      expect(typeof response).toBe('string');
+      expect(response).toBe('null');
+    });
+
+    it('should return null when called with a different id', async () => {
+      const response = await searchRowsTool({
+        email: 'twishabansal@google.com',
+        id: 4,
+        data: 'row3',
+      });
+      expect(typeof response).toBe('string');
+      expect(response).toBe('null');
+    });
+  });
 });

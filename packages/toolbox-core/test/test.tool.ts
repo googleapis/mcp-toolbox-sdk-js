@@ -307,7 +307,7 @@ describe('ToolboxTool', () => {
       expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs, {
         headers: {},
       });
-      expect(result).toEqual(JSON.stringify(mockApiResponseData));
+      expect(result).toEqual(mockApiResponseData['result']);
     });
 
     it('should re-throw the error and log to console.error if API call fails', async () => {
@@ -421,7 +421,7 @@ describe('ToolboxTool', () => {
 
     it('should validate only the user-provided arguments, not the bound ones', async () => {
       const boundTool = tool.bindParams({query: 'a valid query'});
-      mockAxiosPost.mockResolvedValueOnce({data: 'success'});
+      mockAxiosPost.mockResolvedValueOnce({data: {result: 'success'}});
       // This call is valid because 'query' is bound, and no invalid args are passed
       await expect(boundTool()).resolves.toBe('success');
     });

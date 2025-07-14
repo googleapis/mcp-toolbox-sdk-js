@@ -177,9 +177,7 @@ function ToolboxTool(
           headers,
         }
       );
-      return typeof response.data === 'string'
-        ? response.data
-        : JSON.stringify(response.data);
+      return response.data.result;
     } catch (error) {
       logApiError(`Error posting data to ${toolUrl}:`, error);
       throw error;

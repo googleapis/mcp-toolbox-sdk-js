@@ -307,7 +307,7 @@ describe('ToolboxTool', () => {
       expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs, {
         headers: {},
       });
-      expect(result).toEqual(JSON.stringify(mockApiResponseData));
+      expect(result).toEqual(mockApiResponseData['result']);
     });
 
     it('should re-throw the error and log to console.error if API call fails', async () => {
@@ -321,6 +321,38 @@ describe('ToolboxTool', () => {
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         `Error posting data to ${expectedUrl}:`,
         apiError.message
+      );
+    });
+
+    it('should omit null and undefined values from the final payload', async () => {
+      const paramSchemaWithOptional = z.object({
+        required_param: z.string(),
+        optional_param1: z.string().nullish(),
+        optional_param2: z.string().nullish(),
+      });
+
+      const toolWithOptionalParams = ToolboxTool(
+        mockSession,
+        baseURL,
+        toolName,
+        toolDescription,
+        paramSchemaWithOptional
+      );
+
+      mockAxiosPost.mockResolvedValueOnce({data: 'success'} as AxiosResponse);
+
+      const callArgs = {
+        required_param: 'value',
+        optional_param1: null,
+        optional_param2: undefined,
+      };
+
+      await toolWithOptionalParams(callArgs);
+
+      expect(mockAxiosPost).toHaveBeenCalledWith(
+        expectedUrl,
+        {required_param: 'value'},
+        {headers: {}}
       );
     });
   });
@@ -389,7 +421,7 @@ describe('ToolboxTool', () => {
 
     it('should validate only the user-provided arguments, not the bound ones', async () => {
       const boundTool = tool.bindParams({query: 'a valid query'});
-      mockAxiosPost.mockResolvedValueOnce({data: 'success'});
+      mockAxiosPost.mockResolvedValueOnce({data: {result: 'success'}});
       // This call is valid because 'query' is bound, and no invalid args are passed
       await expect(boundTool()).resolves.toBe('success');
     });

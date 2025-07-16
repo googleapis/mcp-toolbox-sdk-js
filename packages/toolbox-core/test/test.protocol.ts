@@ -119,6 +119,42 @@ describe('ZodParameterSchema', () => {
         },
       },
     },
+    {
+      description: 'string parameter with required set to false',
+      data: {
+        name: 'optionalString',
+        description: 'An optional string',
+        type: 'string',
+        required: false,
+      },
+    },
+    {
+      description: 'string parameter with required set to true',
+      data: {
+        name: 'requiredString',
+        description: 'A required string',
+        type: 'string',
+        required: true,
+      },
+    },
+    {
+      description: 'integer parameter with required set to false',
+      data: {
+        name: 'optionalInt',
+        description: 'An optional integer',
+        type: 'integer',
+        required: false,
+      },
+    },
+    {
+      description: 'integer parameter with required set to true',
+      data: {
+        name: 'requiredInt',
+        description: 'A required integer',
+        type: 'integer',
+        required: true,
+      },
+    },
   ];
 
   test.each(validParameterTestCases)(
@@ -387,5 +423,39 @@ describe('createZodObjectSchemaFromParameters', () => {
     expect(() => createZodSchemaFromParams(paramsWithUnknownType)).toThrow(
       'Unknown parameter type: someUnrecognizedType'
     );
+  });
+
+  describe('optional parameters', () => {
+    const params: ParameterSchema[] = [
+      {name: 'requiredParam', description: 'required', type: 'string' as const},
+      {
+        name: 'optionalParam',
+        description: 'optional',
+        type: 'string' as const,
+        required: false,
+      },
+    ];
+    const schema = createZodSchemaFromParams(params);
+
+    it('should fail if a required parameter is missing', () => {
+      expectParseFailure(schema, {optionalParam: 'value'}, errors => {
+        expect(errors).toContain('requiredParam: Required');
+      });
+    });
+
+    it('should succeed if an optional parameter is missing', () => {
+      expectParseSuccess(schema, {requiredParam: 'value'});
+    });
+
+    it('should succeed if an optional parameter is null', () => {
+      expectParseSuccess(schema, {requiredParam: 'value', optionalParam: null});
+    });
+
+    it('should succeed if an optional parameter is undefined', () => {
+      expectParseSuccess(schema, {
+        requiredParam: 'value',
+        optionalParam: undefined,
+      });
+    });
   });
 });

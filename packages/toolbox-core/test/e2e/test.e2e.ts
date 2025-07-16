@@ -18,7 +18,6 @@ import {ToolboxTool} from '../../src/toolbox_core/tool';
 import {AxiosError} from 'axios';
 import {CustomGlobal} from './types';
 import {authTokenGetter} from './utils';
-import {z} from 'zod';
 
 describe('ToolboxClient E2E Tests', () => {
   let commonToolboxClient: ToolboxClient;
@@ -329,9 +328,9 @@ describe('ToolboxClient E2E Tests', () => {
       const paramSchema = searchRowsTool.getParamSchema();
 
       // Test the behavior of the required 'email' parameter
-      expect(
-        paramSchema.safeParse({email: 'test@example.com'}).success
-      ).toBe(true);
+      expect(paramSchema.safeParse({email: 'test@example.com'}).success).toBe(
+        true
+      );
       expect(paramSchema.safeParse({}).success).toBe(false); // Fails when missing
       expect(paramSchema.safeParse({email: null}).success).toBe(false); // Fails when null
 
@@ -434,9 +433,7 @@ describe('ToolboxClient E2E Tests', () => {
     it('should fail when a required param is null', async () => {
       await expect(
         searchRowsTool({email: null, id: 5, data: 'row5'})
-      ).rejects.toThrow(
-        /email: Invalid input: expected string, received null/
-      );
+      ).rejects.toThrow(/email: Invalid input: expected string, received null/);
     });
 
     it('should run tool with all default params', async () => {

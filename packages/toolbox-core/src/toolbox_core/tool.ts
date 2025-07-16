@@ -88,6 +88,9 @@ function ToolboxTool(
 
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
 
+  // Only omit keys that actually exist in the provided schema.
+  // This handles cases where `paramSchema` is already partial.
+  // Could be partial due to bound params being used while loading tools.
   const boundKeys = Object.keys(boundParams);
   const existingSchemaKeys = Object.keys(paramSchema.shape);
   const keysToOmit = boundKeys.filter(key => existingSchemaKeys.includes(key));

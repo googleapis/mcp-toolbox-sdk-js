@@ -222,7 +222,7 @@ describe('ToolboxTool', () => {
     it('should throw a generic error if paramSchema.parse throws a non-ZodError', async () => {
       const customError = new Error('A non-Zod parsing error occurred!');
       const failingSchema = {
-        shape: {}, 
+        shape: {},
         parse: jest.fn().mockImplementation(() => {
           throw customError;
         }),

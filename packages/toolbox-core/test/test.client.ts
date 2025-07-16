@@ -32,9 +32,7 @@ type CallableToolReturnedByFactory = ReturnType<OriginalToolboxToolType>;
 
 type InferredZodTool = z.infer<typeof ZodToolSchema>;
 
-const createMockZodObject = (
-  shape: ZodRawShape = {}
-): ZodObject<ZodRawShape> =>
+const createMockZodObject = (shape: ZodRawShape = {}): ZodObject<ZodRawShape> =>
   ({
     parse: jest.fn(args => args),
     _def: {
@@ -300,7 +298,7 @@ describe('ToolboxClient', () => {
           path: ['tools'],
           message: 'Required',
           code: 'invalid_type',
-          expected: 'object'
+          expected: 'object',
         },
       ]);
 
@@ -480,18 +478,15 @@ describe('ToolboxClient', () => {
         tools: toolDefinitions,
       };
 
-      const zodParamsSchemas: Record<
-        string,
-        ZodObject<ZodRawShape>
-      > = {};
+      const zodParamsSchemas: Record<string, ZodObject<ZodRawShape>> = {};
       const toolInstances: Record<string, CallableToolReturnedByFactory> = {};
       const orderedToolNames = Object.keys(toolDefinitions);
 
       orderedToolNames.forEach(tName => {
         const tDef = toolDefinitions[tName];
         zodParamsSchemas[tName] = createMockZodObject(
-          (tDef.parameters as ParameterSchema[]).reduce( (
-            acc: {[k: string]: ZodTypeAny}, p) => {
+          (tDef.parameters as ParameterSchema[]).reduce(
+            (acc: {[k: string]: ZodTypeAny}, p) => {
               acc[p.name] = {
                 _def: {typeName: 'ZodString'},
               } as unknown as ZodTypeAny;
@@ -753,7 +748,7 @@ describe('ToolboxClient', () => {
           input: undefined,
           path: ['serverVersion'],
           message: 'Zod validation failed on toolset',
-          code: 'custom'
+          code: 'custom',
         },
       ]);
 

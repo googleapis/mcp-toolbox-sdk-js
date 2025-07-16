@@ -175,7 +175,11 @@ describe('ZodParameterSchema', () => {
     const data = {name: 'testArray', description: 'An array', type: 'array'};
     expectParseFailure(ZodParameterSchema, data, errors => {
       expect(errors).toEqual(
-        expect.arrayContaining([expect.stringMatching('items: Invalid input: expected object, received undefined')])
+        expect.arrayContaining([
+          expect.stringMatching(
+            'items: Invalid input: expected object, received undefined'
+          ),
+        ])
       );
     });
   });
@@ -196,9 +200,7 @@ describe('ZodParameterSchema', () => {
     const data = {name: 'testParam', description: 'A param'}; // type is missing
     expectParseFailure(ZodParameterSchema, data, errors => {
       expect(errors).toEqual(
-        expect.arrayContaining([
-          expect.stringMatching('type: Invalid input'),
-        ])
+        expect.arrayContaining([expect.stringMatching('type: Invalid input')])
       );
     });
   });
@@ -315,9 +317,7 @@ describe('createZodObjectSchemaFromParameters', () => {
 
     expectParseSuccess(schema, {});
     expectParseFailure(schema, {anyKey: 'anyValue'}, errors => {
-      expect(
-        errors.some(e => /unrecognized key/i.test(e))
-      ).toBe(true);
+      expect(errors.some(e => /unrecognized key/i.test(e))).toBe(true);
     });
   });
 
@@ -339,10 +339,14 @@ describe('createZodObjectSchemaFromParameters', () => {
       schema,
       {username: 'john_doe', age: '30', isActive: true},
       errors =>
-        expect(errors).toContain('age: Invalid input: expected number, received string')
+        expect(errors).toContain(
+          'age: Invalid input: expected number, received string'
+        )
     );
     expectParseFailure(schema, {username: 'john_doe', isActive: true}, errors =>
-      expect(errors).toContain('age: Invalid input: expected number, received undefined')
+      expect(errors).toContain(
+        'age: Invalid input: expected number, received undefined'
+      )
     );
   });
 
@@ -365,7 +369,9 @@ describe('createZodObjectSchemaFromParameters', () => {
     expectParseSuccess(schema, {tags: ['news', 'tech'], id: 1});
 
     expectParseFailure(schema, {tags: ['news', 123], id: 1}, errors => {
-      expect(errors).toContain('tags.1: Invalid input: expected string, received number');
+      expect(errors).toContain(
+        'tags.1: Invalid input: expected string, received number'
+      );
     });
   });
 
@@ -439,7 +445,9 @@ describe('createZodObjectSchemaFromParameters', () => {
 
     it('should fail if a required parameter is missing', () => {
       expectParseFailure(schema, {optionalParam: 'value'}, errors => {
-        expect(errors).toContain('requiredParam: Invalid input: expected string, received undefined');
+        expect(errors).toContain(
+          'requiredParam: Invalid input: expected string, received undefined'
+        );
       });
     });
 

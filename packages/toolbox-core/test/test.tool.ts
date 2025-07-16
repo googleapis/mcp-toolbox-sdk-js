@@ -275,7 +275,7 @@ describe('ToolboxTool', () => {
         basicParamSchema
       );
       await expect(currentTool()).rejects.toThrow(
-        'Argument validation failed for tool "myTestTool":\n - query: Required'
+        'Argument validation failed for tool "myTestTool":\n - query: Invalid input: expected string, received undefined'
       );
       expect(mockAxiosPost).not.toHaveBeenCalled();
     });

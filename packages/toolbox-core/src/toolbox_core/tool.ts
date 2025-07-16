@@ -116,7 +116,7 @@ function ToolboxTool(
       validatedUserArgs = userParamSchema.parse(callArguments);
     } catch (error) {
       if (error instanceof ZodError) {
-        const errorMessages = error.errors.map(
+        const errorMessages = error.issues.map(
           e => `${e.path.join('.') || 'payload'}: ${e.message}`
         );
         throw new Error(

@@ -18,7 +18,7 @@ import {ToolboxTool} from '../../src/toolbox_core/tool';
 import {AxiosError} from 'axios';
 import {CustomGlobal} from './types';
 import {authTokenGetter} from './utils';
-import {ZodOptional, ZodNullable, ZodTypeAny} from 'zod';
+import {z} from 'zod';
 
 describe('ToolboxClient E2E Tests', () => {
   let commonToolboxClient: ToolboxClient;
@@ -46,13 +46,13 @@ describe('ToolboxClient E2E Tests', () => {
 
     it('should invoke the getNRowsTool with missing params', async () => {
       await expect(getNRowsTool()).rejects.toThrow(
-        /Argument validation failed for tool "get-n-rows":\s*- num_rows: Required/
+        /num_rows: Invalid input: expected string, received undefined/
       );
     });
 
     it('should invoke the getNRowsTool with wrong param type', async () => {
       await expect(getNRowsTool({num_rows: 2})).rejects.toThrow(
-        /Argument validation failed for tool "get-n-rows":\s*- num_rows: Expected string, received number/
+        /num_rows: Invalid input: expected string, received number/
       );
     });
   });
@@ -295,7 +295,7 @@ describe('ToolboxClient E2E Tests', () => {
     });
 
     it('should fail when a tool with a param requiring auth is run with insufficient auth claims', async () => {
-      expect.assertions(3); // Adjusted to account for logApiError's console.error
+      expect.assertions(2); // An AxiosError is expected.
 
       const tool = await commonToolboxClient.loadTool(
         'get-row-by-content-auth',
@@ -327,28 +327,36 @@ describe('ToolboxClient E2E Tests', () => {
 
     it('should correctly identify required and optional parameters in the schema', () => {
       const paramSchema = searchRowsTool.getParamSchema();
-      const {shape} = paramSchema;
 
-      // Required param 'email'
-      expect(shape.email.isOptional()).toBe(false);
-      expect(shape.email.isNullable()).toBe(false);
-      expect(shape.email._def.typeName).toBe('ZodString');
-
-      // Optional param 'data'
-      expect(shape.data.isOptional()).toBe(true);
-      expect(shape.data.isNullable()).toBe(true);
+      // Test the behavior of the required 'email' parameter
       expect(
-        (shape.data as ZodOptional<ZodNullable<ZodTypeAny>>).unwrap().unwrap()
-          ._def.typeName
-      ).toBe('ZodString');
+        paramSchema.safeParse({email: 'test@example.com'}).success
+      ).toBe(true);
+      expect(paramSchema.safeParse({}).success).toBe(false); // Fails when missing
+      expect(paramSchema.safeParse({email: null}).success).toBe(false); // Fails when null
 
-      // Optional param 'id'
-      expect(shape.id.isOptional()).toBe(true);
-      expect(shape.id.isNullable()).toBe(true);
+      // Test the behavior of the optional 'data' parameter
       expect(
-        (shape.id as ZodOptional<ZodNullable<ZodTypeAny>>).unwrap().unwrap()
-          ._def.typeName
-      ).toBe('ZodNumber');
+        paramSchema.safeParse({email: 'test@example.com', data: 'some data'})
+          .success
+      ).toBe(true);
+      expect(
+        paramSchema.safeParse({email: 'test@example.com', data: null}).success
+      ).toBe(true); // Should succeed with null
+      expect(paramSchema.safeParse({email: 'test@example.com'}).success).toBe(
+        true
+      ); // Should succeed when omitted
+
+      // Test the behavior of the optional 'id' parameter
+      expect(
+        paramSchema.safeParse({email: 'test@example.com', id: 123}).success
+      ).toBe(true);
+      expect(
+        paramSchema.safeParse({email: 'test@example.com', id: null}).success
+      ).toBe(true); // Should succeed with null
+      expect(paramSchema.safeParse({email: 'test@example.com'}).success).toBe(
+        true
+      ); // Should succeed when omitted
     });
 
     it('should run tool with optional params omitted', async () => {
@@ -419,7 +427,7 @@ describe('ToolboxClient E2E Tests', () => {
 
     it('should fail when a required param is missing', async () => {
       await expect(searchRowsTool({id: 5, data: 'row5'})).rejects.toThrow(
-        /Argument validation failed for tool "search-rows":\s*- email: Required/
+        /email: Invalid input: expected string, received undefined/
       );
     });
 
@@ -427,7 +435,7 @@ describe('ToolboxClient E2E Tests', () => {
       await expect(
         searchRowsTool({email: null, id: 5, data: 'row5'})
       ).rejects.toThrow(
-        /Argument validation failed for tool "search-rows":\s*- email: Expected string, received null/
+        /email: Invalid input: expected string, received null/
       );
     });
 

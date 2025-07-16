@@ -87,9 +87,12 @@ function ToolboxTool(
   }
 
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
+
   const boundKeys = Object.keys(boundParams);
+  const existingSchemaKeys = Object.keys(paramSchema.shape);
+  const keysToOmit = boundKeys.filter(key => existingSchemaKeys.includes(key));
   const userParamSchema = paramSchema.omit(
-    Object.fromEntries(boundKeys.map(k => [k, true]))
+    Object.fromEntries(keysToOmit.map(k => [k, true]))
   );
 
   const callable = async function (

@@ -60,7 +60,7 @@
         "gts": "^6.0.0",
         "jest": "^30.0.0",
         "tmp": "^0.2.3",
-        "ts-jest": "^29.3.4",
+        "ts-jest": "^29.4.0",
         "typescript": "^5.8.3"
     },
     "dependencies": {

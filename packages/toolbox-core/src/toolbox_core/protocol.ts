@@ -78,7 +78,7 @@ export const ZodParameterSchema = z.lazy(() =>
       type: z.literal('array'),
       items: ZodParameterSchema, // Recursive reference for the item's definition
     }),
-  ])
+  ]),
 ) as z.ZodType<ParameterSchema>;
 
 export const ZodToolSchema = z.object({
@@ -91,7 +91,7 @@ export const ZodManifestSchema = z.object({
   serverVersion: z.string().min(1, 'Server version cannot be empty'),
   tools: z.record(
     z.string().min(1, 'Tool name cannot be empty'),
-    ZodToolSchema
+    ZodToolSchema,
   ),
 });
 
@@ -144,7 +144,7 @@ function buildZodShapeFromParam(param: ParameterSchema): ZodTypeAny {
  * @returns A ZodObject schema.
  */
 export function createZodSchemaFromParams(
-  params: ParameterSchema[]
+  params: ParameterSchema[],
 ): ZodObject<ZodRawShape> {
   const shape: {[k: string]: ZodTypeAny} = {};
   for (const param of params) {

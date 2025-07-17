@@ -57,7 +57,7 @@ describe('resolveValue', () => {
     test('should execute the function and resolve with its return value', async () => {
       const syncFunction = () => 'result from sync function';
       await expect(resolveValue(syncFunction)).resolves.toBe(
-        'result from sync function'
+        'result from sync function',
       );
     });
 
@@ -82,7 +82,7 @@ describe('resolveValue', () => {
     test('should await an async function and resolve with its value', async () => {
       const asyncFunction = async () => 'result from async function';
       await expect(resolveValue(asyncFunction)).resolves.toBe(
-        'result from async function'
+        'result from async function',
       );
     });
 
@@ -100,7 +100,7 @@ describe('resolveValue', () => {
         });
       };
       await expect(resolveValue(delayedAsyncFunction)).resolves.toBe(
-        'delayed result'
+        'delayed result',
       );
     });
 
@@ -116,7 +116,7 @@ describe('resolveValue', () => {
       const error = new Error('Explicit rejection');
       const rejectingPromiseFunction = () => Promise.reject(error);
       await expect(resolveValue(rejectingPromiseFunction)).rejects.toThrow(
-        error
+        error,
       );
     });
   });
@@ -131,7 +131,7 @@ describe('identifyAuthRequirements', () => {
       identifyAuthRequirements(
         reqAuthnParams,
         reqAuthzTokens,
-        authServiceNames
+        authServiceNames,
       );
     expect(remainingAuthnParams).toEqual({});
     expect(remainingAuthzTokens).toEqual([]);
@@ -146,7 +146,7 @@ describe('identifyAuthRequirements', () => {
       identifyAuthRequirements(
         reqAuthnParams,
         reqAuthzTokens,
-        authServiceNames
+        authServiceNames,
       );
     expect(remainingAuthnParams).toEqual({param2: ['serviceC']});
     expect(remainingAuthzTokens).toEqual(['serviceD']);
@@ -161,7 +161,7 @@ describe('identifyAuthRequirements', () => {
       identifyAuthRequirements(
         reqAuthnParams,
         reqAuthzTokens,
-        authServiceNames
+        authServiceNames,
       );
     expect(remainingAuthnParams).toEqual({});
     expect(remainingAuthzTokens).toEqual([]);
@@ -176,7 +176,7 @@ describe('identifyAuthRequirements', () => {
       identifyAuthRequirements(
         reqAuthnParams,
         reqAuthzTokens,
-        authServiceNames
+        authServiceNames,
       );
     expect(remainingAuthnParams).toEqual({param1: ['serviceA']});
     expect(remainingAuthzTokens).toEqual(['serviceB']);
@@ -191,7 +191,7 @@ describe('identifyAuthRequirements', () => {
       identifyAuthRequirements(
         reqAuthnParams,
         reqAuthzTokens,
-        authServiceNames
+        authServiceNames,
       );
     expect(remainingAuthnParams).toEqual({});
     expect(remainingAuthzTokens).toEqual(['serviceY']);
@@ -206,7 +206,7 @@ describe('identifyAuthRequirements', () => {
       identifyAuthRequirements(
         reqAuthnParams,
         reqAuthzTokens,
-        authServiceNames
+        authServiceNames,
       );
     expect(remainingAuthnParams).toEqual({});
     expect(remainingAuthzTokens).toEqual([]);

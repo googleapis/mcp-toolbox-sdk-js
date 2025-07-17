@@ -3,7 +3,6 @@
     "compilerOptions": {
         "module": "nodenext",
         "outDir": "./build/cjs",
-        "declaration": false,
         "target": "ES2019",
     }
 }

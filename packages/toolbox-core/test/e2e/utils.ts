@@ -37,7 +37,7 @@ export function getEnvVar(key: string): string {
 export async function accessSecretVersion(
   projectId: string,
   secretId: string,
-  versionId = 'latest'
+  versionId = 'latest',
 ): Promise<string> {
   const client = new SecretManagerServiceClient();
   const [version] = await client.accessSecretVersion({
@@ -62,7 +62,7 @@ export async function createTmpFile(content: string): Promise<string> {
         err: Error | null,
         filePath: string,
         _fd: number,
-        cleanupCallback: () => void
+        cleanupCallback: () => void,
       ) => {
         if (err) {
           return reject(err);
@@ -73,7 +73,7 @@ export async function createTmpFile(content: string): Promise<string> {
             cleanupCallback();
             reject(writeErr);
           });
-      }
+      },
     );
   });
 }
@@ -84,7 +84,7 @@ export async function createTmpFile(content: string): Promise<string> {
 export async function downloadBlob(
   bucketName: string,
   sourceBlobName: string,
-  destinationFileName: string
+  destinationFileName: string,
 ): Promise<void> {
   const storage = new Storage();
   await storage.bucket(bucketName).file(sourceBlobName).download({
@@ -139,7 +139,7 @@ export async function getAuthToken(clientId: string): Promise<string> {
  */
 export async function authTokenGetter(
   projectId: string,
-  clientName: string
+  clientName: string,
 ): Promise<string> {
   const clientId = await accessSecretVersion(projectId, clientName);
   return getAuthToken(clientId);

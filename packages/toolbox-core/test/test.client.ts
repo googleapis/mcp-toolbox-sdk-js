@@ -146,7 +146,7 @@ describe('ToolboxClient', () => {
         manifestData?: Partial<ZodManifest>;
         zodParamsSchema?: ZodObject<ZodRawShape>;
         toolInstance?: Partial<CallableToolReturnedByFactory>;
-      } = {}
+      } = {},
     ) => {
       const manifestData: ZodManifest = {
         serverVersion: '1.0.0',
@@ -166,8 +166,8 @@ describe('ToolboxClient', () => {
               }
               return shapeAccumulator;
             },
-            {}
-          )
+            {},
+          ),
         );
 
       const defaultMockCallable = jest
@@ -193,7 +193,7 @@ describe('ToolboxClient', () => {
           withAuth: jest.fn().mockReturnThis(),
           addAuthTokenGetters: jest.fn().mockReturnThis(),
           addAuthTokenGetter: jest.fn().mockReturnThis(),
-        }
+        },
       );
 
       const toolInstance = overrides.toolInstance
@@ -207,7 +207,7 @@ describe('ToolboxClient', () => {
       MockedCreateZodSchemaFromParams.mockReturnValueOnce(zodParamsSchema);
 
       MockedToolboxToolFactory.mockReturnValueOnce(
-        toolInstance as CallableToolReturnedByFactory
+        toolInstance as CallableToolReturnedByFactory,
       );
 
       return {manifestData, zodParamsSchema, toolInstance};
@@ -228,11 +228,11 @@ describe('ToolboxClient', () => {
 
       expect(mockSessionGet).toHaveBeenCalledWith(
         expectedApiUrl,
-        expect.any(Object)
+        expect.any(Object),
       );
       expect(MockedZodManifestSchema.parse).toHaveBeenCalledWith(manifestData);
       expect(MockedCreateZodSchemaFromParams).toHaveBeenCalledWith(
-        mockToolDefinition.parameters as unknown as ParameterSchema[] // Cast if createZodSchemaFromParams expects ParameterSchema[]
+        mockToolDefinition.parameters as unknown as ParameterSchema[], // Cast if createZodSchemaFromParams expects ParameterSchema[]
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
         autoCreatedSession,
@@ -244,7 +244,7 @@ describe('ToolboxClient', () => {
         {}, // remainingAuthnParams
         [], // remainingAuthzTokens
         {}, // currBoundParams
-        {} // clientHeaders
+        {}, // clientHeaders
       );
       expect(loadedTool).toBe(toolInstance);
     });
@@ -273,7 +273,7 @@ describe('ToolboxClient', () => {
         expect.anything(),
         expect.anything(),
         boundParams, // currBoundParams
-        expect.anything()
+        expect.anything(),
       );
     });
 
@@ -286,7 +286,7 @@ describe('ToolboxClient', () => {
       setupMocksForSuccessfulLoad(mockToolDefinition);
 
       await expect(client.loadTool(toolName, {}, boundParams)).rejects.toThrow(
-        `Validation failed for tool '${toolName}': unused bound parameters: unusedParam.`
+        `Validation failed for tool '${toolName}': unused bound parameters: unusedParam.`,
       );
     });
 
@@ -310,7 +310,7 @@ describe('ToolboxClient', () => {
       });
 
       await expect(client.loadTool(toolName)).rejects.toThrow(
-        `Invalid manifest structure received from ${expectedApiUrl}: ${JSON.stringify(mockZodError.issues, null, 2)}`
+        `Invalid manifest structure received from ${expectedApiUrl}: ${JSON.stringify(mockZodError.issues, null, 2)}`,
       );
       expect(MockedCreateZodSchemaFromParams).not.toHaveBeenCalled();
       expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
@@ -324,7 +324,7 @@ describe('ToolboxClient', () => {
       });
 
       await expect(client.loadTool(toolName)).rejects.toThrow(
-        `Invalid manifest structure received from ${expectedApiUrl}: ${genericError.message}`
+        `Invalid manifest structure received from ${expectedApiUrl}: ${genericError.message}`,
       );
     });
 
@@ -336,7 +336,7 @@ describe('ToolboxClient', () => {
       });
 
       await expect(client.loadTool(toolName)).rejects.toThrow(
-        `Invalid manifest structure received from ${expectedApiUrl}: Unknown validation error.`
+        `Invalid manifest structure received from ${expectedApiUrl}: Unknown validation error.`,
       );
     });
 
@@ -350,11 +350,11 @@ describe('ToolboxClient', () => {
         data: mockManifestWithoutTools,
       } as AxiosResponse);
       MockedZodManifestSchema.parse.mockReturnValueOnce(
-        mockManifestWithoutTools as unknown as ZodManifest
+        mockManifestWithoutTools as unknown as ZodManifest,
       );
 
       await expect(client.loadTool(toolName)).rejects.toThrow(
-        `Tool "${toolName}" not found in manifest from /api/tool/${toolName}.`
+        `Tool "${toolName}" not found in manifest from /api/tool/${toolName}.`,
       );
       expect(MockedCreateZodSchemaFromParams).not.toHaveBeenCalled();
       expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
@@ -369,10 +369,10 @@ describe('ToolboxClient', () => {
         data: mockManifestWithOtherTools,
       } as AxiosResponse);
       MockedZodManifestSchema.parse.mockReturnValueOnce(
-        mockManifestWithOtherTools
+        mockManifestWithOtherTools,
       );
       await expect(client.loadTool(toolName)).rejects.toThrow(
-        `Tool "${toolName}" not found in manifest from /api/tool/${toolName}.`
+        `Tool "${toolName}" not found in manifest from /api/tool/${toolName}.`,
       );
       expect(MockedCreateZodSchemaFromParams).not.toHaveBeenCalled();
       expect(MockedToolboxToolFactory).not.toHaveBeenCalled();
@@ -385,11 +385,11 @@ describe('ToolboxClient', () => {
       await expect(client.loadTool(toolName)).rejects.toThrow(apiError);
       expect(mockSessionGet).toHaveBeenCalledWith(
         expectedApiUrl,
-        expect.any(Object)
+        expect.any(Object),
       );
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         `Error fetching data from ${expectedApiUrl}:`,
-        apiError.message
+        apiError.message,
       );
       expect(MockedZodManifestSchema.parse).not.toHaveBeenCalled();
     });
@@ -443,7 +443,7 @@ describe('ToolboxClient', () => {
         {},
         [],
         expect.anything(),
-        expect.anything()
+        expect.anything(),
       );
     });
 
@@ -456,7 +456,7 @@ describe('ToolboxClient', () => {
       setupMocksForSuccessfulLoad(mockToolDefinition);
 
       await expect(client.loadTool(toolName, authTokenGetters)).rejects.toThrow(
-        `Validation failed for tool '${toolName}': unused auth tokens: UnusedService.`
+        `Validation failed for tool '${toolName}': unused auth tokens: UnusedService.`,
       );
     });
   });
@@ -471,7 +471,7 @@ describe('ToolboxClient', () => {
 
     const setupMocksForSuccessfulToolsetLoad = (
       toolDefinitions: Record<string, InferredZodTool>, // Use InferredZodTool
-      manifestDataOverride?: ZodManifest
+      manifestDataOverride?: ZodManifest,
     ) => {
       const manifestData: ZodManifest = manifestDataOverride || {
         serverVersion: '1.0.0',
@@ -492,8 +492,8 @@ describe('ToolboxClient', () => {
               } as unknown as ZodTypeAny;
               return acc;
             },
-            {}
-          )
+            {},
+          ),
         );
 
         const mockCallable = jest
@@ -527,7 +527,7 @@ describe('ToolboxClient', () => {
 
       orderedToolNames.forEach(tName => {
         MockedCreateZodSchemaFromParams.mockReturnValueOnce(
-          zodParamsSchemas[tName]
+          zodParamsSchemas[tName],
         );
       });
 
@@ -581,15 +581,15 @@ describe('ToolboxClient', () => {
 
       expect(mockSessionGet).toHaveBeenCalledWith(
         expectedApiUrl,
-        expect.any(Object)
+        expect.any(Object),
       );
       expect(MockedZodManifestSchema.parse).toHaveBeenCalledWith(manifestData);
 
       expect(MockedCreateZodSchemaFromParams).toHaveBeenCalledWith(
-        mockToolDefinitions.toolA.parameters
+        mockToolDefinitions.toolA.parameters,
       );
       expect(MockedCreateZodSchemaFromParams).toHaveBeenCalledWith(
-        mockToolDefinitions.toolB.parameters
+        mockToolDefinitions.toolB.parameters,
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledTimes(2);
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
@@ -602,7 +602,7 @@ describe('ToolboxClient', () => {
         {},
         [],
         {},
-        {}
+        {},
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
         autoCreatedSession,
@@ -614,10 +614,10 @@ describe('ToolboxClient', () => {
         {},
         [],
         {},
-        {}
+        {},
       );
       expect(loadedTools).toEqual(
-        expect.arrayContaining([toolInstances.toolA, toolInstances.toolB])
+        expect.arrayContaining([toolInstances.toolA, toolInstances.toolB]),
       );
       expect(loadedTools.length).toBe(2);
     });
@@ -650,7 +650,7 @@ describe('ToolboxClient', () => {
         expect.anything(),
         expect.anything(),
         {paramA: 'valueA'}, // Correct bound params for toolA
-        expect.anything()
+        expect.anything(),
       );
       expect(MockedToolboxToolFactory).toHaveBeenCalledWith(
         autoCreatedSession,
@@ -662,7 +662,7 @@ describe('ToolboxClient', () => {
         expect.anything(),
         expect.anything(),
         {paramB: 123}, // Correct bound params for toolB
-        expect.anything()
+        expect.anything(),
       );
     });
 
@@ -679,9 +679,9 @@ describe('ToolboxClient', () => {
       setupMocksForSuccessfulToolsetLoad(mockToolDefinitions);
 
       await expect(
-        client.loadToolset(toolsetName, {}, boundParams)
+        client.loadToolset(toolsetName, {}, boundParams),
       ).rejects.toThrow(
-        "Validation failed for toolset 'my-toolset': unused bound parameters could not be applied to any tool: unusedParam."
+        "Validation failed for toolset 'my-toolset': unused bound parameters could not be applied to any tool: unusedParam.",
       );
     });
 
@@ -697,9 +697,9 @@ describe('ToolboxClient', () => {
       setupMocksForSuccessfulToolsetLoad(mockToolDefinitions);
 
       await expect(
-        client.loadToolset(toolsetName, authTokenGetters)
+        client.loadToolset(toolsetName, authTokenGetters),
       ).rejects.toThrow(
-        "Validation failed for toolset 'my-toolset': unused auth tokens could not be applied to any tool: UnusedService."
+        "Validation failed for toolset 'my-toolset': unused auth tokens could not be applied to any tool: UnusedService.",
       );
     });
 
@@ -710,7 +710,7 @@ describe('ToolboxClient', () => {
       await client.loadToolset();
       expect(mockSessionGet).toHaveBeenLastCalledWith(
         expectedApiUrl,
-        expect.any(Object)
+        expect.any(Object),
       );
 
       jest.clearAllMocks();
@@ -720,7 +720,7 @@ describe('ToolboxClient', () => {
       await client.loadToolset(undefined);
       expect(mockSessionGet).toHaveBeenLastCalledWith(
         expectedApiUrl,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -760,7 +760,7 @@ describe('ToolboxClient', () => {
       });
 
       await expect(client.loadToolset(toolsetName)).rejects.toThrow(
-        `Invalid manifest structure received from ${expectedApiUrlForToolset}: ${JSON.stringify(mockZodError.issues, null, 2)}`
+        `Invalid manifest structure received from ${expectedApiUrlForToolset}: ${JSON.stringify(mockZodError.issues, null, 2)}`,
       );
     });
 
@@ -773,7 +773,7 @@ describe('ToolboxClient', () => {
       await expect(client.loadToolset(toolsetName)).rejects.toThrow(apiError);
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         `Error fetching data from ${expectedApiUrl}:`,
-        apiError.message
+        apiError.message,
       );
     });
 
@@ -790,9 +790,9 @@ describe('ToolboxClient', () => {
         setupMocksForSuccessfulToolsetLoad(mockToolDefinitions);
 
         await expect(
-          client.loadToolset(toolsetName, {}, boundParams, true)
+          client.loadToolset(toolsetName, {}, boundParams, true),
         ).rejects.toThrow(
-          "Validation failed for tool 'toolA': unused bound parameters: unusedParam."
+          "Validation failed for tool 'toolA': unused bound parameters: unusedParam.",
         );
       });
 
@@ -817,9 +817,9 @@ describe('ToolboxClient', () => {
         setupMocksForSuccessfulToolsetLoad(mockToolDefinitions);
 
         await expect(
-          client.loadToolset(toolsetName, authTokenGetters, {}, true)
+          client.loadToolset(toolsetName, authTokenGetters, {}, true),
         ).rejects.toThrow(
-          "Validation failed for tool 'toolA': unused auth tokens: ServiceB."
+          "Validation failed for tool 'toolA': unused auth tokens: ServiceB.",
         );
       });
     });

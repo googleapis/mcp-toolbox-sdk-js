@@ -10,15 +10,7 @@
 
 ### Bug Fixes
 
-* **deps:** update dependency google-auth-library to v10 ([#45](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/45)) ([fb3d4aa](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/fb3d4aa34f61b5c8a22c25ae9f7d686e23bc4c10))
-* **deps:** update dependency zod to v4 ([#67](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/67)) ([f1dc8f1](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/f1dc8f19c6160abfa5d40f1cafa4390ed6603f86))
 * **toolbox-core:** Simplify tool invocation response handling ([#69](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/69)) ([c7dce48](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/c7dce4844462ddf415872257c217808791ad5e9a))
-
-
-### Miscellaneous Chores
-
-* **deps:** update dependency gts to v6 ([#29](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/29)) ([bd9fb9f](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/bd9fb9f9c7346298d5a25d6ff6beac18c9227111))
-* update toolbox version ([#63](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/63)) ([9e60069](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/9e60069c3fef4bbda252fabf75147b33eaf6503f))
 
 ## 0.1.0 (2025-06-23)
 

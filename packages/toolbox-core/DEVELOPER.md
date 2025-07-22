@@ -4,13 +4,28 @@ This guide provides instructions for setting up your development environment to
 contribute to the `@toolbox-sdk/core` package, which is part of the
 `mcp-toolbox-sdk-js` monorepo.
 
-## Prerequisites
+## Versioning
+
+This library adheres to [Semantic Versioning](http://semver.org/). Releases are
+automated using [Release Please](https://github.com/googleapis/release-please),
+which analyzes commit messages to determine version bumps.
+
+## Processes
+
+### Conventional Commit Messages
+This repository utilizes [Conventional
+Commits](https://www.conventionalcommits.org/) for structuring commit messages.
+This standard is crucial for the automated release process managed by [Release
+Please](https://github.com/googleapis/release-please?tab=readme-ov-file#how-should-i-write-my-commits),
+which parses your Git history to create GitHub and npm releases.
+
+## Install
 
 Before you begin, ensure you have the following installed:
 
 * Node.js ([LTS version recommended](https://nodejs.org/en/download/))
 
-## Setup
+### Setup
 
 These steps will guide you through setting up the monorepo and this specific package for development.
 
@@ -51,7 +66,7 @@ These steps will guide you through setting up the monorepo and this specific pac
     This creates a symbolic link, allowing changes in `@toolbox-sdk/core` to be
     immediately reflected in the consuming project without reinstallation.
 
-    Don't forget to npm unlink / yarn unlink when done!
+    Don't forget to npm unlink when done!
 
 ## Testing
 
@@ -71,6 +86,14 @@ Ensure all tests pass before submitting your changes. Tests are typically run fr
     ```bash
     npm run test:e2e
     ```
+
+#### Authentication in Local Tests
+Integration tests involving authentication rely on environment variables for
+`TOOLBOX_URL`, `TOOLBOX_VERSION`, and `GOOGLE_CLOUD_PROJECT`. For local runs,
+you might need to mock or set up dummy authentication tokens. Refer to
+[authTokenGetter](./test/e2e/test.e2e.ts#L214) for how authentication tokens (`authToken1`, `authToken2`)
+are generated and used in the test environment. The `authMethods.ts` module
+provides helper functions for obtaining Google ID tokens.
 
 ## Linting and Formatting
 

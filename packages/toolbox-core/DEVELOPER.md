@@ -142,7 +142,7 @@ for this purpose.
   documentation (if applicable) in a single submission.
 * Code style and linting checks will run automatically. Please ensure they pass
   before requesting a review.
-* A reviewer from the `@googleapis/senseai-eco` team will typically review your
+* A reviewer from the maintainer team will typically review your
   PR within 2-5 days and may request changes or approve it.
 * On approval by a repo maintainer, *Squash and Merge* your PR.
 

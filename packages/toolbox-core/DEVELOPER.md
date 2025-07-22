@@ -112,16 +112,66 @@ This project uses linters (e.g., ESLint) and formatters (e.g., Prettier) to main
     ```bash
     npm run fix
     ```
+## Contribution Process
 
-## Committing Changes
+We welcome contributions to this project! Please review the following guidelines
+before submitting.
+
+### Contributor License Agreement (CLA)
+
+Contributions to this project must be accompanied by a [Contributor License
+Agreement](https://cla.developers.google.com/about) (CLA). This grants Google
+permission to use and redistribute your contributions.
+
+### Committing Changes
 
 * **Branching:** Create a new branch for your feature or bug fix (e.g., `feature/my-new-feature` or `fix/issue-123`).
 * **Commit Messages:** Follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for commit message conventions.
 * **Pre-submit checks:** On any PRs, presubmit checks like linters, unit tests
   and integration tests etc. are run. Make sure all checks are green before
   proceeding.
-* **Submitting a PR:** On approval by a repo maintainer, *Squash and Merge* your PR.
 
-## Further Information
+### Code Reviews
 
-* If you encounter issues or have questions, please open an [issue](https://github.com/googleapis/mcp-toolbox-sdk-js/issues) on the GitHub repository.
+All submissions, including those by project members, require review. We use
+[GitHub pull requests](https://help.github.com/articles/about-pull-requests/)
+for this purpose.
+
+* Ensure your pull request clearly describes the changes you are making.
+* Ideally, your pull request should include code, tests, and updated
+  documentation (if applicable) in a single submission.
+* Code style and linting checks will run automatically. Please ensure they pass
+  before requesting a review.
+* A reviewer from the `@googleapis/senseai-eco` team will typically review your
+  PR within 2-5 days and may request changes or approve it.
+* On approval by a repo maintainer, *Squash and Merge* your PR.
+
+## Releases & Pipelines
+
+This project uses `release-please` for automated releases.
+
+* **Release Automation:** [Release
+  Please](https://github.com/googleapis/mcp-toolbox-sdk-js/blob/main/.github/release-please.yml)
+  is configured to manage releases based on [Conventional
+  Commits](#conventional-commit-messages). It creates release pull requests and
+  tags.
+* **Published Packages:** The release pipeline produces npm package(s),
+  including:
+    * `@toolbox-sdk/core`
+  These packages are published to
+    [npm](https://www.npmjs.com/).
+* **Release Trigger:** Releases are typically triggered automatically based on
+  merges to the `main` branch, as configured in [release-trigger.yml](https://github.com/googleapis/mcp-toolbox-sdk-js/blob/main/.github/release-trigger.yml).
+
+## Support
+
+If you encounter issues or have questions, please check the existing [GitHub
+Issues](https://github.com/googleapis/genai-toolbox/issues) for the main Toolbox
+project. If your issue is specific to one of the SDKs, please look for existing
+issues [here](https://github.com/googleapis/mcp-toolbox-sdk-js/issues) or
+open a new issue in this repository.
+
+### Reporting Security Issues
+
+For security-related concerns, please report them via
+[g.co/vulnz](https://g.co/vulnz).

@@ -66,7 +66,7 @@ These steps will guide you through setting up the monorepo and this specific pac
     This creates a symbolic link, allowing changes in `@toolbox-sdk/core` to be
     immediately reflected in the consuming project without reinstallation.
 
-    Don't forget to npm unlink when done!
+    Don't forget to `npm unlink` when done!
 
 ## Testing
 

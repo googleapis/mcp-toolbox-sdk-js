@@ -88,8 +88,7 @@ Ensure all tests pass before submitting your changes. Tests are typically run fr
     ```
 
 #### Authentication in Local Tests
-Integration tests involving authentication rely on environment variables for
-`TOOLBOX_URL`, `TOOLBOX_VERSION`, and `GOOGLE_CLOUD_PROJECT`. For local runs,
+Integration tests involving authentication rely on environment variables for  `TOOLBOX_VERSION`, and `GOOGLE_CLOUD_PROJECT`. For local runs,
 you might need to mock or set up dummy authentication tokens. Refer to
 [authTokenGetter](./test/e2e/test.e2e.ts#L214) for how authentication tokens (`authToken1`, `authToken2`)
 are generated and used in the test environment. The `authMethods.ts` module

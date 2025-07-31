@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.2](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.1.1...core-v0.1.2) (2025-07-31)
+
+
+### Miscellaneous Chores
+
+* **deps:** bump form-data in /packages/toolbox-core ([#73](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/73)) ([4ebd116](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/4ebd116a6f866fc943add43871d5f261b2200346))
+* **deps:** update dependency cross-env to v10 ([#75](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/75)) ([b0bf370](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/b0bf37019570442886d07a69edb536403079740d))
+
+
+### Documentation
+
+* fix method name ([#76](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/76)) ([6f18e99](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/6f18e99242533a0313c8c27206127b22927626d2))
+* improve contributor guidance ([#72](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/72)) ([7012e0a](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/7012e0a477872db6e68a535a67acb772ed6ca2e1))
+
 ## [0.1.1](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.1.0...core-v0.1.1) (2025-07-17)
 
 

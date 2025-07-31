@@ -465,7 +465,7 @@ multiplyTool = await client.loadTool("multiply")
 const multiplyNumbers = tool(multiplyTool, {
     name: multiplyTool.getName(),
     description: multiplyTool.getDescription(),
-    schema: multiplyTool.getParams()
+    schema: multiplyTool.getParamSchema()
 });
 
 await multiplyNumbers.invoke({ a: 2, b: 3 });
@@ -494,7 +494,7 @@ multiplyTool = await client.loadTool("multiply")
 const multiplyNumbers = tool({
     name: multiplyTool.getName(),
     description: multiplyTool.getDescription(),
-    parameters: multiplyTool.getParams(),
+    parameters: multiplyTool.getParamSchema(),
     execute: mutliplyTool
 });
 
@@ -530,7 +530,7 @@ const ai = genkit({
 const multiplyNumbers = ai.defineTool({
     name: multiplyTool.getName(),
     description: multiplyTool.getDescription(),
-    inputSchema: multiplyTool.getParams(),
+    inputSchema: multiplyTool.getParamSchema(),
   },
   multiplyTool,
 );

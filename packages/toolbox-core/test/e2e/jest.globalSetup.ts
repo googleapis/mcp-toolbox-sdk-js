@@ -41,6 +41,7 @@ export default async function globalSetup(): Promise<void> {
     const toolsManifest = await accessSecretVersion(
       projectId,
       'sdk_testing_tools',
+      '34'
     );
     const toolsFilePath = await createTmpFile(toolsManifest);
     (globalThis as CustomGlobal).__TOOLS_FILE_PATH__ = toolsFilePath;

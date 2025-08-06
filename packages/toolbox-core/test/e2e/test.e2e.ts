@@ -115,6 +115,7 @@ describe('ToolboxClient E2E Tests', () => {
         'get-row-by-id',
         'get-n-rows',
         'search-rows',
+        'process-data',
       ]);
       expect(loadedToolNames).toEqual(expectedDefaultTools);
 
@@ -496,6 +497,82 @@ describe('ToolboxClient E2E Tests', () => {
       });
       expect(typeof response).toBe('string');
       expect(response).toBe('null');
+    });
+  });
+  describe('Map/Object Params E2E Tests', () => {
+    let processDataTool: ReturnType<typeof ToolboxTool>;
+
+    beforeAll(async () => {
+      processDataTool = await commonToolboxClient.loadTool('process-data');
+    });
+
+    it('should correctly identify map/object parameters in the schema', () => {
+      const paramSchema = processDataTool.getParamSchema();
+      const baseArgs = {
+        execution_context: {env: 'prod'},
+        user_scores: {user1: 100},
+      };
+
+      // Test required untyped map (dict[str, Any])
+      expect(paramSchema.safeParse(baseArgs).success).toBe(true);
+      const argsWithoutExec = {...baseArgs};
+      delete (argsWithoutExec as Partial<typeof argsWithoutExec>)
+        .execution_context;
+      expect(paramSchema.safeParse(argsWithoutExec).success).toBe(false);
+
+      // Test required typed map (dict[str, int])
+      expect(
+        paramSchema.safeParse({
+          ...baseArgs,
+          user_scores: {user1: 'not-a-number'},
+        }).success,
+      ).toBe(false);
+
+      // Test optional typed map (dict[str, bool])
+      expect(
+        paramSchema.safeParse({
+          ...baseArgs,
+          feature_flags: {new_feature: true},
+        }).success,
+      ).toBe(true);
+      expect(
+        paramSchema.safeParse({...baseArgs, feature_flags: null}).success,
+      ).toBe(true);
+      expect(paramSchema.safeParse(baseArgs).success).toBe(true); // Omitted
+    });
+
+    it('should run tool with valid map parameters', async () => {
+      const response = await processDataTool({
+        execution_context: {env: 'prod', id: 1234, user: 1234.5},
+        user_scores: {user1: 100, user2: 200},
+        feature_flags: {new_feature: true},
+      });
+      expect(typeof response).toBe('string');
+      expect(response).toContain(
+        '"execution_context":{"env":"prod","id":1234,"user":1234.5}',
+      );
+      expect(response).toContain('"user_scores":{"user1":100,"user2":200}');
+      expect(response).toContain('"feature_flags":{"new_feature":true}');
+    });
+
+    it('should run tool with optional map param omitted', async () => {
+      const response = await processDataTool({
+        execution_context: {env: 'dev'},
+        user_scores: {user3: 300},
+      });
+      expect(typeof response).toBe('string');
+      expect(response).toContain('"execution_context":{"env":"dev"}');
+      expect(response).toContain('"user_scores":{"user3":300}');
+      expect(response).toContain('"feature_flags":null');
+    });
+
+    it('should fail when a map parameter has the wrong value type', async () => {
+      await expect(
+        processDataTool({
+          execution_context: {env: 'staging'},
+          user_scores: {user4: 'not-an-integer'},
+        }),
+      ).rejects.toThrow(/user_scores: Expected number, received string/);
     });
   });
 });

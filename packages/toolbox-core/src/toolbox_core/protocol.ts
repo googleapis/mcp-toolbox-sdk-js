@@ -44,9 +44,9 @@ interface ArrayParameter extends BaseParameter {
   items: ParameterSchema; // Recursive reference to the ParameterSchema type
 }
 
-interface MapParameter extends BaseParameter {
-  type: 'map';
-  additionalProperties: ParameterSchema | boolean;
+interface ObjectParameter extends BaseParameter {
+  type: 'object';
+  additionalProperties?: ParameterSchema | boolean;
 }
 
 export type ParameterSchema =
@@ -55,7 +55,7 @@ export type ParameterSchema =
   | FloatParameter
   | BooleanParameter
   | ArrayParameter
-  | MapParameter;
+  | ObjectParameter;
 
 // Get all Zod schema types
 
@@ -85,8 +85,8 @@ export const ZodParameterSchema = z.lazy(() =>
       items: ZodParameterSchema, // Recursive reference for the item's definition
     }),
     ZodBaseParameter.extend({
-      type: z.literal('map'),
-      additionalProperties: z.union([z.boolean(), ZodParameterSchema]),
+      type: z.literal('object'),
+      additionalProperties: z.union([z.boolean(), ZodParameterSchema]).optional(),
     }),
   ]),
 ) as z.ZodType<ParameterSchema>;
@@ -133,7 +133,7 @@ function buildZodShapeFromParam(param: ParameterSchema): ZodTypeAny {
       param.items.required = param.required;
       schema = z.array(buildZodShapeFromParam(param.items));
       break;
-    case 'map':
+    case 'object':
       if (
         typeof param.additionalProperties === 'object' &&
         param.additionalProperties !== null

@@ -151,11 +151,14 @@ function ToolboxTool(
         if (schemaForKey) {
           // Iteratively unwrap the schema to handle any combination of
           // .optional(), .nullable(), etc., until the core schema is reached.
-          while ('unwrap' in schemaForKey && typeof schemaForKey.unwrap === 'function') {
+          while (
+            'unwrap' in schemaForKey &&
+            typeof schemaForKey.unwrap === 'function'
+          ) {
             schemaForKey = schemaForKey.unwrap();
           }
 
-          // Now, check the unwrapped schema's type by looking for unique properties.
+          // Check the unwrapped schema's type by looking for unique properties.
           const isObjectOrMap =
             schemaForKey &&
             ('shape' in schemaForKey || 'keySchema' in schemaForKey);

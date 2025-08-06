@@ -86,7 +86,9 @@ export const ZodParameterSchema = z.lazy(() =>
     }),
     ZodBaseParameter.extend({
       type: z.literal('object'),
-      additionalProperties: z.union([z.boolean(), ZodParameterSchema]).optional(),
+      additionalProperties: z
+        .union([z.boolean(), ZodParameterSchema])
+        .optional(),
     }),
   ]),
 ) as z.ZodType<ParameterSchema>;
@@ -138,7 +140,10 @@ function buildZodShapeFromParam(param: ParameterSchema): ZodTypeAny {
         typeof param.additionalProperties === 'object' &&
         param.additionalProperties !== null
       ) {
-        schema = z.record(z.string(), buildZodShapeFromParam(param.additionalProperties));
+        schema = z.record(
+          z.string(),
+          buildZodShapeFromParam(param.additionalProperties),
+        );
       } else {
         schema = z.record(z.string(), z.any());
       }

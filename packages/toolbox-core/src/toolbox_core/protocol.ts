@@ -137,12 +137,13 @@ function buildZodShapeFromParam(param: ParameterSchema): ZodTypeAny {
       break;
     case 'object':
       if (
+        param.additionalProperties &&
         typeof param.additionalProperties === 'object' &&
-        param.additionalProperties !== null
+        'type' in param.additionalProperties
       ) {
         schema = z.record(
           z.string(),
-          buildZodShapeFromParam(param.additionalProperties),
+          buildZodShapeFromParam(param.additionalProperties as ParameterSchema),
         );
       } else {
         schema = z.record(z.string(), z.any());

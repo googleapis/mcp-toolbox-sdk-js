@@ -63,7 +63,8 @@ describe('ZodParameterSchema', () => {
       data: {name: 'testString', description: 'A string', type: 'string'},
     },
     {
-      description: 'correct array parameter with string items (and no item name)',
+      description:
+        'correct array parameter with string items (and no item name)',
       data: {
         name: 'testArray',
         description: 'An array of strings',
@@ -166,15 +167,11 @@ describe('ZodParameterSchema', () => {
       },
     };
     const schema = createZodSchemaFromParams([data as ParameterSchema]);
-    expectParseFailure(
-      schema,
-      {typedMap: {key1: 'not-a-number'}},
-      errors => {
-        expect(errors).toContain(
-          'typedMap.key1: Invalid input: expected number, received string',
-        );
-      },
-    );
+    expectParseFailure(schema, {typedMap: {key1: 'not-a-number'}}, errors => {
+      expect(errors).toContain(
+        'typedMap.key1: Invalid input: expected number, received string',
+      );
+    });
   });
 });
 

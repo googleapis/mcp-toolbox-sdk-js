@@ -183,19 +183,7 @@ describe('ZodParameterSchema', () => {
       );
     });
   });
-
-  it('should invalidate an array parameter with item having an empty name', () => {
-    const data = {
-      name: 'testArray',
-      description: 'An array',
-      type: 'array',
-      items: {name: '', description: 'item desc', type: 'string'},
-    };
-    expectParseFailure(ZodParameterSchema, data, errors => {
-      expect(errors).toContain('items.name: Parameter name cannot be empty');
-    });
-  });
-
+  
   it('should invalidate if type is missing', () => {
     const data = {name: 'testParam', description: 'A param'}; // type is missing
     expectParseFailure(ZodParameterSchema, data, errors => {

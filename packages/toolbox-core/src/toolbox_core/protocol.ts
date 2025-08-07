@@ -46,7 +46,7 @@ interface ArrayParameter extends BaseParameter {
 
 interface ObjectParameter extends BaseParameter {
   type: 'object';
-  additionalProperties?: ParameterSchema | boolean;
+  AdditionalProperties?: ParameterSchema | boolean;
 }
 
 export type ParameterSchema =
@@ -86,7 +86,7 @@ export const ZodParameterSchema = z.lazy(() =>
     }),
     ZodBaseParameter.extend({
       type: z.literal('object'),
-      additionalProperties: z
+      AdditionalProperties: z
         .union([z.boolean(), ZodParameterSchema])
         .optional(),
     }),
@@ -137,16 +137,16 @@ function buildZodShapeFromParam(param: ParameterSchema): ZodTypeAny {
       break;
     case 'object':
       if (
-        param.additionalProperties &&
-        typeof param.additionalProperties === 'object' &&
-        'type' in param.additionalProperties
+        typeof param.AdditionalProperties === 'boolean' ||
+        param.AdditionalProperties === null ||
+        param.AdditionalProperties === undefined
       ) {
+        schema = z.record(z.string(), z.any());
+      } else {
         schema = z.record(
           z.string(),
-          buildZodShapeFromParam(param.additionalProperties as ParameterSchema),
+          buildZodShapeFromParam(param.AdditionalProperties),
         );
-      } else {
-        schema = z.record(z.string(), z.any());
       }
       break;
     default: {

@@ -431,6 +431,26 @@ describe('createZodObjectSchemaFromParameters', () => {
     );
   });
 
+  it('should handle untyped object parameters', () => {
+    // This parameter definition has type: 'object' but omits 'AdditionalProperties'.
+    const params: ParameterSchema[] = [
+      {
+        name: 'metadata',
+        description: 'Untyped metadata object',
+        type: 'object',
+      },
+    ];
+    const schema = createZodSchemaFromParams(params);
+    expectParseSuccess(schema, {
+      metadata: {isTest: true, id: 'abc-123', score: 99.5},
+    });
+    expectParseFailure(schema, {metadata: 'not-an-object'}, errors => {
+      expect(errors).toContain(
+        'metadata: Invalid input: expected record, received string',
+      );
+    });
+  });
+
   it('should throw an error when creating schema from parameter with unknown type', () => {
     const paramsWithUnknownType: ParameterSchema[] = [
       {

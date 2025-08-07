@@ -57,7 +57,11 @@ export type ParameterSchema =
   | ArrayParameter
   | ObjectParameter;
 
-type NestedParameterSchema = Omit<ParameterSchema, 'name'> & {name?: string};
+type NestedParameterSchema = ParameterSchema extends infer T
+  ? T extends {name: string}
+    ? Omit<T, 'name'> & {name?: string}
+    : T
+  : never;
 
 // Get all Zod schema types
 

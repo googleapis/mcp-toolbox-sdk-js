@@ -63,13 +63,42 @@ describe('ZodParameterSchema', () => {
       data: {name: 'testString', description: 'A string', type: 'string'},
     },
     {
-      description:
-        'correct array parameter with string items (and no item name)',
+      description: 'string parameter with authSources',
+      data: {
+        name: 'testString',
+        description: 'A string',
+        type: 'string',
+        authSources: ['google', 'custom'],
+      },
+    },
+    {
+      description: 'correct integer parameter',
+      data: {name: 'testInt', description: 'An integer', type: 'integer'},
+    },
+    {
+      description: 'correct float parameter',
+      data: {name: 'testFloat', description: 'A float', type: 'float'},
+    },
+    {
+      description: 'correct boolean parameter',
+      data: {name: 'testBool', description: 'A boolean', type: 'boolean'},
+    },
+    {
+      description: 'correct array parameter with string items',
       data: {
         name: 'testArray',
         description: 'An array of strings',
         type: 'array',
-        items: {description: 'item_desc', type: 'string'},
+        items: {name: 'item_name', description: 'item_desc', type: 'string'},
+      },
+    },
+    {
+      description: 'correct array parameter with integer items',
+      data: {
+        name: 'testArrayInt',
+        description: 'An array of integers',
+        type: 'array',
+        items: {name: 'int_item', description: 'item_desc', type: 'integer'},
       },
     },
     {
@@ -83,10 +112,47 @@ describe('ZodParameterSchema', () => {
           description: 'Inner array of integers',
           type: 'array',
           items: {
+            name: 'intItem',
             description: 'integer item',
             type: 'integer',
           },
         },
+      },
+    },
+    {
+      description: 'string parameter with required set to false',
+      data: {
+        name: 'optionalString',
+        description: 'An optional string',
+        type: 'string',
+        required: false,
+      },
+    },
+    {
+      description: 'string parameter with required set to true',
+      data: {
+        name: 'requiredString',
+        description: 'A required string',
+        type: 'string',
+        required: true,
+      },
+    },
+    {
+      description: 'integer parameter with required set to false',
+      data: {
+        name: 'optionalInt',
+        description: 'An optional integer',
+        type: 'integer',
+        required: false,
+      },
+    },
+    {
+      description: 'integer parameter with required set to true',
+      data: {
+        name: 'requiredInt',
+        description: 'A required integer',
+        type: 'integer',
+        required: true,
       },
     },
     {

@@ -572,7 +572,7 @@ describe('ToolboxClient E2E Tests', () => {
           execution_context: {env: 'staging'},
           user_scores: {user4: 'not-an-integer'},
         }),
-      ).rejects.toThrow(/user_scores: Expected number, received string/);
+      ).rejects.toThrow(/user_scores.*expected number, received string/);
     });
   });
 });

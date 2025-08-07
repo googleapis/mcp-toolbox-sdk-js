@@ -157,7 +157,7 @@ function buildZodShapeFromParam(
         param.items.required = param.required;
         schema = z.array(buildZodShapeFromParam(param.items));
       } else {
-        // This case should be impossible, but it satisfies the type checker.
+        // Satisfies the type checker.
         throw new Error(
           'Unreachable: Array parameter is missing "items" property.',
         );

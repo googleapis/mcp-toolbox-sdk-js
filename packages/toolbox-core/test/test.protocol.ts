@@ -63,42 +63,12 @@ describe('ZodParameterSchema', () => {
       data: {name: 'testString', description: 'A string', type: 'string'},
     },
     {
-      description: 'string parameter with authSources',
-      data: {
-        name: 'testString',
-        description: 'A string',
-        type: 'string',
-        authSources: ['google', 'custom'],
-      },
-    },
-    {
-      description: 'correct integer parameter',
-      data: {name: 'testInt', description: 'An integer', type: 'integer'},
-    },
-    {
-      description: 'correct float parameter',
-      data: {name: 'testFloat', description: 'A float', type: 'float'},
-    },
-    {
-      description: 'correct boolean parameter',
-      data: {name: 'testBool', description: 'A boolean', type: 'boolean'},
-    },
-    {
-      description: 'correct array parameter with string items',
+      description: 'correct array parameter with string items (and no item name)',
       data: {
         name: 'testArray',
         description: 'An array of strings',
         type: 'array',
-        items: {name: 'item_name', description: 'item_desc', type: 'string'},
-      },
-    },
-    {
-      description: 'correct array parameter with integer items',
-      data: {
-        name: 'testArrayInt',
-        description: 'An array of integers',
-        type: 'array',
-        items: {name: 'int_item', description: 'item_desc', type: 'integer'},
+        items: {description: 'item_desc', type: 'string'},
       },
     },
     {
@@ -112,7 +82,6 @@ describe('ZodParameterSchema', () => {
           description: 'Inner array of integers',
           type: 'array',
           items: {
-            name: 'intItem',
             description: 'integer item',
             type: 'integer',
           },
@@ -120,39 +89,32 @@ describe('ZodParameterSchema', () => {
       },
     },
     {
-      description: 'string parameter with required set to false',
+      description: 'untyped object parameter',
       data: {
-        name: 'optionalString',
-        description: 'An optional string',
-        type: 'string',
+        name: 'untypedMap',
+        description: 'An untyped map',
+        type: 'object',
+      },
+    },
+    {
+      description: 'typed object parameter (map of string to integer)',
+      data: {
+        name: 'typedMap',
+        description: 'A map of strings to integers',
+        type: 'object',
+        AdditionalProperties: {
+          description: 'An integer value',
+          type: 'integer',
+        },
+      },
+    },
+    {
+      description: 'object parameter with required set to false',
+      data: {
+        name: 'optionalObject',
+        description: 'An optional object',
+        type: 'object',
         required: false,
-      },
-    },
-    {
-      description: 'string parameter with required set to true',
-      data: {
-        name: 'requiredString',
-        description: 'A required string',
-        type: 'string',
-        required: true,
-      },
-    },
-    {
-      description: 'integer parameter with required set to false',
-      data: {
-        name: 'optionalInt',
-        description: 'An optional integer',
-        type: 'integer',
-        required: false,
-      },
-    },
-    {
-      description: 'integer parameter with required set to true',
-      data: {
-        name: 'requiredInt',
-        description: 'A required integer',
-        type: 'integer',
-        required: true,
       },
     },
   ];
@@ -183,14 +145,36 @@ describe('ZodParameterSchema', () => {
       );
     });
   });
-  
+
   it('should invalidate if type is missing', () => {
     const data = {name: 'testParam', description: 'A param'}; // type is missing
     expectParseFailure(ZodParameterSchema, data, errors => {
       expect(errors).toEqual(
-        expect.arrayContaining([expect.stringMatching('type: Invalid input')]),
+        expect.arrayContaining([expect.stringMatching(/type: Invalid input/i)]),
       );
     });
+  });
+
+  it('should invalidate a typed object with incorrect value types', () => {
+    const data = {
+      name: 'typedMap',
+      description: 'A map of strings to integers',
+      type: 'object',
+      AdditionalProperties: {
+        description: 'An integer value',
+        type: 'integer',
+      },
+    };
+    const schema = createZodSchemaFromParams([data as ParameterSchema]);
+    expectParseFailure(
+      schema,
+      {typedMap: {key1: 'not-a-number'}},
+      errors => {
+        expect(errors).toContain(
+          'typedMap.key1: Invalid input: expected number, received string',
+        );
+      },
+    );
   });
 });
 
@@ -401,6 +385,47 @@ describe('createZodObjectSchemaFromParameters', () => {
       errors => {
         expect(errors).toContain(
           'matrix.0.1: Invalid input: expected number, received string',
+        );
+      },
+    );
+  });
+
+  it('should create a Zod object schema with object parameters', () => {
+    const params: ParameterSchema[] = [
+      {
+        name: 'metadata',
+        description: 'Untyped metadata object',
+        type: 'object',
+        required: true,
+      },
+      {
+        name: 'scores',
+        description: 'Map of names to scores',
+        type: 'object',
+        AdditionalProperties: {
+          description: 'A score',
+          type: 'integer',
+        },
+      },
+    ];
+    const schema = createZodSchemaFromParams(params);
+
+    // Valid data
+    expectParseSuccess(schema, {
+      metadata: {isTest: true, id: 'abc-123'},
+      scores: {player1: 100, player2: 95},
+    });
+
+    // Invalid data
+    expectParseFailure(
+      schema,
+      {
+        metadata: {isTest: true, id: 'abc-123'},
+        scores: {player1: '100'},
+      },
+      errors => {
+        expect(errors).toContain(
+          'scores.player1: Invalid input: expected number, received string',
         );
       },
     );

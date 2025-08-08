@@ -41,7 +41,12 @@ interface BooleanParameter extends BaseParameter {
 
 interface ArrayParameter extends BaseParameter {
   type: 'array';
-  items: ParameterSchema; // Recursive reference to the ParameterSchema type
+  items: NestedParameterSchema; // Recursive reference to the ParameterSchema type
+}
+
+interface ObjectParameter extends BaseParameter {
+  type: 'object';
+  AdditionalProperties?: NestedParameterSchema | boolean;
 }
 
 export type ParameterSchema =
@@ -49,7 +54,14 @@ export type ParameterSchema =
   | IntegerParameter
   | FloatParameter
   | BooleanParameter
-  | ArrayParameter;
+  | ArrayParameter
+  | ObjectParameter;
+
+type NestedParameterSchema = ParameterSchema extends infer T
+  ? T extends {name: string}
+    ? Omit<T, 'name'> & {name?: string}
+    : T
+  : never;
 
 // Get all Zod schema types
 
@@ -60,26 +72,40 @@ const ZodBaseParameter = z.object({
   required: z.boolean().optional(),
 });
 
-export const ZodParameterSchema = z.lazy(() =>
+const ZodNestedParameterBase = ZodBaseParameter.extend({
+  name: z.string().optional(),
+});
+
+// eslint-disable-next-line prefer-const
+let ZodNestedParameterSchema: z.ZodType<NestedParameterSchema>;
+
+const createParameterUnionFromShape = <T extends ZodRawShape>(baseShape: T) =>
   z.discriminatedUnion('type', [
-    ZodBaseParameter.extend({
-      type: z.literal('string'),
-    }),
-    ZodBaseParameter.extend({
-      type: z.literal('integer'),
-    }),
-    ZodBaseParameter.extend({
-      type: z.literal('float'),
-    }),
-    ZodBaseParameter.extend({
-      type: z.literal('boolean'),
-    }),
-    ZodBaseParameter.extend({
+    z.object({...baseShape, type: z.literal('string')}),
+    z.object({...baseShape, type: z.literal('integer')}),
+    z.object({...baseShape, type: z.literal('float')}),
+    z.object({...baseShape, type: z.literal('boolean')}),
+    z.object({
+      ...baseShape,
       type: z.literal('array'),
-      items: ZodParameterSchema, // Recursive reference for the item's definition
+      items: z.lazy(() => ZodNestedParameterSchema),
     }),
-  ]),
-) as z.ZodType<ParameterSchema>;
+    z.object({
+      ...baseShape,
+      type: z.literal('object'),
+      AdditionalProperties: z
+        .union([z.boolean(), z.lazy(() => ZodNestedParameterSchema)])
+        .optional(),
+    }),
+  ]);
+
+ZodNestedParameterSchema = z.lazy(() =>
+  createParameterUnionFromShape(ZodNestedParameterBase.shape),
+);
+
+export const ZodParameterSchema: z.ZodType<ParameterSchema> = z.lazy(() =>
+  createParameterUnionFromShape(ZodBaseParameter.shape),
+);
 
 export const ZodToolSchema = z.object({
   description: z.string().min(1, 'Tool description cannot be empty'),
@@ -102,7 +128,9 @@ export type ZodManifest = z.infer<typeof ZodManifestSchema>;
  * @param param The ParameterSchema (TypeScript type) to convert.
  * @returns A ZodTypeAny representing the schema for this parameter.
  */
-function buildZodShapeFromParam(param: ParameterSchema): ZodTypeAny {
+function buildZodShapeFromParam(
+  param: ParameterSchema | NestedParameterSchema,
+): ZodTypeAny {
   let schema: ZodTypeAny;
   switch (param.type) {
     case 'string':
@@ -120,8 +148,34 @@ function buildZodShapeFromParam(param: ParameterSchema): ZodTypeAny {
     case 'array':
       // Recursively build the schema for array items
       // Array items inherit the 'required' status of the parent array.
-      param.items.required = param.required;
-      schema = z.array(buildZodShapeFromParam(param.items));
+      if (param.items) {
+        param.items.required = param.required;
+        schema = z.array(buildZodShapeFromParam(param.items));
+      } else {
+        // Satisfies the type checker.
+        throw new Error(
+          'Unreachable: Array parameter is missing "items" property.',
+        );
+      }
+      break;
+    case 'object':
+      if ('AdditionalProperties' in param) {
+        if (
+          typeof param.AdditionalProperties === 'boolean' ||
+          param.AdditionalProperties === null ||
+          param.AdditionalProperties === undefined
+        ) {
+          schema = z.record(z.string(), z.any());
+        } else {
+          schema = z.record(
+            z.string(),
+            buildZodShapeFromParam(param.AdditionalProperties),
+          );
+        }
+      } else {
+        // This case handles untyped objects and satisfies the type checker.
+        schema = z.record(z.string(), z.any());
+      }
       break;
     default: {
       // This ensures exhaustiveness at compile time if ParameterSchema is a discriminated union

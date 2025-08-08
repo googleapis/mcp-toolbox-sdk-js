@@ -157,7 +157,7 @@ function buildZodShapeFromParam(
     case 'array':
       // Recursively build the schema for array items
       // Array items inherit the 'required' status of the parent array.
-      if ('items' in param) {
+      if (param.items) {
         param.items.required = param.required;
         schema = z.array(buildZodShapeFromParam(param.items));
       } else {

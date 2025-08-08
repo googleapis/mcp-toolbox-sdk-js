@@ -76,6 +76,7 @@ const ZodNestedParameterBase = ZodBaseParameter.extend({
   name: z.string().optional(),
 });
 
+// eslint-disable-next-line prefer-const
 let ZodNestedParameterSchema: z.ZodType<NestedParameterSchema>;
 
 const createParameterUnionFromShape = <T extends ZodRawShape>(baseShape: T) =>

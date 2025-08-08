@@ -76,44 +76,34 @@ const ZodNestedParameterBase = ZodBaseParameter.extend({
   name: z.string().optional(),
 });
 
-// A recursive schema validator specifically for nested types.
-const ZodNestedParameterSchema: z.ZodType<NestedParameterSchema> = z.lazy(() =>
+let ZodNestedParameterSchema: z.ZodType<NestedParameterSchema>;
+
+const createParameterUnionFromShape = <T extends ZodRawShape>(baseShape: T) =>
   z.discriminatedUnion('type', [
-    ZodNestedParameterBase.extend({type: z.literal('string')}),
-    ZodNestedParameterBase.extend({type: z.literal('integer')}),
-    ZodNestedParameterBase.extend({type: z.literal('float')}),
-    ZodNestedParameterBase.extend({type: z.literal('boolean')}),
-    ZodNestedParameterBase.extend({
+    z.object({...baseShape, type: z.literal('string')}),
+    z.object({...baseShape, type: z.literal('integer')}),
+    z.object({...baseShape, type: z.literal('float')}),
+    z.object({...baseShape, type: z.literal('boolean')}),
+    z.object({
+      ...baseShape,
       type: z.literal('array'),
-      items: ZodNestedParameterSchema,
+      items: z.lazy(() => ZodNestedParameterSchema),
     }),
-    ZodNestedParameterBase.extend({
+    z.object({
+      ...baseShape,
       type: z.literal('object'),
       AdditionalProperties: z
-        .union([z.boolean(), ZodNestedParameterSchema])
+        .union([z.boolean(), z.lazy(() => ZodNestedParameterSchema)])
         .optional(),
     }),
-  ]),
+  ]);
+
+ZodNestedParameterSchema = z.lazy(() =>
+  createParameterUnionFromShape(ZodNestedParameterBase.shape),
 );
 
-// The main validator for top-level parameters.
 export const ZodParameterSchema: z.ZodType<ParameterSchema> = z.lazy(() =>
-  z.discriminatedUnion('type', [
-    ZodBaseParameter.extend({type: z.literal('string')}),
-    ZodBaseParameter.extend({type: z.literal('integer')}),
-    ZodBaseParameter.extend({type: z.literal('float')}),
-    ZodBaseParameter.extend({type: z.literal('boolean')}),
-    ZodBaseParameter.extend({
-      type: z.literal('array'),
-      items: ZodNestedParameterSchema,
-    }),
-    ZodBaseParameter.extend({
-      type: z.literal('object'),
-      AdditionalProperties: z
-        .union([z.boolean(), ZodNestedParameterSchema])
-        .optional(),
-    }),
-  ]),
+  createParameterUnionFromShape(ZodBaseParameter.shape),
 );
 
 export const ZodToolSchema = z.object({

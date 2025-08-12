@@ -89,7 +89,7 @@ function ToolboxTool(
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
   const boundKeys = Object.keys(boundParams);
   const userParamSchema = paramSchema.omit(
-    Object.fromEntries(boundKeys.map(k => [k, true]))
+    Object.fromEntries(boundKeys.map(k => [k, true])),
   );
 
   const callable = async function (
@@ -117,7 +117,7 @@ function ToolboxTool(
     } catch (error) {
       if (error instanceof ZodError) {
         const errorMessages = error.errors.map(
-          e => `${e.path.join('.') || 'payload'}: ${e.message}`
+          e => `${e.path.join('.') || 'payload'}: ${e.message}`,
         );
         throw new Error(
           `Argument validation failed for tool "${name}":\n - ${errorMessages.join(

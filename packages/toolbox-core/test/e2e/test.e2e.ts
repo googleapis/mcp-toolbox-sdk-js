@@ -46,13 +46,13 @@ describe('ToolboxClient E2E Tests', () => {
 
     it('should invoke the getNRowsTool with missing params', async () => {
       await expect(getNRowsTool()).rejects.toThrow(
-        /Argument validation failed for tool "get-n-rows":\s*- num_rows: Required/
+        /Argument validation failed for tool "get-n-rows":\s*- num_rows: Required/,
       );
     });
 
     it('should invoke the getNRowsTool with wrong param type', async () => {
       await expect(getNRowsTool({num_rows: 2})).rejects.toThrow(
-        /Argument validation failed for tool "get-n-rows":\s*- num_rows: Expected string, received number/
+        /Argument validation failed for tool "get-n-rows":\s*- num_rows: Expected string, received number/,
       );
     });
   });
@@ -339,7 +339,7 @@ describe('ToolboxClient E2E Tests', () => {
       expect(shape.data.isNullable()).toBe(true);
       expect(
         (shape.data as ZodOptional<ZodNullable<ZodTypeAny>>).unwrap().unwrap()
-          ._def.typeName
+          ._def.typeName,
       ).toBe('ZodString');
 
       // Optional param 'id'
@@ -347,7 +347,7 @@ describe('ToolboxClient E2E Tests', () => {
       expect(shape.id.isNullable()).toBe(true);
       expect(
         (shape.id as ZodOptional<ZodNullable<ZodTypeAny>>).unwrap().unwrap()
-          ._def.typeName
+          ._def.typeName,
       ).toBe('ZodNumber');
     });
 
@@ -419,15 +419,15 @@ describe('ToolboxClient E2E Tests', () => {
 
     it('should fail when a required param is missing', async () => {
       await expect(searchRowsTool({id: 5, data: 'row5'})).rejects.toThrow(
-        /Argument validation failed for tool "search-rows":\s*- email: Required/
+        /Argument validation failed for tool "search-rows":\s*- email: Required/,
       );
     });
 
     it('should fail when a required param is null', async () => {
       await expect(
-        searchRowsTool({email: null, id: 5, data: 'row5'})
+        searchRowsTool({email: null, id: 5, data: 'row5'}),
       ).rejects.toThrow(
-        /Argument validation failed for tool "search-rows":\s*- email: Expected string, received null/
+        /Argument validation failed for tool "search-rows":\s*- email: Expected string, received null/,
       );
     });
 

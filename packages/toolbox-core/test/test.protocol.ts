@@ -175,7 +175,7 @@ describe('ZodParameterSchema', () => {
     const data = {name: 'testArray', description: 'An array', type: 'array'};
     expectParseFailure(ZodParameterSchema, data, errors => {
       expect(errors).toEqual(
-        expect.arrayContaining([expect.stringMatching(/items: Required/i)])
+        expect.arrayContaining([expect.stringMatching(/items: Required/i)]),
       );
     });
   });
@@ -198,7 +198,7 @@ describe('ZodParameterSchema', () => {
       expect(errors).toEqual(
         expect.arrayContaining([
           expect.stringMatching(/Invalid discriminator value/i),
-        ])
+        ]),
       );
     });
   });
@@ -290,7 +290,7 @@ describe('ZodManifestSchema', () => {
       expect(errors).toEqual(
         expect.arrayContaining([
           expect.stringMatching(/Tool name cannot be empty/i),
-        ])
+        ]),
       );
     });
   });
@@ -316,7 +316,7 @@ describe('createZodObjectSchemaFromParameters', () => {
     expectParseSuccess(schema, {});
     expectParseFailure(schema, {anyKey: 'anyValue'}, errors => {
       expect(
-        errors.some(e => /Unrecognized key\(s\) in object: 'anyKey'/.test(e))
+        errors.some(e => /Unrecognized key\(s\) in object: 'anyKey'/.test(e)),
       ).toBe(true);
     });
   });
@@ -339,10 +339,10 @@ describe('createZodObjectSchemaFromParameters', () => {
       schema,
       {username: 'john_doe', age: '30', isActive: true},
       errors =>
-        expect(errors).toContain('age: Expected number, received string')
+        expect(errors).toContain('age: Expected number, received string'),
     );
     expectParseFailure(schema, {username: 'john_doe', isActive: true}, errors =>
-      expect(errors).toContain('age: Required')
+      expect(errors).toContain('age: Required'),
     );
   });
 
@@ -406,7 +406,7 @@ describe('createZodObjectSchemaFromParameters', () => {
       },
       errors => {
         expect(errors).toContain(
-          'matrix.0.1: Expected number, received string'
+          'matrix.0.1: Expected number, received string',
         );
       },
     );

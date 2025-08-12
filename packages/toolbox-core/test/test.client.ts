@@ -33,7 +33,7 @@ type CallableToolReturnedByFactory = ReturnType<OriginalToolboxToolType>;
 type InferredZodTool = z.infer<typeof ZodToolSchema>;
 
 const createMockZodObject = (
-  shape: ZodRawShape = {}
+  shape: ZodRawShape = {},
 ): ZodObject<ZodRawShape, 'strip', ZodTypeAny> =>
   ({
     parse: jest.fn(args => args),
@@ -168,8 +168,8 @@ describe('ToolboxClient', () => {
               }
               return shapeAccumulator;
             },
-            {} as ZodRawShape
-          )
+            {} as ZodRawShape,
+          ),
         );
 
       const defaultMockCallable = jest

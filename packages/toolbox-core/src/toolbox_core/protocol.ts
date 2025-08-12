@@ -20,7 +20,6 @@ interface BaseParameter {
   name: string;
   description: string;
   authSources?: string[];
-  required?: boolean;
 }
 
 interface StringParameter extends BaseParameter {
@@ -57,7 +56,6 @@ const ZodBaseParameter = z.object({
   name: z.string().min(1, 'Parameter name cannot be empty'),
   description: z.string(),
   authSources: z.array(z.string()).optional(),
-  required: z.boolean().optional(),
 });
 
 export const ZodParameterSchema = z.lazy(() =>
@@ -103,38 +101,24 @@ export type ZodManifest = z.infer<typeof ZodManifestSchema>;
  * @returns A ZodTypeAny representing the schema for this parameter.
  */
 function buildZodShapeFromParam(param: ParameterSchema): ZodTypeAny {
-  let schema: ZodTypeAny;
   switch (param.type) {
     case 'string':
-      schema = z.string();
-      break;
+      return z.string();
     case 'integer':
-      schema = z.number().int();
-      break;
+      return z.number().int();
     case 'float':
-      schema = z.number();
-      break;
+      return z.number();
     case 'boolean':
-      schema = z.boolean();
-      break;
+      return z.boolean();
     case 'array':
       // Recursively build the schema for array items
-      // Array items inherit the 'required' status of the parent array.
-      param.items.required = param.required;
-      schema = z.array(buildZodShapeFromParam(param.items));
-      break;
+      return z.array(buildZodShapeFromParam(param.items));
     default: {
       // This ensures exhaustiveness at compile time if ParameterSchema is a discriminated union
       const _exhaustiveCheck: never = param;
       throw new Error(`Unknown parameter type: ${_exhaustiveCheck['type']}`);
     }
   }
-
-  if (param.required === false) {
-    return schema.nullish();
-  }
-
-  return schema;
 }
 
 /**

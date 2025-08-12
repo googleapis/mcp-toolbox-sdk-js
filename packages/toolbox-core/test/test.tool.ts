@@ -323,38 +323,6 @@ describe('ToolboxTool', () => {
         apiError.message,
       );
     });
-
-    it('should omit null and undefined values from the final payload', async () => {
-      const paramSchemaWithOptional = z.object({
-        required_param: z.string(),
-        optional_param1: z.string().nullish(),
-        optional_param2: z.string().nullish(),
-      });
-
-      const toolWithOptionalParams = ToolboxTool(
-        mockSession,
-        baseURL,
-        toolName,
-        toolDescription,
-        paramSchemaWithOptional,
-      );
-
-      mockAxiosPost.mockResolvedValueOnce({data: 'success'} as AxiosResponse);
-
-      const callArgs = {
-        required_param: 'value',
-        optional_param1: null,
-        optional_param2: undefined,
-      };
-
-      await toolWithOptionalParams(callArgs);
-
-      expect(mockAxiosPost).toHaveBeenCalledWith(
-        expectedUrl,
-        {required_param: 'value'},
-        {headers: {}},
-      );
-    });
   });
 
   describe('Bound Parameters Functionality', () => {

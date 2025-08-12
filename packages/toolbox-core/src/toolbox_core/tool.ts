@@ -87,15 +87,9 @@ function ToolboxTool(
   }
 
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
-
-  // Only omit keys that actually exist in the provided schema.
-  // This handles cases where `paramSchema` is already partial.
-  // Could be partial due to bound params being used while loading tools.
   const boundKeys = Object.keys(boundParams);
-  const existingSchemaKeys = Object.keys(paramSchema.shape);
-  const keysToOmit = boundKeys.filter(key => existingSchemaKeys.includes(key));
   const userParamSchema = paramSchema.omit(
-    Object.fromEntries(keysToOmit.map(k => [k, true])),
+    Object.fromEntries(boundKeys.map(k => [k, true]))
   );
 
   const callable = async function (
@@ -122,8 +116,8 @@ function ToolboxTool(
       validatedUserArgs = userParamSchema.parse(callArguments);
     } catch (error) {
       if (error instanceof ZodError) {
-        const errorMessages = error.issues.map(
-          e => `${e.path.join('.') || 'payload'}: ${e.message}`,
+        const errorMessages = error.errors.map(
+          e => `${e.path.join('.') || 'payload'}: ${e.message}`
         );
         throw new Error(
           `Argument validation failed for tool "${name}":\n - ${errorMessages.join(

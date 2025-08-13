@@ -66,6 +66,6 @@ jobs:
         with:
           node-version: 22.16.0
       - name: Install package
-        run: npm ci
+        run: pnpm ci
       - name: Run linter
-        run: npm run lint
+        run: pnpm run lint

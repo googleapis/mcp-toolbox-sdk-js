@@ -46,13 +46,13 @@ describe('ToolboxClient E2E Tests', () => {
 
     it('should invoke the getNRowsTool with missing params', async () => {
       await expect(getNRowsTool()).rejects.toThrow(
-        /Argument validation failed for tool "get-n-rows":\s*- num_rows: Required/
+        /Argument validation failed for tool "get-n-rows":\s*- num_rows: Required/,
       );
     });
 
     it('should invoke the getNRowsTool with wrong param type', async () => {
       await expect(getNRowsTool({num_rows: 2})).rejects.toThrow(
-        /Argument validation failed for tool "get-n-rows":\s*- num_rows: Expected string, received number/
+        /Argument validation failed for tool "get-n-rows":\s*- num_rows: Expected string, received number/,
       );
     });
   });
@@ -74,14 +74,14 @@ describe('ToolboxClient E2E Tests', () => {
     specificToolsetTestCases.forEach(testCase => {
       it(`should successfully load the specific toolset "${testCase.name}"`, async () => {
         const loadedTools = await commonToolboxClient.loadToolset(
-          testCase.name
+          testCase.name,
         );
 
         expect(Array.isArray(loadedTools)).toBe(true);
         expect(loadedTools.length).toBe(testCase.expectedLength);
 
         const loadedToolNames = new Set(
-          loadedTools.map(tool => tool.getName())
+          loadedTools.map(tool => tool.getName()),
         );
         expect(loadedToolNames).toEqual(new Set(testCase.expectedTools));
 
@@ -99,7 +99,7 @@ describe('ToolboxClient E2E Tests', () => {
       expect(Array.isArray(loadedTools)).toBe(true);
       expect(loadedTools.length).toBeGreaterThan(0);
       const getNRowsToolFromSet = loadedTools.find(
-        tool => tool.getName() === 'get-n-rows'
+        tool => tool.getName() === 'get-n-rows',
       );
 
       expect(getNRowsToolFromSet).toBeDefined();
@@ -129,7 +129,7 @@ describe('ToolboxClient E2E Tests', () => {
 
     it('should throw an error when trying to load a non-existent toolset', async () => {
       await expect(
-        commonToolboxClient.loadToolset('non-existent-toolset')
+        commonToolboxClient.loadToolset('non-existent-toolset'),
       ).rejects.toThrow('Request failed with status code 404');
     });
   });
@@ -187,7 +187,7 @@ describe('ToolboxClient E2E Tests', () => {
       expect(() => {
         newTool.bindParam('num_rows', '2');
       }).toThrow(
-        "Cannot re-bind parameter: parameter 'num_rows' is already bound in tool 'get-n-rows'."
+        "Cannot re-bind parameter: parameter 'num_rows' is already bound in tool 'get-n-rows'.",
       );
     });
 
@@ -195,7 +195,7 @@ describe('ToolboxClient E2E Tests', () => {
       expect(() => {
         getNRowsTool.bindParam('non_existent_param', '2');
       }).toThrow(
-        "Unable to bind parameter: no parameter named 'non_existent_param' in tool 'get-n-rows'."
+        "Unable to bind parameter: no parameter named 'non_existent_param' in tool 'get-n-rows'.",
       );
     });
   });
@@ -209,7 +209,7 @@ describe('ToolboxClient E2E Tests', () => {
     beforeAll(async () => {
       if (!projectId) {
         throw new Error(
-          'GOOGLE_CLOUD_PROJECT is not defined. Cannot run Auth E2E tests.'
+          'GOOGLE_CLOUD_PROJECT is not defined. Cannot run Auth E2E tests.',
         );
       }
       authToken1 = await authTokenGetter(projectId, 'sdk_testing_client1');
@@ -223,16 +223,16 @@ describe('ToolboxClient E2E Tests', () => {
       await expect(
         commonToolboxClient.loadTool('get-row-by-id', {
           'my-test-auth': authToken2Getter,
-        })
+        }),
       ).rejects.toThrow(
-        "Validation failed for tool 'get-row-by-id': unused auth tokens: my-test-auth"
+        "Validation failed for tool 'get-row-by-id': unused auth tokens: my-test-auth",
       );
     });
 
     it('should fail when running a tool requiring auth without providing auth', async () => {
       const tool = await commonToolboxClient.loadTool('get-row-by-id-auth');
       await expect(tool({id: '2'})).rejects.toThrow(
-        'One or more of the following authn services are required to invoke this tool: my-test-auth'
+        'One or more of the following authn services are required to invoke this tool: my-test-auth',
       );
     });
 
@@ -251,7 +251,7 @@ describe('ToolboxClient E2E Tests', () => {
           expect.objectContaining({
             error:
               'tool invocation not authorized. Please make sure your specify correct auth headers',
-          })
+          }),
         );
       }
     });
@@ -280,7 +280,7 @@ describe('ToolboxClient E2E Tests', () => {
     it('should fail when a tool with a param requiring auth is run without auth', async () => {
       const tool = await commonToolboxClient.loadTool('get-row-by-email-auth');
       await expect(tool()).rejects.toThrow(
-        'One or more of the following authn services are required to invoke this tool: my-test-auth'
+        'One or more of the following authn services are required to invoke this tool: my-test-auth',
       );
     });
 
@@ -301,7 +301,7 @@ describe('ToolboxClient E2E Tests', () => {
         'get-row-by-content-auth',
         {
           'my-test-auth': authToken1Getter,
-        }
+        },
       );
       try {
         await tool();
@@ -312,7 +312,7 @@ describe('ToolboxClient E2E Tests', () => {
           expect.objectContaining({
             error:
               'provided parameters were invalid: error parsing authenticated parameter "data": no field named row_data in claims',
-          })
+          }),
         );
       }
     });
@@ -339,7 +339,7 @@ describe('ToolboxClient E2E Tests', () => {
       expect(shape.data.isNullable()).toBe(true);
       expect(
         (shape.data as ZodOptional<ZodNullable<ZodTypeAny>>).unwrap().unwrap()
-          ._def.typeName
+          ._def.typeName,
       ).toBe('ZodString');
 
       // Optional param 'id'
@@ -347,7 +347,7 @@ describe('ToolboxClient E2E Tests', () => {
       expect(shape.id.isNullable()).toBe(true);
       expect(
         (shape.id as ZodOptional<ZodNullable<ZodTypeAny>>).unwrap().unwrap()
-          ._def.typeName
+          ._def.typeName,
       ).toBe('ZodNumber');
     });
 
@@ -419,15 +419,15 @@ describe('ToolboxClient E2E Tests', () => {
 
     it('should fail when a required param is missing', async () => {
       await expect(searchRowsTool({id: 5, data: 'row5'})).rejects.toThrow(
-        /Argument validation failed for tool "search-rows":\s*- email: Required/
+        /Argument validation failed for tool "search-rows":\s*- email: Required/,
       );
     });
 
     it('should fail when a required param is null', async () => {
       await expect(
-        searchRowsTool({email: null, id: 5, data: 'row5'})
+        searchRowsTool({email: null, id: 5, data: 'row5'}),
       ).rejects.toThrow(
-        /Argument validation failed for tool "search-rows":\s*- email: Expected string, received null/
+        /Argument validation failed for tool "search-rows":\s*- email: Expected string, received null/,
       );
     });
 

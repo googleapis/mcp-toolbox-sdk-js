@@ -64,7 +64,7 @@ function ToolboxTool(
   requiredAuthnParams: RequiredAuthnParams = {},
   requiredAuthzTokens: string[] = [],
   boundParams: BoundParams = {},
-  clientHeaders: ClientHeadersConfig = {}
+  clientHeaders: ClientHeadersConfig = {},
 ) {
   if (
     (Object.keys(authTokenGetters).length > 0 ||
@@ -72,7 +72,7 @@ function ToolboxTool(
     !baseUrl.startsWith('https://')
   ) {
     console.warn(
-      'Sending ID token over HTTP. User data may be exposed. Use HTTPS for secure communication.'
+      'Sending ID token over HTTP. User data may be exposed. Use HTTPS for secure communication.',
     );
   }
 
@@ -82,18 +82,18 @@ function ToolboxTool(
 
   if (duplicates.length > 0) {
     throw new Error(
-      `Client header(s) \`${duplicates.join(', ')}\` already registered in client. Cannot register the same headers in the client as well as tool.`
+      `Client header(s) \`${duplicates.join(', ')}\` already registered in client. Cannot register the same headers in the client as well as tool.`,
     );
   }
 
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
   const boundKeys = Object.keys(boundParams);
   const userParamSchema = paramSchema.omit(
-    Object.fromEntries(boundKeys.map(k => [k, true]))
+    Object.fromEntries(boundKeys.map(k => [k, true])),
   );
 
   const callable = async function (
-    callArguments: Record<string, unknown> = {}
+    callArguments: Record<string, unknown> = {},
   ) {
     if (
       Object.keys(requiredAuthnParams).length > 0 ||
@@ -101,13 +101,13 @@ function ToolboxTool(
     ) {
       const reqAuthServices = new Set<string>();
       Object.values(requiredAuthnParams).forEach(services =>
-        services.forEach(s => reqAuthServices.add(s))
+        services.forEach(s => reqAuthServices.add(s)),
       );
       requiredAuthzTokens.forEach(s => reqAuthServices.add(s));
       throw new Error(
         `One or more of the following authn services are required to invoke this tool: ${[
           ...reqAuthServices,
-        ].join(',')}`
+        ].join(',')}`,
       );
     }
 
@@ -117,12 +117,12 @@ function ToolboxTool(
     } catch (error) {
       if (error instanceof ZodError) {
         const errorMessages = error.errors.map(
-          e => `${e.path.join('.') || 'payload'}: ${e.message}`
+          e => `${e.path.join('.') || 'payload'}: ${e.message}`,
         );
         throw new Error(
           `Argument validation failed for tool "${name}":\n - ${errorMessages.join(
-            '\n - '
-          )}`
+            '\n - ',
+          )}`,
         );
       }
       throw new Error(`Argument validation failed: ${String(error)}`);
@@ -132,7 +132,7 @@ function ToolboxTool(
       Object.entries(boundParams).map(async ([key, value]) => {
         const resolved = await resolveValue(value);
         return [key, resolved];
-      })
+      }),
     );
     const resolvedBoundParams = Object.fromEntries(resolvedEntries);
 
@@ -146,7 +146,7 @@ function ToolboxTool(
         }
         return acc;
       },
-      {} as Record<string, unknown>
+      {} as Record<string, unknown>,
     );
 
     const headers: Record<string, string> = {};
@@ -154,7 +154,7 @@ function ToolboxTool(
       const resolvedHeaderValue = await resolveValue(headerValue);
       if (typeof resolvedHeaderValue !== 'string') {
         throw new Error(
-          `Client header '${headerName}' did not resolve to a string.`
+          `Client header '${headerName}' did not resolve to a string.`,
         );
       }
       headers[headerName] = resolvedHeaderValue;
@@ -163,7 +163,7 @@ function ToolboxTool(
       const token = await resolveValue(tokenGetter);
       if (typeof token !== 'string') {
         throw new Error(
-          `Auth token getter for '${authService}' did not return a string.`
+          `Auth token getter for '${authService}' did not return a string.`,
         );
       }
       headers[getAuthHeaderName(authService)] = token;
@@ -175,7 +175,7 @@ function ToolboxTool(
         filteredPayload,
         {
           headers,
-        }
+        },
       );
       return response.data.result;
     } catch (error) {
@@ -203,27 +203,27 @@ function ToolboxTool(
   };
 
   callable.addAuthTokenGetters = function (
-    newAuthTokenGetters: AuthTokenGetters
+    newAuthTokenGetters: AuthTokenGetters,
   ) {
     const existingServices = Object.keys(this.authTokenGetters);
     const incomingServices = Object.keys(newAuthTokenGetters);
     const duplicates = existingServices.filter(s =>
-      incomingServices.includes(s)
+      incomingServices.includes(s),
     );
     if (duplicates.length > 0) {
       throw new Error(
-        `Authentication source(s) \`${duplicates.join(', ')}\` already registered in tool \`${this.toolName}\`.`
+        `Authentication source(s) \`${duplicates.join(', ')}\` already registered in tool \`${this.toolName}\`.`,
       );
     }
 
     const requestHeaderNames = Object.keys(this.clientHeaders);
     const authTokenNames = incomingServices.map(getAuthHeaderName);
     const headerDuplicates = requestHeaderNames.filter(h =>
-      authTokenNames.includes(h)
+      authTokenNames.includes(h),
     );
     if (headerDuplicates.length > 0) {
       throw new Error(
-        `Client header(s) \`${headerDuplicates.join(', ')}\` already registered in client. Cannot register the same headers in the client as well as tool.`
+        `Client header(s) \`${headerDuplicates.join(', ')}\` already registered in client. Cannot register the same headers in the client as well as tool.`,
       );
     }
 
@@ -233,13 +233,13 @@ function ToolboxTool(
       identifyAuthRequirements(
         this.requiredAuthnParams,
         this.requiredAuthzTokens,
-        Object.keys(newAuthTokenGetters)
+        Object.keys(newAuthTokenGetters),
       );
 
     const unusedAuth = incomingServices.filter(s => !usedServices.has(s));
     if (unusedAuth.length > 0) {
       throw new Error(
-        `Authentication source(s) \`${unusedAuth.join(', ')}\` unused by tool \`${this.toolName}\`.`
+        `Authentication source(s) \`${unusedAuth.join(', ')}\` unused by tool \`${this.toolName}\`.`,
       );
     }
 
@@ -253,13 +253,13 @@ function ToolboxTool(
       newReqAuthnParams,
       newReqAuthzTokens,
       this.boundParams,
-      this.clientHeaders
+      this.clientHeaders,
     );
   };
 
   callable.addAuthTokenGetter = function (
     authSource: string,
-    getIdToken: AuthTokenGetter
+    getIdToken: AuthTokenGetter,
   ) {
     return this.addAuthTokenGetters({[authSource]: getIdToken});
   };
@@ -269,12 +269,12 @@ function ToolboxTool(
     for (const paramName of Object.keys(paramsToBind)) {
       if (paramName in this.boundParams) {
         throw new Error(
-          `Cannot re-bind parameter: parameter '${paramName}' is already bound in tool '${this.toolName}'.`
+          `Cannot re-bind parameter: parameter '${paramName}' is already bound in tool '${this.toolName}'.`,
         );
       }
       if (!originalParamKeys.includes(paramName)) {
         throw new Error(
-          `Unable to bind parameter: no parameter named '${paramName}' in tool '${this.toolName}'.`
+          `Unable to bind parameter: no parameter named '${paramName}' in tool '${this.toolName}'.`,
         );
       }
     }
@@ -290,7 +290,7 @@ function ToolboxTool(
       this.requiredAuthnParams,
       this.requiredAuthzTokens,
       newBoundParams,
-      this.clientHeaders
+      this.clientHeaders,
     );
   };
 

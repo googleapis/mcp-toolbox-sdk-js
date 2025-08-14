@@ -40,7 +40,7 @@ const expectParseSuccess = (schema: ZodTypeAny, data: unknown) => {
 const expectParseFailure = (
   schema: ZodTypeAny,
   data: unknown,
-  errorMessageCheck: (errors: string[]) => void
+  errorMessageCheck: (errors: string[]) => void,
 ) => {
   const result = schema.safeParse(data);
   expect(result.success).toBe(false);
@@ -49,7 +49,7 @@ const expectParseFailure = (
     errorMessageCheck(getErrorMessages(result.error));
   } else {
     fail(
-      `Parsing was expected to fail for ${JSON.stringify(data)} but succeeded.`
+      `Parsing was expected to fail for ${JSON.stringify(data)} but succeeded.`,
     );
   }
 };
@@ -161,7 +161,7 @@ describe('ZodParameterSchema', () => {
     'should validate a $description',
     ({data}) => {
       expectParseSuccess(ZodParameterSchema, data);
-    }
+    },
   );
 
   it('should invalidate a string parameter with an empty name', () => {
@@ -175,7 +175,7 @@ describe('ZodParameterSchema', () => {
     const data = {name: 'testArray', description: 'An array', type: 'array'};
     expectParseFailure(ZodParameterSchema, data, errors => {
       expect(errors).toEqual(
-        expect.arrayContaining([expect.stringMatching(/items: Required/i)])
+        expect.arrayContaining([expect.stringMatching(/items: Required/i)]),
       );
     });
   });
@@ -198,7 +198,7 @@ describe('ZodParameterSchema', () => {
       expect(errors).toEqual(
         expect.arrayContaining([
           expect.stringMatching(/Invalid discriminator value/i),
-        ])
+        ]),
       );
     });
   });
@@ -242,7 +242,7 @@ describe('ZodToolSchema', () => {
     };
     expectParseFailure(ZodToolSchema, data, errors => {
       expect(errors).toContain(
-        'parameters.0.name: Parameter name cannot be empty'
+        'parameters.0.name: Parameter name cannot be empty',
       );
     });
   });
@@ -290,7 +290,7 @@ describe('ZodManifestSchema', () => {
       expect(errors).toEqual(
         expect.arrayContaining([
           expect.stringMatching(/Tool name cannot be empty/i),
-        ])
+        ]),
       );
     });
   });
@@ -302,7 +302,7 @@ describe('ZodManifestSchema', () => {
     };
     expectParseFailure(ZodManifestSchema, data, errors => {
       expect(errors).toContain(
-        'tools.toolA.description: Tool description cannot be empty'
+        'tools.toolA.description: Tool description cannot be empty',
       );
     });
   });
@@ -316,7 +316,7 @@ describe('createZodObjectSchemaFromParameters', () => {
     expectParseSuccess(schema, {});
     expectParseFailure(schema, {anyKey: 'anyValue'}, errors => {
       expect(
-        errors.some(e => /Unrecognized key\(s\) in object: 'anyKey'/.test(e))
+        errors.some(e => /Unrecognized key\(s\) in object: 'anyKey'/.test(e)),
       ).toBe(true);
     });
   });
@@ -339,10 +339,10 @@ describe('createZodObjectSchemaFromParameters', () => {
       schema,
       {username: 'john_doe', age: '30', isActive: true},
       errors =>
-        expect(errors).toContain('age: Expected number, received string')
+        expect(errors).toContain('age: Expected number, received string'),
     );
     expectParseFailure(schema, {username: 'john_doe', isActive: true}, errors =>
-      expect(errors).toContain('age: Required')
+      expect(errors).toContain('age: Required'),
     );
   });
 
@@ -406,9 +406,9 @@ describe('createZodObjectSchemaFromParameters', () => {
       },
       errors => {
         expect(errors).toContain(
-          'matrix.0.1: Expected number, received string'
+          'matrix.0.1: Expected number, received string',
         );
-      }
+      },
     );
   });
 
@@ -421,7 +421,7 @@ describe('createZodObjectSchemaFromParameters', () => {
       } as unknown as ParameterSchema,
     ];
     expect(() => createZodSchemaFromParams(paramsWithUnknownType)).toThrow(
-      'Unknown parameter type: someUnrecognizedType'
+      'Unknown parameter type: someUnrecognizedType',
     );
   });
 

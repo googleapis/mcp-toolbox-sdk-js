@@ -56,7 +56,7 @@ class ToolboxClient {
   constructor(
     url: string,
     session?: AxiosInstance | null,
-    clientHeaders?: ClientHeadersConfig | null
+    clientHeaders?: ClientHeadersConfig | null,
   ) {
     this.#baseUrl = url;
     this.#session = session || axios.create({baseURL: this.#baseUrl});
@@ -72,7 +72,7 @@ class ToolboxClient {
       Object.entries(this.#clientHeaders).map(async ([key, value]) => {
         const resolved = await resolveValue(value);
         return [key, String(resolved)];
-      })
+      }),
     );
     return Object.fromEntries(resolvedEntries);
   }
@@ -129,7 +129,7 @@ class ToolboxClient {
     toolName: string,
     toolSchema: ToolSchemaFromManifest,
     authTokenGetters: AuthTokenGetters = {},
-    boundParams: BoundParams = {}
+    boundParams: BoundParams = {},
   ): {
     tool: ReturnType<typeof ToolboxTool>;
     usedAuthKeys: Set<string>;
@@ -153,7 +153,7 @@ class ToolboxClient {
       identifyAuthRequirements(
         authParams,
         toolSchema.authRequired || [],
-        authTokenGetters ? Object.keys(authTokenGetters) : []
+        authTokenGetters ? Object.keys(authTokenGetters) : [],
       );
 
     const paramZodSchema = createZodSchemaFromParams(params);
@@ -168,7 +168,7 @@ class ToolboxClient {
       remainingAuthnParams,
       remainingAuthzTokens,
       currBoundParams,
-      this.#clientHeaders
+      this.#clientHeaders,
     );
 
     const usedBoundKeys = new Set(Object.keys(currBoundParams));
@@ -193,7 +193,7 @@ class ToolboxClient {
   async loadTool(
     name: string,
     authTokenGetters: AuthTokenGetters | null = {},
-    boundParams: BoundParams | null = {}
+    boundParams: BoundParams | null = {},
   ): Promise<ReturnType<typeof ToolboxTool>> {
     const apiPath = `/api/tool/${name}`;
     const manifest = await this.#fetchAndParseManifest(apiPath);
@@ -207,20 +207,20 @@ class ToolboxClient {
         name,
         specificToolSchema,
         authTokenGetters || undefined,
-        boundParams || {}
+        boundParams || {},
       );
 
       const providedAuthKeys = new Set(
-        authTokenGetters ? Object.keys(authTokenGetters) : []
+        authTokenGetters ? Object.keys(authTokenGetters) : [],
       );
       const providedBoundKeys = new Set(
-        boundParams ? Object.keys(boundParams) : []
+        boundParams ? Object.keys(boundParams) : [],
       );
       const unusedAuth = [...providedAuthKeys].filter(
-        key => !usedAuthKeys.has(key)
+        key => !usedAuthKeys.has(key),
       );
       const unusedBound = [...providedBoundKeys].filter(
-        key => !usedBoundKeys.has(key)
+        key => !usedBoundKeys.has(key),
       );
 
       const errorMessages: string[] = [];
@@ -229,13 +229,13 @@ class ToolboxClient {
       }
       if (unusedBound.length > 0) {
         errorMessages.push(
-          `unused bound parameters: ${unusedBound.join(', ')}`
+          `unused bound parameters: ${unusedBound.join(', ')}`,
         );
       }
 
       if (errorMessages.length > 0) {
         throw new Error(
-          `Validation failed for tool '${name}': ${errorMessages.join('; ')}.`
+          `Validation failed for tool '${name}': ${errorMessages.join('; ')}.`,
         );
       }
       return tool;
@@ -259,7 +259,7 @@ class ToolboxClient {
     name?: string,
     authTokenGetters: AuthTokenGetters | null = {},
     boundParams: BoundParams | null = {},
-    strict = false
+    strict = false,
   ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
     const toolsetName = name || '';
     const apiPath = `/api/toolset/${toolsetName}`;
@@ -270,10 +270,10 @@ class ToolboxClient {
     const overallUsedAuthKeys: Set<string> = new Set();
     const overallUsedBoundParams: Set<string> = new Set();
     const providedAuthKeys = new Set(
-      authTokenGetters ? Object.keys(authTokenGetters) : []
+      authTokenGetters ? Object.keys(authTokenGetters) : [],
     );
     const providedBoundKeys = new Set(
-      boundParams ? Object.keys(boundParams) : []
+      boundParams ? Object.keys(boundParams) : [],
     );
 
     for (const [toolName, toolSchema] of Object.entries(manifest.tools)) {
@@ -281,16 +281,16 @@ class ToolboxClient {
         toolName,
         toolSchema,
         authTokenGetters || {},
-        boundParams || {}
+        boundParams || {},
       );
       tools.push(tool);
 
       if (strict) {
         const unusedAuth = [...providedAuthKeys].filter(
-          key => !usedAuthKeys.has(key)
+          key => !usedAuthKeys.has(key),
         );
         const unusedBound = [...providedBoundKeys].filter(
-          key => !usedBoundKeys.has(key)
+          key => !usedBoundKeys.has(key),
         );
         const errorMessages: string[] = [];
         if (unusedAuth.length > 0) {
@@ -298,12 +298,12 @@ class ToolboxClient {
         }
         if (unusedBound.length > 0) {
           errorMessages.push(
-            `unused bound parameters: ${unusedBound.join(', ')}`
+            `unused bound parameters: ${unusedBound.join(', ')}`,
           );
         }
         if (errorMessages.length > 0) {
           throw new Error(
-            `Validation failed for tool '${toolName}': ${errorMessages.join('; ')}.`
+            `Validation failed for tool '${toolName}': ${errorMessages.join('; ')}.`,
           );
         }
       } else {
@@ -314,25 +314,25 @@ class ToolboxClient {
 
     if (!strict) {
       const unusedAuth = [...providedAuthKeys].filter(
-        key => !overallUsedAuthKeys.has(key)
+        key => !overallUsedAuthKeys.has(key),
       );
       const unusedBound = [...providedBoundKeys].filter(
-        key => !overallUsedBoundParams.has(key)
+        key => !overallUsedBoundParams.has(key),
       );
       const errorMessages: string[] = [];
       if (unusedAuth.length > 0) {
         errorMessages.push(
-          `unused auth tokens could not be applied to any tool: ${unusedAuth.join(', ')}`
+          `unused auth tokens could not be applied to any tool: ${unusedAuth.join(', ')}`,
         );
       }
       if (unusedBound.length > 0) {
         errorMessages.push(
-          `unused bound parameters could not be applied to any tool: ${unusedBound.join(', ')}`
+          `unused bound parameters could not be applied to any tool: ${unusedBound.join(', ')}`,
         );
       }
       if (errorMessages.length > 0) {
         throw new Error(
-          `Validation failed for toolset '${name || 'default'}': ${errorMessages.join('; ')}.`
+          `Validation failed for toolset '${name || 'default'}': ${errorMessages.join('; ')}.`,
         );
       }
     }

@@ -40,7 +40,7 @@ export default async function globalSetup(): Promise<void> {
     // Fetch tools manifest and create temp file
     const toolsManifest = await accessSecretVersion(
       projectId,
-      'sdk_testing_tools'
+      'sdk_testing_tools',
     );
     const toolsFilePath = await createTmpFile(toolsManifest);
     (globalThis as CustomGlobal).__TOOLS_FILE_PATH__ = toolsFilePath;
@@ -51,7 +51,7 @@ export default async function globalSetup(): Promise<void> {
     const localToolboxPath = path.resolve(__dirname, TOOLBOX_BINARY_NAME);
 
     console.log(
-      `Downloading toolbox binary from gs://genai-toolbox/${toolboxGcsPath} to ${localToolboxPath}...`
+      `Downloading toolbox binary from gs://genai-toolbox/${toolboxGcsPath} to ${localToolboxPath}...`,
     );
     await downloadBlob('genai-toolbox', toolboxGcsPath, localToolboxPath);
     console.log('Toolbox binary downloaded successfully.');
@@ -66,7 +66,7 @@ export default async function globalSetup(): Promise<void> {
       ['--tools-file', toolsFilePath],
       {
         stdio: ['ignore', 'pipe', 'pipe'], // ignore stdin, pipe stdout/stderr
-      }
+      },
     );
 
     (globalThis as CustomGlobal).__TOOLBOX_SERVER_PROCESS__ = serverProcess;
@@ -86,7 +86,7 @@ export default async function globalSetup(): Promise<void> {
 
     serverProcess.on('exit', (code, signal) => {
       console.log(
-        `Toolbox server process exited with code ${code}, signal ${signal}.`
+        `Toolbox server process exited with code ${code}, signal ${signal}.`,
       );
       if (
         (globalThis as CustomGlobal).__TOOLBOX_SERVER_PROCESS__ &&
@@ -106,12 +106,12 @@ export default async function globalSetup(): Promise<void> {
         serverProcess.exitCode === null
       ) {
         console.log(
-          'Toolbox server process appears to be running. Polling for stability...'
+          'Toolbox server process appears to be running. Polling for stability...',
         );
         await delay(SERVER_READY_POLL_INTERVAL_MS * 2);
         if (serverProcess.exitCode === null) {
           console.log(
-            'Toolbox server started successfully (process is active).'
+            'Toolbox server started successfully (process is active).',
           );
           started = true;
           break;
@@ -129,7 +129,7 @@ export default async function globalSetup(): Promise<void> {
         serverProcess.kill('SIGTERM');
       }
       throw new Error(
-        `Toolbox server failed to start within ${SERVER_READY_TIMEOUT_MS / 1000} seconds.`
+        `Toolbox server failed to start within ${SERVER_READY_TIMEOUT_MS / 1000} seconds.`,
       );
     }
 
@@ -151,7 +151,7 @@ export default async function globalSetup(): Promise<void> {
       } catch (e) {
         console.error(
           'Error removing temp tools file during setup failure:',
-          e
+          e,
         );
       }
     }

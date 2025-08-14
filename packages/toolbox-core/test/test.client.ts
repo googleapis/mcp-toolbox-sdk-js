@@ -32,7 +32,9 @@ type CallableToolReturnedByFactory = ReturnType<OriginalToolboxToolType>;
 
 type InferredZodTool = z.infer<typeof ZodToolSchema>;
 
-const createMockZodObject = (shape: ZodRawShape = {}): ZodObject<ZodRawShape> =>
+const createMockZodObject = (
+  shape: ZodRawShape = {}
+): ZodObject<ZodRawShape, 'strip', ZodTypeAny> =>
   ({
     parse: jest.fn(args => args),
     _def: {
@@ -43,7 +45,7 @@ const createMockZodObject = (shape: ZodRawShape = {}): ZodObject<ZodRawShape> =>
     pick: jest.fn().mockReturnThis(),
     omit: jest.fn().mockReturnThis(),
     extend: jest.fn().mockReturnThis(),
-  }) as unknown as ZodObject<ZodRawShape>;
+  }) as unknown as ZodObject<ZodRawShape, 'strip', ZodTypeAny>;
 
 // --- Mocking External Dependencies ---
 jest.mock('axios');
@@ -144,13 +146,13 @@ describe('ToolboxClient', () => {
       },
       overrides: {
         manifestData?: Partial<ZodManifest>;
-        zodParamsSchema?: ZodObject<ZodRawShape>;
+        zodParamsSchema?: ZodObject<ZodRawShape, 'strip', ZodTypeAny>;
         toolInstance?: Partial<CallableToolReturnedByFactory>;
       } = {},
     ) => {
       const manifestData: ZodManifest = {
         serverVersion: '1.0.0',
-        tools: {[toolName]: toolDefinition as unknown as InferredZodTool},
+        tools: {[toolName]: toolDefinition as unknown as InferredZodTool}, // Cast here if ZodManifest expects InferredZodTool
         ...overrides.manifestData,
       } as ZodManifest; // Outer cast to ZodManifest
 
@@ -158,7 +160,7 @@ describe('ToolboxClient', () => {
         overrides.zodParamsSchema ||
         createMockZodObject(
           (toolDefinition.parameters as unknown as ParameterSchema[]).reduce(
-            (shapeAccumulator: {[k: string]: ZodTypeAny}, param) => {
+            (shapeAccumulator: ZodRawShape, param) => {
               if (!param.authSources) {
                 shapeAccumulator[param.name] = {
                   _def: {typeName: 'ZodString'},
@@ -166,8 +168,8 @@ describe('ToolboxClient', () => {
               }
               return shapeAccumulator;
             },
-            {},
-          ),
+            {} as ZodRawShape
+          )
         );
 
       const defaultMockCallable = jest
@@ -294,11 +296,11 @@ describe('ToolboxClient', () => {
       const mockApiResponseData = {invalid: 'manifest structure'};
       const mockZodError = new ZodError([
         {
-          input: undefined,
           path: ['tools'],
           message: 'Required',
           code: 'invalid_type',
           expected: 'object',
+          received: 'undefined',
         },
       ]);
 
@@ -478,7 +480,10 @@ describe('ToolboxClient', () => {
         tools: toolDefinitions,
       };
 
-      const zodParamsSchemas: Record<string, ZodObject<ZodRawShape>> = {};
+      const zodParamsSchemas: Record<
+        string,
+        ZodObject<ZodRawShape, 'strip', ZodTypeAny>
+      > = {};
       const toolInstances: Record<string, CallableToolReturnedByFactory> = {};
       const orderedToolNames = Object.keys(toolDefinitions);
 
@@ -486,7 +491,7 @@ describe('ToolboxClient', () => {
         const tDef = toolDefinitions[tName];
         zodParamsSchemas[tName] = createMockZodObject(
           (tDef.parameters as ParameterSchema[]).reduce(
-            (acc: {[k: string]: ZodTypeAny}, p) => {
+            (acc: ZodRawShape, p) => {
               acc[p.name] = {
                 _def: {typeName: 'ZodString'},
               } as unknown as ZodTypeAny;
@@ -745,7 +750,6 @@ describe('ToolboxClient', () => {
       const mockApiResponseData = {invalid: 'toolset structure'};
       const mockZodError = new ZodError([
         {
-          input: undefined,
           path: ['serverVersion'],
           message: 'Zod validation failed on toolset',
           code: 'custom',

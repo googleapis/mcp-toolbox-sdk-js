@@ -64,8 +64,9 @@
         "typescript": "^5.8.3"
     },
     "dependencies": {
+        "@types/node": "^24.2.1",
         "axios": "^1.9.0",
         "google-auth-library": "^10.0.0",
-        "zod": "^3.24.4"
+        "zod": "^3.25.76"
     }
 }

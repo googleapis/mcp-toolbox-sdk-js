@@ -1,0 +1,21 @@
+{
+  "name": "llama",
+  "version": "1.0.0",
+  "main": "llama.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@google/genai": "^1.14.0",
+    "@llamaindex/google": "^0.3.19",
+    "@llamaindex/workflow": "^1.1.20",
+    "@toolbox-sdk/core": "file:../toolbox-core",
+    "axios": "^1.11.0",
+    "dependo": "^0.2.0",
+    "llamaindex": "^0.11.26",
+    "zod-to-json-schema": "^3.24.6"
+  }
+}

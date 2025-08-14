@@ -72,6 +72,7 @@ jobs:
         with:
           node-version: 22.16.0
           cache: 'pnpm'
+          cache-dependency-path: packages/toolbox-core/pnpm-lock.yaml
       - name: Install package
         run: pnpm ci
       - name: Run linter

@@ -34,7 +34,7 @@ export default async function globalTeardown(): Promise<void> {
       const timeout = setTimeout(() => {
         if (!serverProcess.killed) {
           console.warn(
-            'Toolbox server did not terminate gracefully, sending SIGKILL.',
+            'Toolbox server did not terminate gracefully, sending SIGKILL.'
           );
           serverProcess.kill('SIGKILL');
         }
@@ -45,7 +45,7 @@ export default async function globalTeardown(): Promise<void> {
       serverProcess.on('exit', (code, signal) => {
         clearTimeout(timeout);
         console.log(
-          `Toolbox server process exited with code ${code}, signal ${signal} during teardown.`,
+          `Toolbox server process exited with code ${code}, signal ${signal} during teardown.`
         );
         resolve();
       });
@@ -74,7 +74,7 @@ export default async function globalTeardown(): Promise<void> {
     } catch (error) {
       console.error(
         `Failed to remove temporary tools file ${toolsFilePath}:`,
-        error,
+        error
       );
     }
   }

@@ -40,7 +40,7 @@ export async function resolveValue(value: BoundValue): Promise<unknown> {
 export function identifyAuthRequirements(
   reqAuthnParams: RequiredAuthnParams,
   reqAuthzTokens: string[],
-  authServiceNames: Iterable<string>,
+  authServiceNames: Iterable<string>
 ): [RequiredAuthnParams, string[], Set<string>] {
   const requiredAuthnParams: RequiredAuthnParams = {};
   const usedServices = new Set<string>();

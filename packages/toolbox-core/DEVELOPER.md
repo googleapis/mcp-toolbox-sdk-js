@@ -68,6 +68,8 @@ These steps will guide you through setting up the monorepo and this specific pac
 
     Don't forget to `npm unlink` when done!
 
+   **Note**: Sometimes, due to dependency conflicts, `npm link` might not work as expected. In such cases, it is advised to pack your package using `npm pack` and then use it in another package.
+
 ## Testing
 
 Ensure all tests pass before submitting your changes. Tests are typically run from within the `packages/toolbox-core` directory.

@@ -122,7 +122,7 @@ function buildZodShapeFromTypeSchema(typeSchema: TypeSchema): ZodTypeAny {
       }
     default: {
       const _exhaustiveCheck: never = typeSchema;
-      throw new Error(`Unknown parameter type`);
+      throw new Error(`Unknown parameter type: ${_exhaustiveCheck['type']}`);
     }
   }
 }

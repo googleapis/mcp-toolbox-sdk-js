@@ -213,7 +213,9 @@ describe('ZodParameterSchema', () => {
     const data = {name: 'testParam', description: 'A param'}; // type is missing
     expectParseFailure(ZodParameterSchema, data, errors => {
       expect(errors).toEqual(
-        expect.arrayContaining([expect.stringMatching(/type: Invalid discriminator value./i)]),
+        expect.arrayContaining([
+          expect.stringMatching(/type: Invalid discriminator value./i),
+        ]),
       );
     });
   });
@@ -493,9 +495,7 @@ describe('createZodObjectSchemaFromParameters', () => {
       metadata: {isTest: true, id: 'abc-123', score: 99.5},
     });
     expectParseFailure(schema, {metadata: 'not-an-object'}, errors => {
-      expect(errors).toContain(
-        'metadata: Expected object, received string',
-      );
+      expect(errors).toContain('metadata: Expected object, received string');
     });
   });
 

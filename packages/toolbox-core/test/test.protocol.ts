@@ -169,7 +169,7 @@ describe('ZodParameterSchema', () => {
         name: 'typedMap',
         description: 'A map of strings to integers',
         type: 'object',
-        AdditionalProperties: {
+        additionalProperties: {
           description: 'An integer value',
           type: 'integer',
         },
@@ -227,7 +227,7 @@ describe('ZodParameterSchema', () => {
       name: 'typedMap',
       description: 'A map of strings to integers',
       type: 'object',
-      AdditionalProperties: {
+      additionalProperties: {
         description: 'An integer value',
         type: 'integer',
       },
@@ -465,7 +465,7 @@ describe('createZodObjectSchemaFromParameters', () => {
         name: 'scores',
         description: 'Map of names to scores',
         type: 'object',
-        AdditionalProperties: {
+        additionalProperties: {
           description: 'A score',
           type: 'integer',
         },
@@ -495,7 +495,7 @@ describe('createZodObjectSchemaFromParameters', () => {
   });
 
   it('should handle untyped object parameters', () => {
-    // This parameter definition has type: 'object' but omits 'AdditionalProperties'.
+    // This parameter definition has type: 'object' but omits 'additionalProperties'.
     const params: ParameterSchema[] = [
       {
         name: 'metadata',

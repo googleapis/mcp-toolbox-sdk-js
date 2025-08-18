@@ -46,7 +46,7 @@ interface ArrayParameter extends BaseParameter {
 
 interface ObjectParameter extends BaseParameter {
   type: 'object';
-  AdditionalProperties?: NestedParameterSchema | boolean;
+  additionalProperties?: NestedParameterSchema | boolean;
 }
 
 export type ParameterSchema =
@@ -93,7 +93,7 @@ const createParameterUnionFromShape = <T extends ZodRawShape>(baseShape: T) =>
     z.object({
       ...baseShape,
       type: z.literal('object'),
-      AdditionalProperties: z
+      additionalProperties: z
         .union([z.boolean(), z.lazy(() => ZodNestedParameterSchema)])
         .optional(),
     }),
@@ -159,17 +159,17 @@ function buildZodShapeFromParam(
       }
       break;
     case 'object':
-      if ('AdditionalProperties' in param) {
+      if ('additionalProperties' in param) {
         if (
-          typeof param.AdditionalProperties === 'boolean' ||
-          param.AdditionalProperties === null ||
-          param.AdditionalProperties === undefined
+          typeof param.additionalProperties === 'boolean' ||
+          param.additionalProperties === null ||
+          param.additionalProperties === undefined
         ) {
           schema = z.record(z.string(), z.any());
         } else {
           schema = z.record(
             z.string(),
-            buildZodShapeFromParam(param.AdditionalProperties),
+            buildZodShapeFromParam(param.additionalProperties),
           );
         }
       } else {

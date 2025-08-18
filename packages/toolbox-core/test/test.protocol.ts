@@ -170,7 +170,6 @@ describe('ZodParameterSchema', () => {
         description: 'A map of strings to integers',
         type: 'object',
         additionalProperties: {
-          description: 'An integer value',
           type: 'integer',
         },
       },
@@ -226,7 +225,6 @@ describe('ZodParameterSchema', () => {
       description: 'A map of strings to integers',
       type: 'object',
       additionalProperties: {
-        description: 'An integer value',
         type: 'integer',
       },
     };

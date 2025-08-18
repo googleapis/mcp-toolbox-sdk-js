@@ -200,7 +200,7 @@ function buildZodShapeFromParam(
 export function createZodSchemaFromParams(
   params: ParameterSchema[],
 ): ZodObject<ZodRawShape> {
-  const shape: {[k: string]: ZodTypeAny} = {};
+  const shape: ZodRawShape = {};
   for (const param of params) {
     shape[param.name] = buildZodShapeFromParam(param);
   }

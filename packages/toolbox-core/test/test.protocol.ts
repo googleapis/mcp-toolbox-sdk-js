@@ -386,8 +386,6 @@ describe('createZodObjectSchemaFromParameters', () => {
         description: 'List of tags',
         type: 'array' as const,
         items: {
-          name: 'tag_item',
-          description: 'A tag',
           type: 'string' as const,
         },
       },
@@ -409,12 +407,8 @@ describe('createZodObjectSchemaFromParameters', () => {
         description: 'A matrix of numbers',
         type: 'array' as const,
         items: {
-          name: 'row',
-          description: 'A row in the matrix',
           type: 'array' as const,
           items: {
-            name: 'cell',
-            description: 'A cell value',
             type: 'float' as const,
           },
         },
@@ -458,7 +452,6 @@ describe('createZodObjectSchemaFromParameters', () => {
         description: 'Map of names to scores',
         type: 'object',
         additionalProperties: {
-          description: 'A score',
           type: 'integer',
         },
       },
@@ -515,7 +508,7 @@ describe('createZodObjectSchemaFromParameters', () => {
       } as unknown as ParameterSchema,
     ];
     expect(() => createZodSchemaFromParams(paramsWithUnknownType)).toThrow(
-      'Unknown parameter type: someUnrecognizedType',
+      'Unknown parameter type',
     );
   });
 

@@ -116,7 +116,7 @@ function buildZodShapeFromTypeSchema(typeSchema: TypeSchema): ZodTypeAny {
           buildZodShapeFromTypeSchema(typeSchema.additionalProperties),
         );
       } else if (typeSchema.additionalProperties === false) {
-        return z.object({})
+        return z.object({});
       } else {
         return z.record(z.string(), z.any());
       }

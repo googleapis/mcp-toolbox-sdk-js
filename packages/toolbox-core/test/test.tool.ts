@@ -222,7 +222,6 @@ describe('ToolboxTool', () => {
     it('should throw a generic error if paramSchema.parse throws a non-ZodError', async () => {
       const customError = new Error('A non-Zod parsing error occurred!');
       const failingSchema = {
-        shape: {},
         parse: jest.fn().mockImplementation(() => {
           throw customError;
         }),
@@ -276,7 +275,7 @@ describe('ToolboxTool', () => {
         basicParamSchema,
       );
       await expect(currentTool()).rejects.toThrow(
-        'Argument validation failed for tool "myTestTool":\n - query: Invalid input: expected string, received undefined',
+        'Argument validation failed for tool "myTestTool":\n - query: Required',
       );
       expect(mockAxiosPost).not.toHaveBeenCalled();
     });

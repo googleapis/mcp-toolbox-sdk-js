@@ -138,35 +138,6 @@ function ToolboxTool(
 
     const payload = {...validatedUserArgs, ...resolvedBoundParams};
 
-    for (const key in payload) {
-      if (Object.prototype.hasOwnProperty.call(payload, key)) {
-        let schemaForKey = paramSchema.shape[key];
-
-        if (schemaForKey) {
-          // Iteratively unwrap the schema to handle any combination of
-          // .optional(), .nullable(), etc., until the core schema is reached.
-          while (
-            'unwrap' in schemaForKey &&
-            typeof schemaForKey.unwrap === 'function'
-          ) {
-            schemaForKey = schemaForKey.unwrap();
-          }
-
-          // Check the unwrapped schema's type by looking for unique properties.
-          const isObjectOrMap =
-            schemaForKey &&
-            ('shape' in schemaForKey || 'keySchema' in schemaForKey);
-
-          const isValueAnObject =
-            typeof payload[key] === 'object' && payload[key] !== null;
-
-          if (isObjectOrMap && isValueAnObject) {
-            payload[key] = JSON.stringify(payload[key]);
-          }
-        }
-      }
-    }
-
     // Filter out null values from the payload
     const filteredPayload = Object.entries(payload).reduce(
       (acc, [key, value]) => {

@@ -27,23 +27,24 @@ interface FloatType {
 interface BooleanType {
   type: 'boolean';
 }
+
+export type PrimitiveTypeSchema =
+  | StringType
+  | IntegerType
+  | FloatType
+  | BooleanType;
+
 interface ArrayType {
   type: 'array';
   items: TypeSchema; // Recursive
 }
 interface ObjectType {
   type: 'object';
-  additionalProperties?: boolean | TypeSchema; // Recursive
+  additionalProperties?: boolean | PrimitiveTypeSchema;
 }
 
 // Union of all pure type definitions.
-export type TypeSchema =
-  | StringType
-  | IntegerType
-  | FloatType
-  | BooleanType
-  | ArrayType
-  | ObjectType;
+export type TypeSchema = PrimitiveTypeSchema | ArrayType | ObjectType;
 
 // The base properties of a named parameter.
 interface BaseParameter {
@@ -55,6 +56,14 @@ interface BaseParameter {
 
 export type ParameterSchema = BaseParameter & TypeSchema;
 
+const ZodPrimitiveTypeSchema: z.ZodType<PrimitiveTypeSchema> =
+  z.discriminatedUnion('type', [
+    z.object({type: z.literal('string')}),
+    z.object({type: z.literal('integer')}),
+    z.object({type: z.literal('float')}),
+    z.object({type: z.literal('boolean')}),
+  ]);
+
 // Zod schema for the pure type definitions. This must be lazy for recursion.
 const ZodTypeSchema: z.ZodType<TypeSchema> = z.lazy(() =>
   z.discriminatedUnion('type', [
@@ -65,7 +74,9 @@ const ZodTypeSchema: z.ZodType<TypeSchema> = z.lazy(() =>
     z.object({type: z.literal('array'), items: ZodTypeSchema}),
     z.object({
       type: z.literal('object'),
-      additionalProperties: z.union([z.boolean(), ZodTypeSchema]).optional(),
+      additionalProperties: z
+        .union([z.boolean(), ZodPrimitiveTypeSchema])
+        .optional(),
     }),
   ]),
 );
@@ -113,7 +124,9 @@ function buildZodShapeFromTypeSchema(typeSchema: TypeSchema): ZodTypeAny {
       if (typeof typeSchema.additionalProperties === 'object') {
         return z.record(
           z.string(),
-          buildZodShapeFromTypeSchema(typeSchema.additionalProperties),
+          buildZodShapeFromTypeSchema(
+            typeSchema.additionalProperties as TypeSchema,
+          ),
         );
       } else if (typeSchema.additionalProperties === false) {
         return z.object({});

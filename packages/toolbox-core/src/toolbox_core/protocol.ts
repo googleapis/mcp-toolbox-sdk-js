@@ -45,10 +45,7 @@ interface ObjectType {
 
 // Union of all pure type definitions.
 export type TypeSchema =
-  | StringType
-  | IntegerType
-  | FloatType
-  | BooleanType
+  | PrimitiveTypeSchema
   | ArrayType
   | ObjectType;
 

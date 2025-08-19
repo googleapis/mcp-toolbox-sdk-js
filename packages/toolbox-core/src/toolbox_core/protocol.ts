@@ -44,10 +44,7 @@ interface ObjectType {
 }
 
 // Union of all pure type definitions.
-export type TypeSchema =
-  | PrimitiveTypeSchema
-  | ArrayType
-  | ObjectType;
+export type TypeSchema = PrimitiveTypeSchema | ArrayType | ObjectType;
 
 // The base properties of a named parameter.
 interface BaseParameter {

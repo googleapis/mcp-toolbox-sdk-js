@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.1.2](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.1.1...core-v0.1.2) (2025-08-19)
+
+
+### Features
+
+* Add support for map parameter type ([#78](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/78)) ([5de08c1](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/5de08c10368ffe67ccb776ecda6cdab0a1a76484))
+
+
+### Bug Fixes
+
+* remove support for nested maps ([#92](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/92)) ([93a8193](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/93a81931a62a1f9e79290da20359c3242404d561))
+
+
+### Miscellaneous Chores
+
+* **deps:** bump form-data in /packages/toolbox-core ([#73](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/73)) ([4ebd116](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/4ebd116a6f866fc943add43871d5f261b2200346))
+* **deps:** update dependency cross-env to v10 ([#75](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/75)) ([b0bf370](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/b0bf37019570442886d07a69edb536403079740d))
+* **deps:** update dependency tmp to v0.2.4 [security] ([#80](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/80)) ([b5cee74](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/b5cee74c65aa6e94a2c4907631423164d5650bd2))
+* pick tools config version from cloudbuild.yaml ([#91](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/91)) ([71e931f](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/71e931f7aa8f0da6540ff845494627a8bb192015))
+* update toolbox version ([#77](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/77)) ([6a02200](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/6a022006c5d4ee2abd1683a17d4ab247f8eed928))
+
+
+### Documentation
+
+* Add note regarding local testing ([#89](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/89)) ([6ed5348](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/6ed53481a89d459c057352c7db237326dd10b35f))
+* fix method name ([#76](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/76)) ([6f18e99](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/6f18e99242533a0313c8c27206127b22927626d2))
+* improve contributor guidance ([#72](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/72)) ([7012e0a](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/7012e0a477872db6e68a535a67acb772ed6ca2e1))
+
 ## [0.1.1](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.1.0...core-v0.1.1) (2025-07-17)
 
 

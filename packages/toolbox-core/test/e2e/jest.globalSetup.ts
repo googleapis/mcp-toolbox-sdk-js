@@ -41,7 +41,7 @@ export default async function globalSetup(): Promise<void> {
     const toolsManifest = await accessSecretVersion(
       projectId,
       'sdk_testing_tools',
-      getEnvVar('TOOLBOX_MANIFEST_VERSION')
+      getEnvVar('TOOLBOX_MANIFEST_VERSION'),
     );
     const toolsFilePath = await createTmpFile(toolsManifest);
     (globalThis as CustomGlobal).__TOOLS_FILE_PATH__ = toolsFilePath;

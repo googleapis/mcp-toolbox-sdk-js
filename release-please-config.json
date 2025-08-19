@@ -14,14 +14,5 @@
       "packages/toolbox-core": {
         "component": "core"
       }
-    },
-    "plugins": [
-    {
-      "type": "linked-versions",
-      "groupName": "main",
-      "components": [
-        "core"
-      ]
     }
-  ]
 }

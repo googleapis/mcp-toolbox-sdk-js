@@ -8,18 +8,9 @@
 * Add support for map parameter type ([#78](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/78)) ([5de08c1](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/5de08c10368ffe67ccb776ecda6cdab0a1a76484))
 
 
-### Bug Fixes
+### Bug fixes
 
-* remove support for nested maps ([#92](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/92)) ([93a8193](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/93a81931a62a1f9e79290da20359c3242404d561))
-
-
-### Miscellaneous Chores
-
-* **deps:** bump form-data in /packages/toolbox-core ([#73](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/73)) ([4ebd116](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/4ebd116a6f866fc943add43871d5f261b2200346))
-* **deps:** update dependency cross-env to v10 ([#75](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/75)) ([b0bf370](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/b0bf37019570442886d07a69edb536403079740d))
-* **deps:** update dependency tmp to v0.2.4 [security] ([#80](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/80)) ([b5cee74](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/b5cee74c65aa6e94a2c4907631423164d5650bd2))
-* pick tools config version from cloudbuild.yaml ([#91](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/91)) ([71e931f](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/71e931f7aa8f0da6540ff845494627a8bb192015))
-* update toolbox version ([#77](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/77)) ([6a02200](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/6a022006c5d4ee2abd1683a17d4ab247f8eed928))
+* Revert back zod version to v3 ([#88](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/88)) ([6163c34](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/6163c340c577926b5f2d5607abde5e2c1131ee59))
 
 
 ### Documentation

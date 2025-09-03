@@ -75,17 +75,6 @@ function ToolboxTool(
       'Sending ID token over HTTP. User data may be exposed. Use HTTPS for secure communication.',
     );
   }
-
-  const requestHeaderNames = Object.keys(clientHeaders);
-  const authTokenNames = Object.keys(authTokenGetters).map(getAuthHeaderName);
-  const duplicates = requestHeaderNames.filter(h => authTokenNames.includes(h));
-
-  if (duplicates.length > 0) {
-    throw new Error(
-      `Client header(s) \`${duplicates.join(', ')}\` already registered in client. Cannot register the same headers in the client as well as tool.`,
-    );
-  }
-
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
   const boundKeys = Object.keys(boundParams);
   const userParamSchema = paramSchema.omit(

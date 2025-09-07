@@ -618,12 +618,12 @@ describe('ToolboxTool', () => {
     });
     it('should override client headers with auth token getters during API call', async () => {
       const clientHeaders = {
-        'service1_token': 'value-from-client',
+        service1_token: 'value-from-client',
         'x-another-header': 'client-value',
       };
-      
+
       const authTokenGetters = {
-        'service1': () => 'value-from-auth',
+        service1: () => 'value-from-auth',
       };
 
       const toolWithConflict = ToolboxTool(
@@ -638,7 +638,7 @@ describe('ToolboxTool', () => {
         {},
         clientHeaders, // Contains the conflicting 'service1_token'
       );
-      
+
       mockAxiosPost.mockResolvedValueOnce({data: {result: 'success'}});
 
       // Call the tool
@@ -650,12 +650,11 @@ describe('ToolboxTool', () => {
         {query: 'test'},
         {
           headers: {
-            'service1_token': 'value-from-auth', // This value should win
+            service1_token: 'value-from-auth', // This value should win
             'x-another-header': 'client-value',
           },
         },
       );
     });
-
   });
 });

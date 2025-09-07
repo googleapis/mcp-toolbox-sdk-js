@@ -616,5 +616,46 @@ describe('ToolboxTool', () => {
         'Client header(s) `service1_token` already registered in client. Cannot register the same headers in the client as well as tool.',
       );
     });
+    it('should override client headers with auth token getters during API call', async () => {
+      const clientHeaders = {
+        'service1_token': 'value-from-client',
+        'x-another-header': 'client-value',
+      };
+      
+      const authTokenGetters = {
+        'service1': () => 'value-from-auth',
+      };
+
+      const toolWithConflict = ToolboxTool(
+        mockSession,
+        baseURL,
+        toolName,
+        toolDescription,
+        basicParamSchema,
+        authTokenGetters, // Contains 'service1'
+        {},
+        [],
+        {},
+        clientHeaders, // Contains the conflicting 'service1_token'
+      );
+      
+      mockAxiosPost.mockResolvedValueOnce({data: {result: 'success'}});
+
+      // Call the tool
+      await toolWithConflict({query: 'test'});
+
+      // Assert that the final headers sent to the API used the value from the auth token
+      expect(mockAxiosPost).toHaveBeenCalledWith(
+        expectedUrl,
+        {query: 'test'},
+        {
+          headers: {
+            'service1_token': 'value-from-auth', // This value should win
+            'x-another-header': 'client-value',
+          },
+        },
+      );
+    });
+
   });
 });

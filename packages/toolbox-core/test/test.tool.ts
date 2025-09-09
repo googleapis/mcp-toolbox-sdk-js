@@ -649,7 +649,7 @@ describe('ToolboxTool', () => {
         {query: 'test'},
         {
           headers: {
-            service1_token: 'value-from-auth', // This value should win
+            service1_token: 'value-from-auth',
             'x-another-header': 'client-value',
           },
         },

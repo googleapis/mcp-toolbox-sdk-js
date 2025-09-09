@@ -641,7 +641,6 @@ describe('ToolboxTool', () => {
 
       mockAxiosPost.mockResolvedValueOnce({data: {result: 'success'}});
 
-      // Call the tool
       await toolWithConflict({query: 'test'});
 
       // Assert that the final headers sent to the API used the value from the auth token

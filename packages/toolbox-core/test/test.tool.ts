@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ToolboxTool} from '../src/toolbox_core/tool';
+import {ToolboxTool} from '../src/toolbox_core/tool.js';
 import {z, ZodObject, ZodRawShape} from 'zod';
 import {AxiosInstance, AxiosResponse} from 'axios';
-import * as utils from '../src/toolbox_core/utils';
+import * as utils from '../src/toolbox_core/utils.js';
 
 // Global mocks
 const mockAxiosPost = jest.fn();
@@ -133,27 +133,6 @@ describe('ToolboxTool', () => {
       );
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         'Sending ID token over HTTP. User data may be exposed. Use HTTPS for secure communication.',
-      );
-    });
-
-    it('should throw an error if client headers and auth tokens have conflicting names', () => {
-      const authTokenGetters = {service1: () => 'token'};
-      const clientHeaders = {service1_token: 'some-other-token'}; // Conflicts with service1
-      expect(() => {
-        ToolboxTool(
-          mockSession,
-          baseURL,
-          toolName,
-          toolDescription,
-          basicParamSchema,
-          authTokenGetters,
-          {},
-          [],
-          {},
-          clientHeaders,
-        );
-      }).toThrow(
-        'Client header(s) `service1_token` already registered in client. Cannot register the same headers in the client as well as tool.',
       );
     });
   });
@@ -614,6 +593,45 @@ describe('ToolboxTool', () => {
         toolWithClientHeader.addAuthTokenGetter('service1', () => 'token'),
       ).toThrow(
         'Client header(s) `service1_token` already registered in client. Cannot register the same headers in the client as well as tool.',
+      );
+    });
+    it('should override client headers with auth token getters during API call', async () => {
+      const clientHeaders = {
+        service1_token: 'value-from-client',
+        'x-another-header': 'client-value',
+      };
+
+      const authTokenGetters = {
+        service1: () => 'value-from-auth',
+      };
+
+      const toolWithConflict = ToolboxTool(
+        mockSession,
+        baseURL,
+        toolName,
+        toolDescription,
+        basicParamSchema,
+        authTokenGetters, // Contains 'service1'
+        {},
+        [],
+        {},
+        clientHeaders, // Contains the conflicting 'service1_token'
+      );
+
+      mockAxiosPost.mockResolvedValueOnce({data: {result: 'success'}});
+
+      await toolWithConflict({query: 'test'});
+
+      // Assert that the final headers sent to the API used the value from the auth token
+      expect(mockAxiosPost).toHaveBeenCalledWith(
+        expectedUrl,
+        {query: 'test'},
+        {
+          headers: {
+            service1_token: 'value-from-auth',
+            'x-another-header': 'client-value',
+          },
+        },
       );
     });
   });

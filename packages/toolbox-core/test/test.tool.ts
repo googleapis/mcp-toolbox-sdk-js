@@ -135,7 +135,6 @@ describe('ToolboxTool', () => {
         'Sending ID token over HTTP. User data may be exposed. Use HTTPS for secure communication.',
       );
     });
-
   });
 
   describe('Callable Function - Argument Validation', () => {

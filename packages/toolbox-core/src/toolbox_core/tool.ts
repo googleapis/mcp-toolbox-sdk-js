@@ -76,7 +76,6 @@ function ToolboxTool(
     );
   }
 
-
   const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
   const boundKeys = Object.keys(boundParams);
   const userParamSchema = paramSchema.omit(

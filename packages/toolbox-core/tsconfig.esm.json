@@ -6,7 +6,11 @@
       "rootDir": "src/toolbox_core",
       "outDir": "build",
       "declaration": true,
-      "sourceMap": true
+      "sourceMap": true,
+      "lib": [
+        "ES2023",
+        "DOM"
+      ]
     },
     "include": [
       "src/**/*.ts"

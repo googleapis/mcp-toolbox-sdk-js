@@ -47,5 +47,8 @@
     "dependencies": {
         "@google/adk": "^0.1.2",
         "@toolbox-sdk/core": "^0.1.2"
+    },
+    "devDependencies": {
+        "gts": "^6.0.2"
     }
 }

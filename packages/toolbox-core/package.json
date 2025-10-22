@@ -17,9 +17,9 @@
     ],
     "exports": {
         ".": {
-            "import": "./build/client.js",
-            "require": "./build/cjs/client.js",
-            "types": "./build/client.d.ts"
+            "import": "./build/index.js",
+            "require": "./build/cjs/index.js",
+            "types": "./build/index.d.ts"
         },
         "./auth": {
             "import": "./build/authMethods.js",

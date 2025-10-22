@@ -46,10 +46,11 @@
     },
     "dependencies": {
         "@google/adk": "^0.1.2",
-        "@toolbox-sdk/core": "0.1.2",
-        "zod": "^3.25.76"
+        "zod": "^3.24.4"
     },
     "devDependencies": {
-        "gts": "^6.0.2"
+        "@types/node": "^24.9.1",
+        "gts": "^6.0.2",
+        "openapi-types": "^12.1.3"
     }
 }

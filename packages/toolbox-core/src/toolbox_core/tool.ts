@@ -289,5 +289,3 @@ function ToolboxTool(
   };
   return callable;
 }
-
-export {ToolboxTool};

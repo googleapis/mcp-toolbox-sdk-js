@@ -13,6 +13,9 @@
 // limitations under the License.
 
 // This file defines the public API for the @toolbox-sdk/core package.
+
+export {ToolboxClient} from './client.js';
+
 // Export the main factory function and the core tool type
 export {ToolboxTool} from './tool.js';
 

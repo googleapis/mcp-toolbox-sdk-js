@@ -65,7 +65,9 @@
     },
     "dependencies": {
         "axios": "^1.9.0",
-        "google-auth-library": "^10.0.0",
+        "google-auth-library": "^10.0.0"
+    },
+    "peerDependencies": {
         "zod": "^3.24.4"
     }
 }

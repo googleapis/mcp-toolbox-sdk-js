@@ -3,7 +3,7 @@
     "compilerOptions": {
       "module": "NodeNext",
       "moduleResolution": "NodeNext",
-      "rootDir": "src/toolbox_core",
+      "rootDir": "src/toolbox_adk",
       "outDir": "build",
       "declaration": true,
       "sourceMap": true,

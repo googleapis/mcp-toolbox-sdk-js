@@ -14,7 +14,7 @@
 
 // This file defines the public API for the @toolbox-sdk/core package.
 // Export the main factory function and the core tool type
-export { ToolboxTool } from './tool.js';
+export {ToolboxTool} from './tool.js';
 
 // Re-export all the supporting types that are part of the public interface
 export type {
@@ -23,5 +23,5 @@ export type {
   RequiredAuthnParams,
 } from './tool.js';
 
-export type { BoundParams, BoundValue } from './utils.js';
-export type { ClientHeadersConfig } from './client.js';
+export type {BoundParams, BoundValue} from './utils.js';
+export type {ClientHeadersConfig} from './client.js';

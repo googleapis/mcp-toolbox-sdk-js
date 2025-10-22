@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { BaseTool, RunAsyncToolRequest } from '@google/adk';
-import { FunctionDeclaration } from '@google/genai';
+import {BaseTool, RunAsyncToolRequest} from '@google/adk';
+import type {FunctionDeclaration} from '@google/genai';
 
 import {
   ToolboxClient,
@@ -22,11 +22,9 @@ import {
   BoundParams,
   BoundValue,
 } from '@toolbox-sdk/core';
-import {
-  ConvertZodToFunctionDeclaration
-} from './protocol.js';
+import {ConvertZodToFunctionDeclaration} from './protocol.js';
 
-import { ZodObject, ZodRawShape } from 'zod';
+import {ZodObject, ZodRawShape} from 'zod';
 
 type ResolvedPromiseType<T> = T extends Promise<infer U> ? U : T;
 
@@ -72,7 +70,7 @@ export class ToolboxTool extends BaseTool {
    */
   override _getDeclaration(): FunctionDeclaration | undefined {
     const zodSchema = this.coreTool.params as ZodObject<ZodRawShape>;
-    
+
     return ConvertZodToFunctionDeclaration(
       this.name,
       this.description,
@@ -140,4 +138,3 @@ export class ToolboxTool extends BaseTool {
     return this.coreTool;
   }
 }
-

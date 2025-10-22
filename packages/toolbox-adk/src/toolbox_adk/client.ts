@@ -19,7 +19,7 @@ import {
   ClientHeadersConfig,
 } from '@toolbox-sdk/core';
 import {ToolboxTool, CoreTool} from './tool.js';
-import {AxiosInstance} from 'axios';
+import type {AxiosInstance} from 'axios';
 
 /**
  * An asynchronous client for interacting with a Toolbox service, specifically
@@ -27,7 +27,7 @@ import {AxiosInstance} from 'axios';
  *
  * This client mirrors the interface of the core ToolboxClient but returns
  * ADK-compatible `ToolboxTool` instances that can be used directly in an
-// ADK Agent.
+ * ADK Agent.
  */
 export class ToolboxClient {
   private readonly coreClient: CoreToolboxClient;
@@ -45,7 +45,6 @@ export class ToolboxClient {
     session?: AxiosInstance | null,
     clientHeaders?: ClientHeadersConfig | null,
   ) {
-    // This client composes the core client and delegates all network calls to it.
     this.coreClient = new CoreToolboxClient(url, session, clientHeaders);
   }
 
@@ -66,14 +65,11 @@ export class ToolboxClient {
     authTokenGetters: AuthTokenGetters | null = {},
     boundParams: BoundParams | null = {},
   ): Promise<ToolboxTool> {
-    // 1. Delegate the core logic of fetching and creating the tool to the core client.
     const coreTool: CoreTool = await this.coreClient.loadTool(
       name,
       authTokenGetters,
       boundParams,
     );
-
-    // 2. Wrap the resulting CoreTool in the ADK ToolboxTool adapter class.
     return new ToolboxTool(coreTool);
   }
 
@@ -93,15 +89,12 @@ export class ToolboxClient {
     boundParams: BoundParams | null = {},
     strict = false,
   ): Promise<Array<ToolboxTool>> {
-    // 1. Delegate the core logic to the core client.
     const coreTools: CoreTool[] = await this.coreClient.loadToolset(
       name,
       authTokenGetters,
       boundParams,
       strict,
     );
-
-    // 2. Map over the array of CoreTools and wrap each one in the ADK adapter.
     return coreTools.map(coreTool => new ToolboxTool(coreTool));
   }
 }

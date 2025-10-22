@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {FunctionDeclaration, Schema, Type} from '@google/genai';
+import type {FunctionDeclaration, Schema} from '@google/genai';
+import {Type} from '@google/genai';
 import {z, ZodObject, ZodRawShape, ZodTypeAny} from 'zod';
 
 /**
@@ -27,7 +28,7 @@ function getJsonSchemaTypeFromZod(zodType: ZodTypeAny): Type {
   if (zodType instanceof z.ZodBoolean) return Type.BOOLEAN;
   if (zodType instanceof z.ZodArray) return Type.ARRAY;
   if (zodType instanceof z.ZodObject) return Type.OBJECT;
-    return Type.STRING;
+  return Type.STRING;
 }
 
 /**

@@ -340,3 +340,5 @@ class ToolboxClient {
     return tools;
   }
 }
+
+export {ToolboxClient};

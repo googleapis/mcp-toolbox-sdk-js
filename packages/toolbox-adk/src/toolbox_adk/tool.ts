@@ -30,7 +30,7 @@ import { ZodObject, ZodRawShape } from 'zod';
 
 type ResolvedPromiseType<T> = T extends Promise<infer U> ? U : T;
 
-type CoreTool = ResolvedPromiseType<
+export type CoreTool = ResolvedPromiseType<
   ReturnType<typeof ToolboxClient.prototype.loadTool>
 >;
 

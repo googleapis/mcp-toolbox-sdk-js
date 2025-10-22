@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type BoundValue = unknown | (() => unknown) | (() => Promise<unknown>);
+type BoundValue = unknown | (() => unknown) | (() => Promise<unknown>);
 
-export type BoundParams = Record<string, BoundValue>;
+type BoundParams = Record<string, BoundValue>;
 type RequiredAuthnParams = Record<string, string[]>;
 
 /**

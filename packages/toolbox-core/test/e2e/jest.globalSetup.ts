@@ -22,8 +22,8 @@ import {
   downloadBlob,
   getToolboxBinaryGcsPath,
   delay,
-} from './utils';
-import {CustomGlobal} from './types';
+} from './utils.js';
+import {CustomGlobal} from './types.js';
 
 const TOOLBOX_BINARY_NAME = 'toolbox';
 const SERVER_READY_TIMEOUT_MS = 30000; // 30 seconds

@@ -98,15 +98,16 @@ export async function downloadBlob(
  */
 export function getToolboxBinaryGcsPath(toolboxVersion: string): string {
   const system = os.platform().toLowerCase(); // 'darwin', 'linux', 'windows'
-  let arch = os.arch(); // 'amd64', 'arm64'
+  const arch = os.arch();
+  let archForPath: string; // 'amd64', 'arm64'
 
   if (system === 'darwin' && arch === 'arm64') {
-    arch = 'arm64';
+    archForPath = 'arm64';
   } else {
-    arch = 'amd64';
+    archForPath = 'amd64';
   }
   const osSystemForPath = system === 'win32' ? 'windows' : system;
-  return `v${toolboxVersion}/${osSystemForPath}/${arch}/toolbox`;
+  return `v${toolboxVersion}/${osSystemForPath}/${archForPath}/toolbox`;
 }
 
 export function delay(ms: number): Promise<void> {

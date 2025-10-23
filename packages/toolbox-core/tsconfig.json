@@ -1,5 +1,7 @@
 {
-  "extends": "./tsconfig.esm.json",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+  },
   "include": [
     "src/**/*.ts",
     "test/**/*.ts"

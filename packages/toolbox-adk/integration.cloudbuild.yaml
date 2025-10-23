@@ -30,7 +30,7 @@ steps:
     args:
       - -c
       - npm ci
-    waitFor: build-toolbox-core
+    waitFor: ['build-toolbox-core']
   
   - id: Run integration tests
     name: 'node:${_VERSION}'
@@ -44,7 +44,7 @@ steps:
     args:
       - '-c'
       - npm run test:e2e
-    waitFor: install-adk
+    waitFor: ['install-adk']
 options:
   logging: CLOUD_LOGGING_ONLY
 substitutions:

@@ -1,12 +1,21 @@
 {
-  "preset": "ts-jest/presets/default-esm",
+  "preset": "ts-jest",
   "testEnvironment": "node",
   "testMatch": [
     "<rootDir>/test/e2e/*.e2e.ts"
   ],
+  "extensionsToTreatAsEsm": [".ts"],
+  "transform": {
+    "^.+\\.ts$": [
+      "ts-jest",
+      {
+        "useESM": true,
+        "tsconfig": "tsconfig.test.json"
+      }
+    ]
+  },
   "globalSetup": "<rootDir>/test/e2e/jest.globalSetup.ts",
   "globalTeardown": "<rootDir>/test/e2e/jest.globalTeardown.ts",
-
   "testTimeout": 60000,
   "collectCoverage": false,
   "moduleNameMapper": {

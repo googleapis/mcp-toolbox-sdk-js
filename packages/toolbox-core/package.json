@@ -17,9 +17,9 @@
     ],
     "exports": {
         ".": {
-            "import": "./build/client.js",
-            "require": "./build/cjs/client.js",
-            "types": "./build/client.d.ts"
+            "import": "./build/index.js",
+            "require": "./build/cjs/index.js",
+            "types": "./build/index.d.ts"
         },
         "./auth": {
             "import": "./build/authMethods.js",
@@ -65,7 +65,9 @@
     },
     "dependencies": {
         "axios": "^1.9.0",
-        "google-auth-library": "^10.0.0",
+        "google-auth-library": "^10.0.0"
+    },
+    "peerDependencies": {
         "zod": "^3.24.4"
     }
 }

@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ToolboxClient} from '../../src/toolbox_adk/client';
-import {ToolboxTool} from '../../src/toolbox_adk/tool';
+import {ToolboxClient} from '../../src/toolbox_adk/client.js';
+import {ToolboxTool} from '../../src/toolbox_adk/tool.js';
 
 import {AxiosError} from 'axios';
-import {CustomGlobal} from './types';
+import {CustomGlobal} from './types.js';
 import {ToolContext} from '@google/adk';
 
-import {authTokenGetter} from './utils';
-import {ZodOptional, ZodNullable, ZodTypeAny} from 'zod';
+import {authTokenGetter} from './utils.js';
 
 describe('ToolboxClient E2E Tests', () => {
   let commonToolboxClient: ToolboxClient;

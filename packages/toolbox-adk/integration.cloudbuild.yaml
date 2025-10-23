@@ -30,6 +30,7 @@ steps:
     args:
       - -c
       - npm ci
+      - npm run compile
     waitFor: ['build-toolbox-core']
   
   - id: Run integration tests

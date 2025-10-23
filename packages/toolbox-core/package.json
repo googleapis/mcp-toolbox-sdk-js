@@ -46,7 +46,7 @@
         "compile:cjs": "tsc -p tsconfig.cjs.json",
         "prepare": "npm run compile",
         "test:unit": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json",
-        "test:e2e": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.e2e.config.json --runInBand",
+        "test:e2e": "cross-env NODE_OPTIONS='--experimental-vm-modules --loader ts-node/esm' jest --config jest.e2e.config.json --runInBand",
         "coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json --coverage"
     },
     "devDependencies": {
@@ -61,6 +61,7 @@
         "jest": "^30.0.0",
         "tmp": "^0.2.3",
         "ts-jest": "^29.4.0",
+        "ts-node": "^10.9.2",
         "typescript": "^5.8.3"
     },
     "dependencies": {

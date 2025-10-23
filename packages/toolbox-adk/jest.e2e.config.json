@@ -4,19 +4,25 @@
     "testMatch": [
         "<rootDir>/test/e2e/*.e2e.ts"
     ],
-     "transform": {
+    "transform": {
       "^.+\\.ts$": [
         "ts-jest",
         {
-          "tsconfig": "tsconfig.test.json"
+          "tsconfig": "tsconfig.test.json",
+          "useESM": true
         }
       ]
     },
+    "extensionsToTreatAsEsm": [".ts"],
     "globalSetup": "<rootDir>/test/e2e/jest.globalSetup.ts",
     "globalTeardown": "<rootDir>/test/e2e/jest.globalTeardown.ts",
     "testTimeout": 60000,
     "collectCoverage": false,
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1"
-    }
+    },
+    "moduleDirectories": [
+      "node_modules",
+      "<rootDir>/../../node_modules"
+    ]
 }

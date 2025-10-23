@@ -13,8 +13,17 @@
 // limitations under the License.
 
 import {GoogleAuth} from 'google-auth-library';
+import {jest, describe, it, expect, beforeEach} from '@jest/globals';
 
+type FetchIdTokenFn = (url: string) => Promise<string>;
+type IdTokenClient = {
+  idTokenProvider: {
+    fetchIdToken: jest.Mock<FetchIdTokenFn>;
+  };
+};
 type GetGoogleIdToken = (url: string) => Promise<string>;
+type GetIdTokenClientFn = (url: string) => Promise<IdTokenClient>;
+
 
 describe('getGoogleIdToken', () => {
   const mockUrl = 'https://example.com';
@@ -22,10 +31,10 @@ describe('getGoogleIdToken', () => {
 
   let getGoogleIdToken: GetGoogleIdToken;
   let MockedGoogleAuth: jest.MockedClass<typeof GoogleAuth>;
-  let mockGetIdTokenClient: jest.Mock;
-  let mockFetchIdToken: jest.Mock;
+  let mockGetIdTokenClient: jest.Mock<GetIdTokenClientFn>;
+  let mockFetchIdToken: jest.Mock<FetchIdTokenFn>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.resetModules();
 
     mockFetchIdToken = jest.fn();
@@ -41,10 +50,10 @@ describe('getGoogleIdToken', () => {
 
     // With the mocks fully configured, dynamically require the modules.
     // This ensures our code runs against the fresh mocks we just set up.
-    const authMethods = require('../src/toolbox_core/authMethods');
-    const {GoogleAuth: GA} = require('google-auth-library');
+    const authMethods = await import('../src/toolbox_core/authMethods.js');
+    const {GoogleAuth: GA} = await import('google-auth-library');
     getGoogleIdToken = authMethods.getGoogleIdToken;
-    MockedGoogleAuth = GA;
+    MockedGoogleAuth = GA as jest.MockedClass<typeof GoogleAuth>;
 
     mockGetIdTokenClient.mockResolvedValue({
       idTokenProvider: {fetchIdToken: mockFetchIdToken},

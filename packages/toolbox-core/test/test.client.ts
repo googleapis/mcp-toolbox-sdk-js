@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ToolboxClient} from '../src/toolbox_core/client';
-import {ToolboxTool} from '../src/toolbox_core/tool';
+import {ToolboxClient} from '../src/toolbox_core/client.js';
+import {ToolboxTool} from '../src/toolbox_core/tool.js';
 import {
   ZodManifestSchema,
   createZodSchemaFromParams,
   type ZodManifest,
   ZodToolSchema,
   type ParameterSchema,
-} from '../src/toolbox_core/protocol';
+} from '../src/toolbox_core/protocol.js';
 import axios, {AxiosInstance, AxiosResponse} from 'axios';
 import {z, ZodRawShape, ZodObject, ZodTypeAny, ZodError} from 'zod';
 
 // --- Helper Types ---
 type OriginalToolboxToolType =
-  typeof import('../src/toolbox_core/tool').ToolboxTool;
+  typeof import('../src/toolbox_core/tool.js').ToolboxTool;
 
 type CallableToolReturnedByFactory = ReturnType<OriginalToolboxToolType>;
 

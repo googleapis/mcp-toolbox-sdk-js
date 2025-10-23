@@ -1,17 +1,19 @@
 {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "extensionsToTreatAsEsm": [".ts"],
     "testMatch": [
         "<rootDir>/test/*.ts"
     ],
-    "preset": "ts-jest",
     "transform": {
       "^.+\\.ts$": [
         "ts-jest",
         {
+          "useESM": true,
           "tsconfig": "tsconfig.test.json"
         }
       ]
     },
-    "testEnvironment": "node",
     "collectCoverage": true,
     "coverageDirectory": "coverage",
     "coverageReporters": ["lcov", "text"],

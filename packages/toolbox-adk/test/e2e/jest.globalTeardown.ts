@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as fs from 'fs-extra';
-import {CustomGlobal} from './types';
+import {CustomGlobal} from './types.js';
 
 const SERVER_TERMINATE_TIMEOUT_MS = 10000; // 10 seconds
 

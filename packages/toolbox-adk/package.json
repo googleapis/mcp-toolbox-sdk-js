@@ -46,11 +46,20 @@
     },
     "dependencies": {
         "@google/adk": "^0.1.2",
+        "@google/genai": "^1.14.0",
+        "@toolbox-sdk/core": "file:toolbox-sdk-core-0.1.2.tgz",
+        "@types/fs-extra": "^11.0.4",
+        "axios": "^1.12.2",
+        "fs-extra": "^11.3.2",
         "zod": "^3.24.4"
     },
     "devDependencies": {
+        "@types/jest": "^30.0.0",
         "@types/node": "^24.9.1",
+        "cross-env": "^10.1.0",
         "gts": "^6.0.2",
-        "openapi-types": "^12.1.3"
+        "jest": "^30.2.0",
+        "openapi-types": "^12.1.3",
+        "ts-jest": "^29.4.0"
     }
 }

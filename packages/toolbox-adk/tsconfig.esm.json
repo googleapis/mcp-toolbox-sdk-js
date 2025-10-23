@@ -10,8 +10,7 @@
       "lib": [
         "ES2023",
         "DOM"
-      ],
-      "isolatedModules": true
+      ]
     },
     "include": [
       "src/**/*.ts"

@@ -1,8 +1,5 @@
 {
   "extends": "./tsconfig.esm.json",
-  "compilerOptions": {
-    "rootDir": "."
-  },
   "include": [
     "src/**/*.ts",
     "test/**/*.ts"

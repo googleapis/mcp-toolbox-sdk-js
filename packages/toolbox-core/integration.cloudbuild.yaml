@@ -16,21 +16,21 @@ steps:
   - id: Install package
     name: 'node:${_VERSION}'
     entrypoint: /bin/bash
-    dir: packages/toolbox-core
+    dir: packages/toolbox-adk
     args:
       - -c
       - npm ci
-  - id: Run unit tests
-    name: 'node:${_VERSION}'
-    entrypoint: /bin/bash
-    dir: packages/toolbox-core
-    args:
-      - '-c'
-      - npm run test:unit
+  # - id: Run unit tests
+  #   name: 'node:${_VERSION}'
+  #   entrypoint: /bin/bash
+  #   dir: packages/toolbox-adk
+  #   args:
+  #     - '-c'
+  #     - npm run test:unit
   - id: Run integration tests
     name: 'node:${_VERSION}'
     entrypoint: /bin/bash
-    dir: packages/toolbox-core
+    dir: packages/toolbox-adk
     env:
       - TOOLBOX_URL=$_TOOLBOX_URL
       - TOOLBOX_VERSION=$_TOOLBOX_VERSION

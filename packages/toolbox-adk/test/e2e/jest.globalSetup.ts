@@ -15,6 +15,7 @@
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import {spawn} from 'child_process';
+import { fileURLToPath } from 'url';
 import {
   getEnvVar,
   accessSecretVersion,
@@ -49,6 +50,11 @@ export default async function globalSetup(): Promise<void> {
 
     // Download toolbox binary
     const toolboxGcsPath = getToolboxBinaryGcsPath(toolboxVersion);
+
+    // Add these two lines to define __dirname
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+
     const localToolboxPath = path.resolve(__dirname, TOOLBOX_BINARY_NAME);
 
     console.log(

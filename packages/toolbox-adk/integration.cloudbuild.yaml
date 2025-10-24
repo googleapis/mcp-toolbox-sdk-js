@@ -32,6 +32,15 @@ steps:
       - npm ci
       - npm run compile
     waitFor: ['build-toolbox-core']
+    
+  - id: Run unit tests
+    name: 'node:${_VERSION}'
+    entrypoint: /bin/bash
+    dir: packages/toolbox-adk
+    args:
+      - '-c'
+      - npm run test:unit
+    waitFor: ['install-adk']
   
   - id: Run integration tests
     name: 'node:${_VERSION}'
@@ -46,6 +55,7 @@ steps:
       - '-c'
       - npm run test:e2e
     waitFor: ['install-adk']
+
 options:
   logging: CLOUD_LOGGING_ONLY
 substitutions:

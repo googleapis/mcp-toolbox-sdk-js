@@ -23,12 +23,36 @@ import {z, ZodObject, ZodRawShape, ZodTypeAny} from 'zod';
  * @returns A value from the `Type` enum.
  */
 function getJsonSchemaTypeFromZod(zodType: ZodTypeAny): Type {
-  if (zodType instanceof z.ZodString) return Type.STRING;
-  if (zodType instanceof z.ZodNumber) return Type.NUMBER;
-  if (zodType instanceof z.ZodBoolean) return Type.BOOLEAN;
-  if (zodType instanceof z.ZodArray) return Type.ARRAY;
-  if (zodType instanceof z.ZodObject) return Type.OBJECT;
-  return Type.STRING;
+  // Handle optional and nullable types by recursively unwrapping them
+  if (zodType instanceof z.ZodOptional || zodType instanceof z.ZodNullable) {
+    return getJsonSchemaTypeFromZod(zodType.unwrap());
+  }
+
+  // Handle specific base types
+  if (zodType instanceof z.ZodNull) {
+    return Type.NULL;
+  }
+
+  if (zodType instanceof z.ZodString || zodType instanceof z.ZodEnum) {
+    return Type.STRING;
+  }
+
+  if (zodType instanceof z.ZodNumber) {
+    const isInteger = zodType._def.checks.some(check => check.kind === 'int');
+    return isInteger ? Type.INTEGER : Type.NUMBER;
+  }
+
+  if (zodType instanceof z.ZodBoolean) {
+    return Type.BOOLEAN;
+  }
+  if (zodType instanceof z.ZodArray) {
+    return Type.ARRAY;
+  }
+  if (zodType instanceof z.ZodObject) {
+    return Type.OBJECT;
+  }
+  // Fallback for unhandled types
+  return Type.TYPE_UNSPECIFIED;
 }
 
 /**

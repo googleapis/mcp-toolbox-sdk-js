@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as os from 'os';
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import {GoogleAuth} from 'google-auth-library';
 
 import * as tmp from 'tmp';

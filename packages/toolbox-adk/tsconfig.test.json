@@ -1,0 +1,14 @@
+{
+    "extends": "./tsconfig.esm.json",
+    "compilerOptions": {
+      "rootDir": ".",
+      "outDir": "build",
+      "esModuleInterop": true,
+      "sourceMap": true,
+      "isolatedModules": true
+    },
+    "include": [
+      "src/**/*.ts",
+      "test/**/*.ts"
+    ]
+}

@@ -15,7 +15,7 @@
 import * as path from 'path';
 import fs from 'fs-extra';
 import {spawn} from 'child_process';
-import { fileURLToPath } from 'url';
+import {fileURLToPath} from 'url';
 import {
   getEnvVar,
   accessSecretVersion,

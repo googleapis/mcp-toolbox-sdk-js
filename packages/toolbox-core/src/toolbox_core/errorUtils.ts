@@ -40,3 +40,5 @@ export function logApiError(baseMessage: string, error: unknown): void {
   }
   console.error(baseMessage, loggableDetails);
 }
+
+// small change to check test run

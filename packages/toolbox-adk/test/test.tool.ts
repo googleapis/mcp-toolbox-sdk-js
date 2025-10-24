@@ -16,7 +16,7 @@ import {jest, describe, it, expect, beforeEach} from '@jest/globals';
 import {z, ZodRawShape} from 'zod';
 import {Type} from '@google/genai';
 import type {FunctionDeclaration} from '@google/genai';
-import type {RunAsyncToolRequest} from '@google/adk';
+import type {RunAsyncToolRequest, ToolContext} from '@google/adk';
 import type {ToolboxTool as ToolboxToolType} from '../src/toolbox_adk/tool.js';
 
 const mockedConvertZod = jest.fn();
@@ -56,6 +56,10 @@ type MockCoreTool = jest.Mock & {
   addAuthTokenGetter: jest.Mock;
   bindParams: jest.Mock;
   bindParam: jest.Mock;
+  boundParams: Record<string, unknown>;
+  authTokenGetters: Record<string, unknown>;
+  requiredAuthnParams: string[];
+  requiredAuthzTokens: string[];
 };
 
 const createMockCoreTool = (): MockCoreTool => {
@@ -69,11 +73,16 @@ const createMockCoreTool = (): MockCoreTool => {
     addAuthTokenGetter: jest.fn(() => createMockCoreTool()),
     bindParams: jest.fn(() => createMockCoreTool()),
     bindParam: jest.fn(() => createMockCoreTool()),
+
+    boundParams: {},
+    authTokenGetters: {},
+    requiredAuthnParams: [],
+    requiredAuthzTokens: [],
   });
 };
 
 describe('ToolboxTool', () => {
-  let mockCoreTool: any;;
+  let mockCoreTool: MockCoreTool;
   let adkTool: ToolboxToolType;
 
   beforeEach(() => {
@@ -100,7 +109,7 @@ describe('ToolboxTool', () => {
 
     const request: RunAsyncToolRequest = {
       args: mockArgs,
-      toolContext: {} as any,
+      toolContext: {} as unknown as ToolContext,
     };
 
     const result = await adkTool.runAsync(request);

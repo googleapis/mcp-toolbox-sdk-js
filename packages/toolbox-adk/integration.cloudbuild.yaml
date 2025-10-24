@@ -43,3 +43,5 @@ steps:
     waitFor: ['install-adk']
 options:
   logging: CLOUD_LOGGING_ONLY
+substitutions:
+  _VERSION: '22.16.0'

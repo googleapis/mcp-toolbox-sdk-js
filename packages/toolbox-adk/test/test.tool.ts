@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import {jest, describe, it, expect, beforeEach} from '@jest/globals';
-import {z, ZodRawShape} from 'zod';
+import {z} from 'zod';
 import {Type} from '@google/genai';
 import type {FunctionDeclaration} from '@google/genai';
 import type {RunAsyncToolRequest, ToolContext} from '@google/adk';

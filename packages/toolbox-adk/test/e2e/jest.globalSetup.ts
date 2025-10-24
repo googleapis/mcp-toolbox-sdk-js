@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as path from 'path';
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import {spawn} from 'child_process';
 import { fileURLToPath } from 'url';
 import {

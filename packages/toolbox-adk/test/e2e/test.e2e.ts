@@ -244,7 +244,7 @@ describe('ToolboxClient E2E Tests', () => {
       try {
         await authTool.runAsync({args: {id: '2'}, toolContext: mockToolContext});
       } catch (error) {
-        expect(error).toBeInstanceOf(AxiosError);
+        expect((error as AxiosError).isAxiosError).toBe(true);        
         const axiosError = error as AxiosError;
         expect(axiosError.response?.status).toBe(401);
         expect(axiosError.response?.data).toEqual(
@@ -306,7 +306,7 @@ describe('ToolboxClient E2E Tests', () => {
       try {
         await tool.runAsync({args: {}, toolContext: mockToolContext});
       } catch (error) {
-        expect(error).toBeInstanceOf(AxiosError);
+        expect((error as AxiosError).isAxiosError).toBe(true);
         const axiosError = error as AxiosError;
         expect(axiosError.response?.data).toEqual(
           expect.objectContaining({

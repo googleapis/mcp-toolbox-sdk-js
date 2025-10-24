@@ -4,6 +4,7 @@
       "rootDir": ".",
       "outDir": "build",
       "esModuleInterop": true,
-      "sourceMap": true   
+      "sourceMap": true,
+      "isolatedModules": true
     }
 }

@@ -48,21 +48,8 @@ const mockDeclaration: FunctionDeclaration = {
   },
 };
 
-type MockCoreTool = jest.Mock & {
-  toolName: string;
-  description: string;
-  params: z.ZodObject<ZodRawShape>;
-  addAuthTokenGetters: jest.Mock;
-  addAuthTokenGetter: jest.Mock;
-  bindParams: jest.Mock;
-  bindParam: jest.Mock;
-  boundParams: Record<string, unknown>;
-  authTokenGetters: Record<string, unknown>;
-  requiredAuthnParams: string[];
-  requiredAuthzTokens: string[];
-};
-
-const createMockCoreTool = (): MockCoreTool => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const createMockCoreTool: any = () => {
   const mockToolFn = jest.fn();
 
   return Object.assign(mockToolFn, {
@@ -73,16 +60,12 @@ const createMockCoreTool = (): MockCoreTool => {
     addAuthTokenGetter: jest.fn(() => createMockCoreTool()),
     bindParams: jest.fn(() => createMockCoreTool()),
     bindParam: jest.fn(() => createMockCoreTool()),
-
-    boundParams: {},
-    authTokenGetters: {},
-    requiredAuthnParams: [],
-    requiredAuthzTokens: [],
   });
 };
 
 describe('ToolboxTool', () => {
-  let mockCoreTool: MockCoreTool;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let mockCoreTool: any;
   let adkTool: ToolboxToolType;
 
   beforeEach(() => {

@@ -1,5 +1,5 @@
 {
-    "preset": "ts-jest",
+    "preset": "ts-jest/presets/default-esm",
     "testEnvironment": "node",
     "testMatch": [
         "<rootDir>/test/e2e/*.e2e.ts"
@@ -12,8 +12,8 @@
         }
       ]
     },
-    "globalSetup": "<rootDir>/test/e2e/jest.globalSetup.ts",
-    "globalTeardown": "<rootDir>/test/e2e/jest.globalTeardown.ts",
+    "globalSetup": "<rootDir>/build/test/e2e/jest.globalSetup.js",
+    "globalTeardown": "<rootDir>/build/test/e2e/jest.globalTeardown.js",
     "testTimeout": 60000,
     "collectCoverage": false,
     "moduleNameMapper": {

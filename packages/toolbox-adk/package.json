@@ -45,6 +45,18 @@
         "coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json --coverage"
     },
     "dependencies": {
-        "@toolbox-sdk/core": "^0.1.2"
+        "@google/genai": "^1.14.0",
+        "@toolbox-sdk/core": "^0.1.2",
+        "zod": "^3.24.4"
+    },
+    "devDependencies": {
+        "@types/jest": "^30.0.0",
+        "@types/node": "^24.9.1",
+        "@types/tmp": "^0.2.6",
+        "cross-env": "^10.1.0",
+        "fs-extra": "^11.3.2",
+        "gts": "^6.0.2",
+        "jest": "^30.2.0",
+        "ts-jest": "^29.4.5"
     }
 }

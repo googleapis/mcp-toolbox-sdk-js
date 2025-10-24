@@ -30,7 +30,11 @@ describe('ConvertZodToFunctionDeclaration', () => {
         .describe('The unit of temperature'),
     });
 
-    const result = ConvertZodToFunctionDeclaration(name, description, zodSchema);
+    const result = ConvertZodToFunctionDeclaration(
+      name,
+      description,
+      zodSchema,
+    );
 
     expect(result).toEqual({
       name: 'get_weather',
@@ -57,7 +61,11 @@ describe('ConvertZodToFunctionDeclaration', () => {
     const description = 'Get the current time';
     const zodSchema = z.object({});
 
-    const result = ConvertZodToFunctionDeclaration(name, description, zodSchema);
+    const result = ConvertZodToFunctionDeclaration(
+      name,
+      description,
+      zodSchema,
+    );
 
     expect(result).toEqual({
       name: 'get_time',
@@ -85,7 +93,11 @@ describe('ConvertZodToFunctionDeclaration', () => {
       }),
     });
 
-    const result = ConvertZodToFunctionDeclaration(name, description, zodSchema);
+    const result = ConvertZodToFunctionDeclaration(
+      name,
+      description,
+      zodSchema,
+    );
 
     expect(result).toEqual({
       name: 'create_user',
@@ -131,7 +143,11 @@ describe('ConvertZodToFunctionDeclaration', () => {
       notifications_enabled: z.boolean().optional(),
     });
 
-    const result = ConvertZodToFunctionDeclaration(name, description, zodSchema);
+    const result = ConvertZodToFunctionDeclaration(
+      name,
+      description,
+      zodSchema,
+    );
 
     // This test now passes because your updated getJsonSchemaTypeFromZod
     // function correctly unwraps ZodOptional.
@@ -163,7 +179,11 @@ describe('ConvertZodToFunctionDeclaration', () => {
       event_data: z.object({}),
     });
 
-    const result = ConvertZodToFunctionDeclaration(name, description, zodSchema);
+    const result = ConvertZodToFunctionDeclaration(
+      name,
+      description,
+      zodSchema,
+    );
 
     expect(result).toEqual({
       name: 'log_event',
@@ -194,7 +214,11 @@ describe('ConvertZodToFunctionDeclaration', () => {
       error_code: z.null(), // Should be NULL
     });
 
-    const result = ConvertZodToFunctionDeclaration(name, description, zodSchema);
+    const result = ConvertZodToFunctionDeclaration(
+      name,
+      description,
+      zodSchema,
+    );
 
     expect(result).toEqual({
       name: 'process_data',
@@ -225,7 +249,11 @@ describe('ConvertZodToFunctionDeclaration', () => {
       user_count: z.bigint(),
     });
 
-    const result = ConvertZodToFunctionDeclaration(name, description, zodSchema);
+    const result = ConvertZodToFunctionDeclaration(
+      name,
+      description,
+      zodSchema,
+    );
 
     expect(result).toEqual({
       name: 'unsupported_test',

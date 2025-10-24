@@ -14,12 +14,7 @@
 
 import type {FunctionDeclaration, Schema} from '@google/genai';
 import {Type} from '@google/genai';
-import {
-  z,
-  ZodObject,
-  ZodRawShape,
-  ZodTypeAny,
-} from 'zod';
+import {z, ZodObject, ZodRawShape, ZodTypeAny} from 'zod';
 
 /**
  * Safely determines the JSON Schema type enum from a Zod type object.
@@ -43,9 +38,7 @@ function getJsonSchemaTypeFromZod(zodType: ZodTypeAny): Type {
   }
 
   if (zodType instanceof z.ZodNumber) {
-    const isInteger = zodType._def.checks.some(
-      (check) => check.kind === 'int'
-    );
+    const isInteger = zodType._def.checks.some(check => check.kind === 'int');
     return isInteger ? Type.INTEGER : Type.NUMBER;
   }
 

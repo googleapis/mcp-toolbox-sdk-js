@@ -6,5 +6,9 @@
       "esModuleInterop": true,
       "sourceMap": true,
       "isolatedModules": true
-    }
+    },
+    "include": [
+      "src/**/*.ts",
+      "test/**/*.ts"
+    ]
 }

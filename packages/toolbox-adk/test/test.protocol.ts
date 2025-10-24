@@ -240,7 +240,6 @@ describe('ConvertZodToFunctionDeclaration', () => {
     });
   });
 
-  // --- NEW TEST ---
   it('should return TYPE_UNSPECIFIED for unsupported Zod types', () => {
     const name = 'unsupported_test';
     const description = 'Test unsupported types';

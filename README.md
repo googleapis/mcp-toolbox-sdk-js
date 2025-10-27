@@ -21,13 +21,14 @@ Databases or APIs) managed by Toolbox into your GenAI applications.
 
 <!-- TOC -->
 
-- [Overview](#overview)
-- [Which Package Should I Use?](#which-package-should-i-use)
-- [Available Packages](#available-packages)
-- [Getting Started](#getting-started)
-- [Contributing](#contributing)
-- [License](#license)
-- [Support](#support)
+- [MCP Toolbox SDKs for JS](#mcp-toolbox-sdks-for-js)
+    - [Overview](#overview)
+    - [Which Package Should I Use?](#which-package-should-i-use)
+    - [Available Packages](#available-packages)
+    - [Getting Started](#getting-started)
+    - [Contributing](#contributing)
+    - [License](#license)
+    - [Support](#support)
 
 <!-- /TOC -->
 
@@ -53,6 +54,8 @@ Choosing the right package depends on how you are building your application:
 - [`@toolbox-sdk/core`](https://github.com/googleapis/mcp-toolbox-sdk-js/tree/main/packages/toolbox-core):
   This is a framework agnostic way to connect the tools to popular frameworks
   like Langchain, LlamaIndex and Genkit.
+- [`@toolbox-sdk/adk`](https://github.com/googleapis/mcp-toolbox-sdk-js/tree/main/packages/toolbox-adk):
+  This package provides a seamless way to connect to [Google ADK TS](https://github.com/google/adk-js).
 
 ## Available Packages
 
@@ -62,6 +65,7 @@ README for detailed installation and usage instructions:
 | Package | Target Use Case | Integration | Path | Details (README) | Npm Version |
 | :------ | :---------- | :---------- | :---------------------- | :---------- | :--------- 
 | `toolbox-core` | Framework-agnostic / Custom applications | Use directly / Custom | `packages/toolbox-core/` | 📄 [View README](https://github.com/googleapis/mcp-toolbox-sdk-js/blob/main/packages/toolbox-core/README.md) | ![npm](https://img.shields.io/npm/v/@toolbox-sdk/core) |
+| `toolbox-adk` | ADK applications | ADK | `packages/toolbox-adk/` | 📄 [View README](https://github.com/googleapis/mcp-toolbox-sdk-js/blob/main/packages/toolbox-adk/README.md) | ![npm](https://img.shields.io/npm/v/@toolbox-sdk/adk) |
 
 ## Getting Started
 

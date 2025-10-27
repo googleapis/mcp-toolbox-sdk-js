@@ -21,14 +21,13 @@ Databases or APIs) managed by Toolbox into your GenAI applications.
 
 <!-- TOC -->
 
-- [MCP Toolbox SDKs for JS](#mcp-toolbox-sdks-for-js)
-    - [Overview](#overview)
-    - [Which Package Should I Use?](#which-package-should-i-use)
-    - [Available Packages](#available-packages)
-    - [Getting Started](#getting-started)
-    - [Contributing](#contributing)
-    - [License](#license)
-    - [Support](#support)
+- [Overview](#overview)
+- [Which Package Should I Use?](#which-package-should-i-use)
+- [Available Packages](#available-packages)
+- [Getting Started](#getting-started)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
 
 <!-- /TOC -->
 

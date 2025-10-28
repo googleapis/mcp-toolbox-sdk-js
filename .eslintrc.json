@@ -4,7 +4,8 @@
     "project": [
       "./packages/toolbox-core/tsconfig.json",
       "./packages/toolbox-adk/tsconfig.json"
-    ]
+    ],
+    "tsconfigRootDir": "."
   },
   "env": {
         "node": true,

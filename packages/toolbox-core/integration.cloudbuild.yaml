@@ -14,22 +14,22 @@
 
 steps:
   - id: Install dependencies
-    name: 'pnpm/node:${_VERSION}'
+    name: 'node:${_VERSION}'
     entrypoint: /bin/bash
     args:
       - -c
-      - pnpm install --frozen-lockfile
+      - corepack enable && pnpm install --frozen-lockfile
 
   - id: Run unit tests
-    name: 'pnpm/node:${_VERSION}'
+    name: 'node:${_VERSION}'
     entrypoint: /bin/bash
     waitFor: ['Install dependencies']
     args:
       - '-c'
-      - pnpm --filter @toolbox-sdk/core run test:unit
+      - corepack enable && pnpm --filter @toolbox-sdk/core run test:unit
 
   - id: Run integration tests
-    name: 'pnpm/node:${_VERSION}'
+    name: 'node:${_VERSION}'
     entrypoint: /bin/bash
     waitFor: ['Install dependencies']
     env:
@@ -39,7 +39,7 @@ steps:
       - TOOLBOX_MANIFEST_VERSION=$_TOOLBOX_MANIFEST_VERSION
     args:
       - '-c'
-      - pnpm --filter @toolbox-sdk/core run test:e2e
+      - corepack enable && pnpm --filter @toolbox-sdk/core run test:e2e
 
 options:
   logging: CLOUD_LOGGING_ONLY

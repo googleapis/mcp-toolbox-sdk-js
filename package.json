@@ -1,0 +1,30 @@
+{
+  "name": "toolbox-js-sdks",
+  "private": true,
+  "scripts": {
+    "lint": "pnpm -r lint",
+    "fix": "pnpm -r fix",
+    "compile": "pnpm -r --stream run compile",
+    "compile:esm": "pnpm -r --stream run compile:esm",
+    "compile:cjs": "pnpm -r --stream run compile:cjs",
+    "test:unit": "pnpm -r --stream run test:unit",
+    "test:e2e": "pnpm -r --stream run test:e2e",
+    "coverage": "pnpm -r --stream run coverage"
+  },
+  "devDependencies": {
+    "@google-cloud/secret-manager": "^6.1.1",
+    "@google-cloud/storage": "^7.17.2",
+    "@types/fs-extra": "^11.0.4",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.9.1",
+    "@types/tmp": "^0.2.6",
+    "cross-env": "^10.1.0",
+    "fs-extra": "^11.3.2",
+    "google-auth-library": "^10.4.2",
+    "gts": "^6.0.2",
+    "jest": "^30.2.0",
+    "tmp": "^0.2.5",
+    "ts-jest": "^29.4.5",
+    "typescript": "^5.8.3"
+  }
+}

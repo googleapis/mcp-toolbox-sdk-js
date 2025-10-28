@@ -49,20 +49,6 @@
         "test:e2e": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.e2e.config.json --runInBand",
         "coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json --coverage"
     },
-    "devDependencies": {
-        "@google-cloud/secret-manager": "^6.0.1",
-        "@google-cloud/storage": "^7.16.0",
-        "@types/fs-extra": "^11.0.4",
-        "@types/jest": "^30.0.0",
-        "@types/tmp": "^0.2.6",
-        "cross-env": "^10.0.0",
-        "fs-extra": "^11.3.0",
-        "gts": "^6.0.0",
-        "jest": "^30.0.0",
-        "tmp": "^0.2.3",
-        "ts-jest": "^29.4.0",
-        "typescript": "^5.8.3"
-    },
     "dependencies": {
         "axios": "^1.9.0",
         "google-auth-library": "^10.0.0"

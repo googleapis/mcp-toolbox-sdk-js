@@ -1,9 +1,12 @@
 {
-    "extends": "./node_modules/gts",
-    "parserOptions": {
-      "project": "./tsconfig.json"
-    },
-    "env": {
+  "extends": "./node_modules/gts",
+  "parserOptions": {
+    "project": [
+      "./packages/toolbox-core/tsconfig.json",
+      "./packages/toolbox-adk/tsconfig.json"
+    ]
+  },
+  "env": {
         "node": true,
         "jest": true
     },
@@ -17,9 +20,8 @@
             "**/jest.setup.ts"
           ],
           "rules": {
-            "n/no-extraneous-import": "off",
             "n/no-unpublished-import": "off"
           }
         }
-      ]
+    ]
 }

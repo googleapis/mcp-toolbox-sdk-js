@@ -13,23 +13,15 @@
 # limitations under the License.
 
 steps:
-  - id: Install pnpm
-    name: 'node:${_VERSION}'
-    entrypoint: /bin/bash
-    args:
-      - -c
-      - npm install -g pnpm
-
   - id: Install dependencies
-    name: 'node:${_VERSION}'
+    name: 'pnpm/node:${_VERSION}'
     entrypoint: /bin/bash
-    waitFor: ['Install pnpm']
     args:
       - -c
       - pnpm install --frozen-lockfile
 
   - id: Run unit tests
-    name: 'node:${_VERSION}'
+    name: 'pnpm/node:${_VERSION}'
     entrypoint: /bin/bash
     waitFor: ['Install dependencies']
     args:
@@ -37,7 +29,7 @@ steps:
       - pnpm --filter @toolbox-sdk/core run test:unit
 
   - id: Run integration tests
-    name: 'node:${_VERSION}'
+    name: 'pnpm/node:${_VERSION}'
     entrypoint: /bin/bash
     waitFor: ['Install dependencies']
     env:

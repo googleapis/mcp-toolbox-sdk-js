@@ -1,3 +1,8 @@
-*node_modules*
-*build*
-*coverage*
+# Dependencies
+node_modules/
+
+# Build output
+build/
+
+# Coverage
+coverage/

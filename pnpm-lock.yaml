@@ -57,6 +57,12 @@ importers:
         specifier: ^5.8.3
         version: 5.9.3
 
+  packages/toolbox-adk:
+    dependencies:
+      '@toolbox-sdk/core':
+        specifier: workspace:*
+        version: link:../toolbox-core
+
   packages/toolbox-core:
     dependencies:
       axios:

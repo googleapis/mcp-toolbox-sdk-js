@@ -46,7 +46,7 @@
     },
     "dependencies": {
         "@google/genai": "^1.14.0",
-        "@toolbox-sdk/core": "workspace:*"
+        "@toolbox-sdk/core": "workspace:*",
         "zod": "^3.24.4"
     }
 }

@@ -13,35 +13,37 @@
 # limitations under the License.
 
 steps:
-  - id: build-toolbox-core
+  - id: Install dependencies
     name: 'node:${_VERSION}'
     entrypoint: /bin/bash
-    dir: packages/toolbox-core
     args:
       - -c
-      - |
-        npm ci
-        npm run compile
-  
-  - id: install-adk
-    name: 'node:${_VERSION}'
-    entrypoint: /bin/bash
-    dir: packages/toolbox-adk
-    args:
-      - -c
-      - npm ci
-      - npm run compile
-    waitFor: ['build-toolbox-core']
+      - corepack enable && pnpm install --frozen-lockfile
 
   - id: Run unit tests
     name: 'node:${_VERSION}'
     entrypoint: /bin/bash
-    dir: packages/toolbox-adk
+    waitFor: ['Install dependencies']
     args:
       - '-c'
-      - npm run test:unit
-    waitFor: ['install-adk']
+      - corepack enable && pnpm --filter @toolbox-sdk/adk run test:unit
+
+  - id: Run integration tests
+    name: 'node:${_VERSION}'
+    entrypoint: /bin/bash
+    waitFor: ['Install dependencies']
+    env:
+      - TOOLBOX_URL=$_TOOLBOX_URL
+      - TOOLBOX_VERSION=$_TOOLBOX_VERSION
+      - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
+      - TOOLBOX_MANIFEST_VERSION=$_TOOLBOX_MANIFEST_VERSION
+    args:
+      - '-c'
+      - corepack enable && pnpm --filter @toolbox-sdk/adk run test:e2e
+
 options:
   logging: CLOUD_LOGGING_ONLY
 substitutions:
   _VERSION: '22.16.0'
+  _TOOLBOX_VERSION: '0.17.0'
+  _TOOLBOX_MANIFEST_VERSION: '34'

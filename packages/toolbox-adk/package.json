@@ -48,13 +48,5 @@
         "@google/genai": "^1.14.0",
         "@toolbox-sdk/core": "workspace:*"
         "zod": "^3.24.4"
-    },
-    "devDependencies": {
-        "@types/node": "^24.9.1",
-        "cross-env": "^10.1.0",
-        "fs-extra": "^11.3.2",
-        "gts": "^6.0.2",
-        "jest": "^30.2.0",
-        "ts-jest": "^29.4.5"
     }
 }

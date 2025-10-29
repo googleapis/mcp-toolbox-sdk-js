@@ -14,6 +14,7 @@
   "devDependencies": {
     "@google-cloud/secret-manager": "^6.1.1",
     "@google-cloud/storage": "^7.17.2",
+    "@jest/globals": "^30.2.0",
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.9.1",

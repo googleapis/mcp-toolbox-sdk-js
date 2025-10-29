@@ -32,9 +32,6 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true
-    defaults:
-      run:
-        working-directory: ./packages/toolbox-adk
     permissions:
       contents: 'read'
       issues: 'write'
@@ -66,7 +63,11 @@ jobs:
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
         with:
           node-version: 22.16.0
-      - name: Install package
-        run: npm ci
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
       - name: Run linter
-        run: npm run lint
+        run: pnpm --filter @toolbox-sdk/adk run lint

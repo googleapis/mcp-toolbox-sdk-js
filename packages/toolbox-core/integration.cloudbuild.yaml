@@ -13,24 +13,25 @@
 # limitations under the License.
 
 steps:
-  - id: Install package
+  - id: Install dependencies
     name: 'node:${_VERSION}'
     entrypoint: /bin/bash
-    dir: packages/toolbox-core
     args:
       - -c
-      - npm ci
+      - corepack enable && pnpm install --frozen-lockfile
+
   - id: Run unit tests
     name: 'node:${_VERSION}'
     entrypoint: /bin/bash
-    dir: packages/toolbox-core
+    waitFor: ['Install dependencies']
     args:
       - '-c'
-      - npm run test:unit
+      - corepack enable && pnpm --filter @toolbox-sdk/core run test:unit
+
   - id: Run integration tests
     name: 'node:${_VERSION}'
     entrypoint: /bin/bash
-    dir: packages/toolbox-core
+    waitFor: ['Install dependencies']
     env:
       - TOOLBOX_URL=$_TOOLBOX_URL
       - TOOLBOX_VERSION=$_TOOLBOX_VERSION
@@ -38,7 +39,8 @@ steps:
       - TOOLBOX_MANIFEST_VERSION=$_TOOLBOX_MANIFEST_VERSION
     args:
       - '-c'
-      - npm run test:e2e
+      - corepack enable && pnpm --filter @toolbox-sdk/core run test:e2e
+
 options:
   logging: CLOUD_LOGGING_ONLY
 substitutions:

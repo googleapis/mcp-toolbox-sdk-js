@@ -30,3 +30,5 @@ sourceFileExtensions:
   - "text"
   - "js"
   - "ts"
+ignoreFiles:
+  - "pnpm-lock.yaml"

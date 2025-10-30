@@ -2,7 +2,7 @@
     "testMatch": [
         "<rootDir>/test/*.ts"
     ],
-    "preset": "ts-jest",
+    "preset": "ts-jest/presets/default-esm",
     "transform": {
       "^.+\\.ts$": [
         "ts-jest",

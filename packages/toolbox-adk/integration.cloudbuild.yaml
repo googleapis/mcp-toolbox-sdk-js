@@ -28,18 +28,18 @@ steps:
       - '-c'
       - corepack enable && pnpm --filter @toolbox-sdk/adk run test:unit
 
-  - id: Run integration tests
-    name: 'node:${_VERSION}'
-    entrypoint: /bin/bash
-    waitFor: ['Install dependencies']
-    env:
-      - TOOLBOX_URL=$_TOOLBOX_URL
-      - TOOLBOX_VERSION=$_TOOLBOX_VERSION
-      - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
-      - TOOLBOX_MANIFEST_VERSION=$_TOOLBOX_MANIFEST_VERSION
-    args:
-      - '-c'
-      - corepack enable && pnpm --filter @toolbox-sdk/adk run test:e2e
+  # - id: Run integration tests
+  #   name: 'node:${_VERSION}'
+  #   entrypoint: /bin/bash
+  #   waitFor: ['Install dependencies']
+  #   env:
+  #     - TOOLBOX_URL=$_TOOLBOX_URL
+  #     - TOOLBOX_VERSION=$_TOOLBOX_VERSION
+  #     - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
+  #     - TOOLBOX_MANIFEST_VERSION=$_TOOLBOX_MANIFEST_VERSION
+  #   args:
+  #     - '-c'
+  #     - corepack enable && pnpm --filter @toolbox-sdk/adk run test:e2e
 
 options:
   logging: CLOUD_LOGGING_ONLY

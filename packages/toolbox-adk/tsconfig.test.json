@@ -5,7 +5,8 @@
       "outDir": "build",
       "esModuleInterop": true,
       "sourceMap": true,
-      "isolatedModules": true
+      "isolatedModules": true,
+      "types": ["jest", "node"]
     },
     "include": [
       "src/**/*.ts",

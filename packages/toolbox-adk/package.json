@@ -45,6 +45,6 @@
         "coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json --coverage"
     },
     "dependencies": {
-        "@toolbox-sdk/core": "^0.1.2"
+        "@toolbox-sdk/core": "workspace:*"
     }
 }

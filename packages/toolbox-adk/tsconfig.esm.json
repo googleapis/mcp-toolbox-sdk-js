@@ -1,22 +1,10 @@
 {
-    "extends": "./node_modules/gts/tsconfig-google.json",
-    "compilerOptions": {
-      "module": "NodeNext",
-      "moduleResolution": "NodeNext",
-      "rootDir": "src/toolbox_adk",
-      "outDir": "build",
-      "declaration": true,
-      "sourceMap": true,
-      "lib": [
-        "ES2023",
-        "DOM"
-      ]
-    },
-    "include": [
-      "src/**/*.ts"
-    ],
-    "exclude": [
-      "node_modules",
-      "build"
-    ]
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src/toolbox_adk",
+    "outDir": "build"
+  },
+  "include": [
+    "src/**/*.ts"
+  ]
 }

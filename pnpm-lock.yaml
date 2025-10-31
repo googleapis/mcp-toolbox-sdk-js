@@ -61,13 +61,13 @@ importers:
     dependencies:
       '@google/adk':
         specifier: ^0.1.2
-        version: 0.1.2(@google/genai@1.14.0(@modelcontextprotocol/sdk@1.17.5))(@modelcontextprotocol/sdk@1.17.5)(@opentelemetry/api@1.9.0)(zod@3.25.76)
+        version: 0.1.2(@google/genai@1.14.0(@modelcontextprotocol/sdk@1.20.2))(@modelcontextprotocol/sdk@1.20.2)(@opentelemetry/api@1.9.0)(zod@3.25.76)
       '@google/genai':
         specifier: ^1.14.0
-        version: 1.14.0(@modelcontextprotocol/sdk@1.17.5)
+        version: 1.14.0(@modelcontextprotocol/sdk@1.20.2)
       '@modelcontextprotocol/sdk':
-        specifier: 1.17.5
-        version: 1.17.5
+        specifier: 1.20.2
+        version: 1.20.2
       '@toolbox-sdk/core':
         specifier: workspace:*
         version: link:../toolbox-core
@@ -462,8 +462,8 @@ packages:
   '@js-sdsl/ordered-map@4.4.2':
     resolution: {integrity: sha512-iUKgm52T8HOE/makSxjqoWhe95ZJA1/G1sYsGev2JDKUSS14KAgg1LHb+Ba+IPow0xflbnSkOsZcO08C7w1gYw==}
 
-  '@modelcontextprotocol/sdk@1.17.5':
-    resolution: {integrity: sha512-QakrKIGniGuRVfWBdMsDea/dx1PNE739QJ7gCM41s9q+qaCYTHCdsIBXQVVXry3mfWAiaM9kT22Hyz53Uw8mfg==}
+  '@modelcontextprotocol/sdk@1.20.2':
+    resolution: {integrity: sha512-6rqTdFt67AAAzln3NOKsXRmv5ZzPkgbfaebKBqUbts7vK1GZudqnrun5a8d3M/h955cam9RHZ6Jb4Y1XhnmFPg==}
     engines: {node: '>=18'}
 
   '@napi-rs/wasm-runtime@0.2.12':
@@ -3045,19 +3045,19 @@ snapshots:
       - encoding
       - supports-color
 
-  '@google/adk@0.1.2(@google/genai@1.14.0(@modelcontextprotocol/sdk@1.17.5))(@modelcontextprotocol/sdk@1.17.5)(@opentelemetry/api@1.9.0)(zod@3.25.76)':
+  '@google/adk@0.1.2(@google/genai@1.14.0(@modelcontextprotocol/sdk@1.20.2))(@modelcontextprotocol/sdk@1.20.2)(@opentelemetry/api@1.9.0)(zod@3.25.76)':
     dependencies:
-      '@google/genai': 1.14.0(@modelcontextprotocol/sdk@1.17.5)
-      '@modelcontextprotocol/sdk': 1.17.5
+      '@google/genai': 1.14.0(@modelcontextprotocol/sdk@1.20.2)
+      '@modelcontextprotocol/sdk': 1.20.2
       '@opentelemetry/api': 1.9.0
       zod: 3.25.76
 
-  '@google/genai@1.14.0(@modelcontextprotocol/sdk@1.17.5)':
+  '@google/genai@1.14.0(@modelcontextprotocol/sdk@1.20.2)':
     dependencies:
       google-auth-library: 9.15.1
       ws: 8.18.3
     optionalDependencies:
-      '@modelcontextprotocol/sdk': 1.17.5
+      '@modelcontextprotocol/sdk': 1.20.2
     transitivePeerDependencies:
       - bufferutil
       - encoding
@@ -3307,7 +3307,7 @@ snapshots:
 
   '@js-sdsl/ordered-map@4.4.2': {}
 
-  '@modelcontextprotocol/sdk@1.17.5':
+  '@modelcontextprotocol/sdk@1.20.2':
     dependencies:
       ajv: 6.12.6
       content-type: 1.0.5

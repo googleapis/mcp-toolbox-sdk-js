@@ -61,7 +61,7 @@ importers:
     dependencies:
       '@google/adk':
         specifier: ^0.1.2
-        version: 0.1.2(@google/genai@1.14.0(@modelcontextprotocol/sdk@1.20.2))(@modelcontextprotocol/sdk@1.20.2)(@opentelemetry/api@1.9.0)(zod@3.25.76)
+        version: 0.1.2(@google/genai@1.14.0(@modelcontextprotocol/sdk@1.20.2))(@modelcontextprotocol/sdk@1.20.2)(@opentelemetry/api@1.9.0)(zod@4.1.12)
       '@google/genai':
         specifier: ^1.14.0
         version: 1.14.0(@modelcontextprotocol/sdk@1.20.2)
@@ -78,8 +78,8 @@ importers:
         specifier: ^12.1.3
         version: 12.1.3
       zod:
-        specifier: ^3.24.4
-        version: 3.25.76
+        specifier: ^4.0.0
+        version: 4.1.12
 
   packages/toolbox-core:
     dependencies:
@@ -90,8 +90,8 @@ importers:
         specifier: ^10.0.0
         version: 10.4.2
       zod:
-        specifier: ^3.24.4
-        version: 3.25.76
+        specifier: ^4.0.0
+        version: 4.1.12
 
 packages:
 
@@ -2777,6 +2777,9 @@ packages:
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
+  zod@4.1.12:
+    resolution: {integrity: sha512-JInaHOamG8pt5+Ey8kGmdcAcg3OL9reK8ltczgHTAwNhMys/6ThXHityHxVV2p3fkw/c+MAvBHFVYHFZDmjMCQ==}
+
 snapshots:
 
   '@babel/code-frame@7.27.1':
@@ -3045,12 +3048,12 @@ snapshots:
       - encoding
       - supports-color
 
-  '@google/adk@0.1.2(@google/genai@1.14.0(@modelcontextprotocol/sdk@1.20.2))(@modelcontextprotocol/sdk@1.20.2)(@opentelemetry/api@1.9.0)(zod@3.25.76)':
+  '@google/adk@0.1.2(@google/genai@1.14.0(@modelcontextprotocol/sdk@1.20.2))(@modelcontextprotocol/sdk@1.20.2)(@opentelemetry/api@1.9.0)(zod@4.1.12)':
     dependencies:
       '@google/genai': 1.14.0(@modelcontextprotocol/sdk@1.20.2)
       '@modelcontextprotocol/sdk': 1.20.2
       '@opentelemetry/api': 1.9.0
-      zod: 3.25.76
+      zod: 4.1.12
 
   '@google/genai@1.14.0(@modelcontextprotocol/sdk@1.20.2)':
     dependencies:
@@ -5876,3 +5879,5 @@ snapshots:
       zod: 3.25.76
 
   zod@3.25.76: {}
+
+  zod@4.1.12: {}

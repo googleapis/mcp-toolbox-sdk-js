@@ -13,6 +13,18 @@
     "packages": {
       "packages/toolbox-core": {
         "component": "core"
+      },
+      "packages/toolbox-adk": {
+        "component": "adk"
       }
+    },
+    "plugins": [
+    {
+      "type": "linked-versions",
+      "groupName": "toolbox-js-sdks",
+      "components": [
+        "core", "adk"
+      ]
     }
+  ]
 }

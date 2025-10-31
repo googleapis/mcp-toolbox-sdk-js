@@ -74,12 +74,6 @@ importers:
       openapi-types:
         specifier: ^12.1.3
         version: 12.1.3
-      '@google/genai':
-        specifier: ^1.14.0
-        version: 1.27.0
-      '@toolbox-sdk/core':
-        specifier: workspace:*
-        version: link:../toolbox-core
       zod:
         specifier: ^3.24.4
         version: 3.25.76
@@ -321,11 +315,11 @@ packages:
       '@opentelemetry/api': 1.9.0
       zod: 3.25.76
 
-  '@google/genai@1.27.0':
-    resolution: {integrity: sha512-sveeQqwyzO/U5kOjo3EflF1rf7v0ZGprrjPGmeT6V5u22IUTcA4wBFxW+q1n7hOX0M1iWR3944MImoNPOM+zsA==}
+  '@google/genai@1.14.0':
+    resolution: {integrity: sha512-jirYprAAJU1svjwSDVCzyVq+FrJpJd5CSxR/g2Ga/gZ0ZYZpcWjMS75KJl9y71K1mDN+tcx6s21CzCbB2R840g==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
-      '@modelcontextprotocol/sdk': ^1.20.1
+      '@modelcontextprotocol/sdk': ^1.11.0
     peerDependenciesMeta:
       '@modelcontextprotocol/sdk':
         optional: true
@@ -3064,12 +3058,6 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - encoding
-  '@google/genai@1.27.0':
-    dependencies:
-      google-auth-library: 10.4.2
-      ws: 8.18.3
-    transitivePeerDependencies:
-      - bufferutil
       - supports-color
       - utf-8-validate
 

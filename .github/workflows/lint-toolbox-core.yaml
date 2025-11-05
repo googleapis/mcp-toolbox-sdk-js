@@ -64,9 +64,9 @@ jobs:
         with:
           node-version: 22.16.0
       - name: Install pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
         with:
-          version: 9
+          version: 10
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Run linter

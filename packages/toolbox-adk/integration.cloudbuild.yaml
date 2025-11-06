@@ -20,10 +20,18 @@ steps:
       - -c
       - npm ci
 
-  - id: Run unit tests
+  - id: Build packages
     name: 'node:${_VERSION}'
     entrypoint: /bin/bash
     waitFor: ['Install dependencies']
+    args:
+      - '-c'
+      - npm run build
+
+  - id: Run unit tests
+    name: 'node:${_VERSION}'
+    entrypoint: /bin/bash
+    waitFor: ['Build packages']
     args:
       - '-c'
       - npm run test:unit -w @toolbox-sdk/adk
@@ -31,7 +39,7 @@ steps:
   - id: Run integration tests
     name: 'node:${_VERSION}'
     entrypoint: /bin/bash
-    waitFor: ['Install dependencies']
+    waitFor: ['Build packages']
     env:
       - TOOLBOX_URL=$_TOOLBOX_URL
       - TOOLBOX_VERSION=$_TOOLBOX_VERSION

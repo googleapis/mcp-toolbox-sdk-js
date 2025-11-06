@@ -15,6 +15,12 @@
         "agents",
         "mcp"
     ],
+    "main": "./build/cjs/index.js",
+    "module": "./build/index.js",
+    "types": "./build/index.d.ts",
+    "files": [
+        "build"
+    ],
     "exports": {
         ".": {
             "import": "./build/index.js",

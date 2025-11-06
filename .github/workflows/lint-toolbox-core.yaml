@@ -64,9 +64,10 @@ jobs:
         with:
           node-version: 22.16.0
       - name: Install dependencies
-        run: npm ci --ignore-scripts # Ignore scripts to prevent premature compilation
+        run: npm ci
+      
       - name: Build all packages
-        # This will build packages in the correct dependency order
-        run: npm run build --workspaces --if-present
+        run: npm run build
+
       - name: Run linter
         run: npm run lint -w @toolbox-sdk/core

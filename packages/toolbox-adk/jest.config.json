@@ -7,7 +7,8 @@
       "^.+\\.ts$": [
         "ts-jest",
         {
-          "tsconfig": "tsconfig.test.json"
+          "tsconfig": "tsconfig.test.json",
+          "useESM": true
         }
       ]
     },
@@ -29,7 +30,6 @@
       }
     },
     "moduleNameMapper": {
-      "^@toolbox-sdk/core$": "<rootDir>/../toolbox-core/build/index.js",
-      "^@toolbox-sdk/core/auth$": "<rootDir>/../toolbox-core/build/authMethods.js"
+      "(.+)\\.js": "$1"
     }
 }

@@ -30,6 +30,7 @@
     },
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1",
-      "^@toolbox-sdk/core(.*)$": "<rootDir>/../toolbox-core/src$1"
+      "^@toolbox-sdk/core$": "<rootDir>/../toolbox-core/src/index.ts",
+      "^@toolbox-sdk/core/auth$": "<rootDir>/../toolbox-core/src/authMethods.ts"
     }
 }

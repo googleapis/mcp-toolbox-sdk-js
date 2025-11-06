@@ -18,7 +18,7 @@ steps:
     entrypoint: /bin/bash
     args:
       - -c
-      - corepack enable && pnpm install --frozen-lockfile
+      - npm ci
 
   - id: Run unit tests
     name: 'node:${_VERSION}'
@@ -26,7 +26,7 @@ steps:
     waitFor: ['Install dependencies']
     args:
       - '-c'
-      - corepack enable && pnpm --filter @toolbox-sdk/adk run test:unit
+      - npm run test:unit -w @toolbox-sdk/adk
 
   - id: Run integration tests
     name: 'node:${_VERSION}'
@@ -39,7 +39,7 @@ steps:
       - TOOLBOX_MANIFEST_VERSION=$_TOOLBOX_MANIFEST_VERSION
     args:
       - '-c'
-      - corepack enable && pnpm --filter @toolbox-sdk/adk run test:e2e
+      - npm run test:e2e -w @toolbox-sdk/adk
 
 options:
   logging: CLOUD_LOGGING_ONLY

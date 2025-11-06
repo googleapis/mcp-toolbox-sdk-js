@@ -17,8 +17,7 @@ on:
   pull_request:
     paths:
       - 'packages/toolbox-adk/**'
-      - 'packages/toolbox-core/**'
-      - '!packages*/**/*.md'
+      - '!packages/toolbox-adk/**/*.md'
   pull_request_target:
     types: [labeled]
 
@@ -68,6 +67,5 @@ jobs:
         run: npm ci
       - name: Build core dependency
         run: npm run compile -w @toolbox-sdk/core
-
       - name: Run linter
         run: npm run lint -w @toolbox-sdk/adk

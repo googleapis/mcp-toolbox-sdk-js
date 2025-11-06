@@ -1,5 +1,10 @@
 {
   "extends": "./tsconfig.esm.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "composite": true,
+    "declarationMap": true
+  },
   "include": [
     "src/**/*.ts",
     "test/**/*.ts"

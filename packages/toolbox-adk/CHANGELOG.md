@@ -12,18 +12,6 @@
 * **toolbox-adk:** add tool ([#123](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/123)) ([7c7d6e4](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/7c7d6e48ecf79a5d611f526334cbe48710160328))
 
 
-### Bug Fixes
-
-* **deps:** update dependency @modelcontextprotocol/sdk to v1.20.2 ([#135](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/135)) ([1e03411](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/1e03411da7243b8b0eac955c238e2f9d0e93e702))
-* **deps:** update dependency @modelcontextprotocol/sdk to v1.21.0 ([#136](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/136)) ([5e19f52](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/5e19f52c2b38c37c6bf9380f209ceae22f881645))
-
-
-### Miscellaneous Chores
-
-* release main ([#51](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/51)) ([d3edcd7](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/d3edcd7d5fb49fb02a77177f8a898b961a6fe09e))
-* **toolbox-adk:** add empty changelog file ([#127](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/127)) ([1eeac1a](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/1eeac1a6608719efdfee56db6abd87bfda1b5916))
-
-
 ### Documentation
 
 * **toolbox-adk:** add readme and developer files ([#128](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/128)) ([32683b1](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/32683b17806fd58f676cbf02aefc965caa418a57))

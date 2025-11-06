@@ -29,8 +29,7 @@
       }
     },
     "moduleNameMapper": {
-      "^(\\.{1,2}/.*)\\.js$": "$1",
-      "^@toolbox-sdk/core$": "<rootDir>/../toolbox-core/src/index.ts",
-      "^@toolbox-sdk/core/auth$": "<rootDir>/../toolbox-core/src/authMethods.ts"
+      "^@toolbox-sdk/core$": "<rootDir>/../toolbox-core/build/index.js",
+      "^@toolbox-sdk/core/auth$": "<rootDir>/../toolbox-core/build/authMethods.js"
     }
 }

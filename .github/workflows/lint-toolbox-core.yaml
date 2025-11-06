@@ -63,7 +63,10 @@ jobs:
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
         with:
           node-version: 22.16.0
-      - name: Install package
-        run: npm ci
+      - name: Install dependencies
+        run: npm ci --ignore-scripts # Ignore scripts to prevent premature compilation
+      - name: Build all packages
+        # This will build packages in the correct dependency order
+        run: npm run build --workspaces --if-present
       - name: Run linter
         run: npm run lint -w @toolbox-sdk/core

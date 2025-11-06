@@ -61,10 +61,11 @@
   "regexManagers": [
     {
       "fileMatch": [
-        "packages/toolbox-core/integration.cloudbuild.yaml"
+        "packages/toolbox-core/integration.cloudbuild.yaml",
+        "packages/toolbox-adk/integration.cloudbuild.yaml",
       ],
       "matchStrings": [
-        "_TOOLBOX_VERSION: ['\"]?(?<currentValue>v?\\d+\\.\\d+\\.\\d+)['\"]?"
+        "_TOOLBOX_VERSION: ['\"]?(?<currentValue>v?\\d+\\.\\d+\\.\\d+)['\"]?",
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "googleapis/genai-toolbox",

@@ -14,7 +14,6 @@
 
 // This file defines the public API for the @toolbox-sdk/adk package.
 
-export {ToolboxClient} from './client.js';
-
 // Export the main factory function and the core tool type
+export {ToolboxClient} from './client.js';
 export {ToolboxTool} from './tool.js';

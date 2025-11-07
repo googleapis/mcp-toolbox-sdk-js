@@ -30,7 +30,6 @@
       }
     },
     "moduleNameMapper": {
-      "(.+)\\.js": "$1",
-      "^@toolbox-sdk/core$": "<rootDir>/../toolbox-core/src"
+      "^@toolbox-sdk/core$": "<rootDir>/../toolbox-core/build/index.js"
     }
 }

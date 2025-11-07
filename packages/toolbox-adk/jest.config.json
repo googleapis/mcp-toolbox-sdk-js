@@ -29,6 +29,7 @@
       }
     },
     "moduleNameMapper": {
-      "^(\\.{1,2}/.*)\\.js$": "$1"
+      "^(\\.{1,2}/.*)\\.js$": "$1",
+      "^@toolbox-sdk/core$": "<rootDir>/../toolbox-core/src/index.js"
     }
 }

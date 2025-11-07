@@ -1,26 +1,42 @@
 {
-  extends: [
-    'config:recommended',
-    ':semanticCommits',
-    ':ignoreUnstable',
-    'group:allNonMajor',
-    ':separateMajorReleases',
-    ':prConcurrentLimitNone',
-    ':prHourlyLimitNone',
-    ':preserveSemverRanges',
+  "extends": [
+    "config:recommended",
+    ":semanticCommitTypeAll(chore)",
+    ":ignoreUnstable",
+    "group:allNonMajor",
+    ":separateMajorReleases",
+    ":prConcurrentLimitNone",
+    ":prHourlyLimitNone",
+    ":preserveSemverRanges"
   ],
-  minimumReleaseAge: '3',
-  rebaseWhen: 'conflicted',
-  dependencyDashboardLabels: [
-    'type: process',
+  "minimumReleaseAge": "3",
+  "rebaseWhen": "conflicted",
+  "dependencyDashboardLabels": [
+    "type: process"
   ],
-  packageRules: [
+  "packageRules": [
     {
-      groupName: 'GitHub Actions',
-      matchManagers: [
-        'github-actions',
+      "groupName": "GitHub Actions",
+      "matchManagers": [
+        "github-actions"
       ],
-      pinDigests: true,
+      "pinDigests": true
+    },
+    {
+      "description": "Auto-update genai-toolbox server version",
+      "matchPackageNames": [
+        "googleapis/genai-toolbox"
+      ],
+      "matchManagers": [
+        "regex"
+      ],
+      "branchName": "auto-update/toolbox-server-v{{newValue}}",
+      "commitMessageTopic": "update MCP Toolbox server version in integration tests to v{{newValue}}",
+      "prTitle": "chore(deps): update mcp toolbox server for integration tests to v{{newValue}}",
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ]
     },
     {
       "groupName": "js-ts-nonmajor",
@@ -34,11 +50,28 @@
       ]
     },
     {
-      groupName: 'kokoro dependencies',
-      matchFileNames: [
-        '.kokoro/**',
-      ],
-    },
+      "groupName": "kokoro dependencies",
+      "matchFileNames": [
+        ".kokoro/**"
+      ]
+    }
   ],
-  "ignoreDeps": ["typescript"],
+  "ignoreDeps": [
+    "typescript"
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": [
+        "packages/toolbox-core/integration.cloudbuild.yaml",
+        "packages/toolbox-adk/integration.cloudbuild.yaml",
+      ],
+      "matchStrings": [
+        "_TOOLBOX_VERSION: ['\"]?(?<currentValue>v?\\d+\\.\\d+\\.\\d+)['\"]?",
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "googleapis/genai-toolbox",
+      "versioningTemplate": "semver",
+      "packageNameTemplate": "googleapis/genai-toolbox"
+    }
+  ]
 }

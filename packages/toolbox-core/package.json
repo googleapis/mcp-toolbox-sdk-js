@@ -27,6 +27,7 @@
             "types": "./build/authMethods.d.ts"
         }
     },
+    "files": ["build"],
     "repository": {
         "type": "git",
         "url": "git+https://github.com/googleapis/mcp-toolbox-sdk-js.git"

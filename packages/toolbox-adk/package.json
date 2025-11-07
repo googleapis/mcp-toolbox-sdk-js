@@ -17,11 +17,12 @@
     ],
     "exports": {
         ".": {
-            "import": "./build/client.js",
-            "require": "./build/cjs/client.js",
-            "types": "./build/client.d.ts"
+            "import": "./build/index.js",
+            "require": "./build/cjs/index.js",
+            "types": "./build/index.d.ts"
         }
     },
+    "files": [ "build" ],
     "repository": {
         "type": "git",
         "url": "git+https://github.com/googleapis/mcp-toolbox-sdk-js.git"

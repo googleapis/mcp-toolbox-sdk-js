@@ -7,8 +7,7 @@
       "^.+\\.ts$": [
         "ts-jest",
         {
-          "tsconfig": "tsconfig.test.json",
-          "useESM": true
+          "tsconfig": "tsconfig.test.json"
         }
       ]
     },
@@ -30,6 +29,6 @@
       }
     },
     "moduleNameMapper": {
-      "^@toolbox-sdk/core$": "<rootDir>/../toolbox-core/build/index.js"
+      "^(\\.{1,2}/.*)\\.js$": "$1"
     }
 }

@@ -19,8 +19,8 @@ import type {
   BoundParams,
   ClientHeadersConfig,
 } from '@toolbox-sdk/core';
-import type {CoreTool} from '../src/toolbox_adk/tool.ts';
-import type {ToolboxClient as ToolboxClientType} from '../src/toolbox_adk/client.ts';
+import type {CoreTool} from '../src/toolbox_adk/tool.js';
+import type {ToolboxClient as ToolboxClientType} from '../src/toolbox_adk/client.js';
 import type {AxiosInstance} from 'axios';
 
 // Define the return type (the "instance") of the mock constructor
@@ -68,11 +68,11 @@ jest.unstable_mockModule('@toolbox-sdk/core', () => ({
   ToolboxClient: MockCoreToolboxClient,
 }));
 
-jest.unstable_mockModule('../src/toolbox_adk/tool.ts', () => ({
+jest.unstable_mockModule('../src/toolbox_adk/tool.js', () => ({
   ToolboxTool: MockToolboxTool,
 }));
 
-const {ToolboxClient} = (await import('../src/toolbox_adk/client.ts')) as {
+const {ToolboxClient} = (await import('../src/toolbox_adk/client.js')) as {
   ToolboxClient: typeof ToolboxClientType;
 };
 

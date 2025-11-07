@@ -1,15 +1,10 @@
 {
   "extends": "./tsconfig.esm.json",
   "compilerOptions": {
-    "rootDir": ".",
-    "composite": true
+    "rootDir": "."
   },
   "include": [
     "src/**/*.ts",
     "test/**/*.ts"
-  ],
-  "references": [
-    // This tells TSC to build 'core' first
-    { "path": "../toolbox-core/tsconfig.json" }
   ]
 }

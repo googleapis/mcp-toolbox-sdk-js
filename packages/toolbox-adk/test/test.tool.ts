@@ -17,15 +17,15 @@ import {z} from 'zod';
 import {Type} from '@google/genai';
 import type {FunctionDeclaration} from '@google/genai';
 import type {RunAsyncToolRequest, ToolContext} from '@google/adk';
-import type {ToolboxTool as ToolboxToolType} from '../src/toolbox_adk/tool.ts';
+import type {ToolboxTool as ToolboxToolType} from '../src/toolbox_adk/tool.js';
 
 const mockedConvertZod = jest.fn();
 
-jest.unstable_mockModule('../src/toolbox_adk/protocol.ts', () => ({
+jest.unstable_mockModule('../src/toolbox_adk/protocol.js', () => ({
   ConvertZodToFunctionDeclaration: mockedConvertZod,
 }));
 
-const {ToolboxTool} = (await import('../src/toolbox_adk/tool.ts')) as {
+const {ToolboxTool} = (await import('../src/toolbox_adk/tool.js')) as {
   ToolboxTool: typeof ToolboxToolType;
 };
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import {z} from 'zod';
-import {ConvertZodToFunctionDeclaration} from '../src/toolbox_adk/protocol.ts';
+import {ConvertZodToFunctionDeclaration} from '../src/toolbox_adk/protocol.js';
 import {Type} from '@google/genai';
 
 describe('ConvertZodToFunctionDeclaration', () => {

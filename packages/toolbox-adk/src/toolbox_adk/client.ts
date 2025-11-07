@@ -18,7 +18,7 @@ import {
   BoundParams,
   ClientHeadersConfig,
 } from '@toolbox-sdk/core';
-import {ToolboxTool, CoreTool} from './tool.ts';
+import {ToolboxTool, CoreTool} from './tool.js';
 import type {AxiosInstance} from 'axios';
 
 /**

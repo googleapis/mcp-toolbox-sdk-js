@@ -22,7 +22,7 @@ import {
   BoundParams,
   BoundValue,
 } from '@toolbox-sdk/core';
-import {ConvertZodToFunctionDeclaration} from './protocol.ts';
+import {ConvertZodToFunctionDeclaration} from './protocol.js';
 
 import {ZodObject, ZodRawShape} from 'zod';
 

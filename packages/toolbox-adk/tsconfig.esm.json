@@ -2,7 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src/toolbox_adk",
-    "outDir": "build"
+    "outDir": "build",
+    "allowImportingTsExtensions": true
   },
   "include": [
     "src/**/*.ts"

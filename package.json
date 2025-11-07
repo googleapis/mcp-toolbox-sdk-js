@@ -1,15 +1,19 @@
 {
   "name": "toolbox-js-sdks",
   "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "lint": "pnpm -r lint",
-    "fix": "pnpm -r fix",
-    "compile": "pnpm -r --stream run compile",
-    "compile:esm": "pnpm -r --stream run compile:esm",
-    "compile:cjs": "pnpm -r --stream run compile:cjs",
-    "test:unit": "pnpm -r --stream run test:unit",
-    "test:e2e": "pnpm -r --stream run test:e2e",
-    "coverage": "pnpm -r --stream run coverage"
+    "lint": "npm run lint --workspaces",
+    "fix": "npm run fix --workspaces",
+    "compile": "npm run compile --workspaces",
+    "compile:esm": "npm run compile:esm --workspaces",
+    "compile:cjs": "npm run compile:cjs --workspaces",
+    "test:unit": "npm run test:unit --workspaces",
+    "test:e2e": "npm run test:e2e --workspaces",
+    "coverage": "npm run coverage --workspaces",
+    "build": "npm run build --workspaces --if-present"
   },
   "devDependencies": {
     "@google-cloud/secret-manager": "^6.1.1",

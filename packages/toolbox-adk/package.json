@@ -42,7 +42,8 @@
         "compile:cjs": "tsc -p tsconfig.cjs.json",
         "test:unit": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json",
         "test:e2e": "npx tsc -p tsconfig.test.json && cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.e2e.config.json --runInBand",
-        "coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json --coverage"
+        "coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json --coverage",
+        "prepare": "npm run build"
     },
     "dependencies": {
         "@google/adk": "^0.1.2",

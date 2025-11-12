@@ -22,7 +22,7 @@
             "types": "./build/index.d.ts"
         }
     },
-    "files": [ "build" ],
+    "files": [ "build/" ],
     "repository": {
         "type": "git",
         "url": "git+https://github.com/googleapis/mcp-toolbox-sdk-js.git"
@@ -45,7 +45,8 @@
         "coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json --coverage",
         "clean": "rimraf ./build",
         "build": "npm run clean && npm run compile",
-        "prepare": "npm run build"
+        "//": "Change prepack to invoke turbo from the root context",
+        "prepack": "npx turbo run build --filter=@toolbox-sdk/adk"
     },
     "dependencies": {
         "@google/adk": "^0.1.2",

@@ -12,7 +12,11 @@
     "compile:cjs": "npm run compile:cjs --workspaces",
     "test:unit": "npm run test:unit --workspaces",
     "test:e2e": "npm run test:e2e --workspaces",
-    "coverage": "npm run coverage --workspaces"
+    "coverage": "npm run coverage --workspaces",
+
+    "build:core": "npm run build -w @toolbox-sdk/core",
+    "build:adk": "npm run build -w @toolbox-sdk/adk",
+    "build": "npm run build:core && npm run build:adk"
   },
   "devDependencies": {
     "@google-cloud/secret-manager": "^6.1.1",

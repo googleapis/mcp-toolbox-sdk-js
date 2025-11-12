@@ -43,6 +43,8 @@
         "test:unit": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json",
         "test:e2e": "npx tsc -p tsconfig.test.json && cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.e2e.config.json --runInBand",
         "coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json --coverage",
+        "clean": "rimraf ./build",
+        "build": "npm run clean && npm run compile",
         "prepare": "npm run build"
     },
     "dependencies": {

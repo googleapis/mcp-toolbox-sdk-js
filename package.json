@@ -12,8 +12,7 @@
     "compile:cjs": "npm run compile:cjs --workspaces",
     "test:unit": "npm run test:unit --workspaces",
     "test:e2e": "npm run test:e2e --workspaces",
-    "coverage": "npm run coverage --workspaces",
-    "prepare": "npm run build"
+    "coverage": "npm run coverage --workspaces"
   },
   "devDependencies": {
     "@google-cloud/secret-manager": "^6.1.1",

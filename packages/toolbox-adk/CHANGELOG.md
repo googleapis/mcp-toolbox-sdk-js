@@ -10,5 +10,3 @@
 ### Documentation
 
 * **toolbox-adk:** add readme and developer files ([#128](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/128)) ([32683b1](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/32683b17806fd58f676cbf02aefc965caa418a57))
-
-

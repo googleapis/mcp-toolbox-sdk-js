@@ -63,11 +63,9 @@ jobs:
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
         with:
           node-version: 22.16.0
-      - name: Install pnpm
-        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
-        with:
-          version: 10
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
+      - name: Build core dependency
+        run: npm run compile -w @toolbox-sdk/core
       - name: Run linter
-        run: pnpm --filter @toolbox-sdk/adk run lint
+        run: npm run lint -w @toolbox-sdk/adk

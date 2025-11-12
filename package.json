@@ -4,6 +4,7 @@
   "workspaces": [
     "packages/*"
   ],
+  "packageManager": "npm@10.9.2",
   "scripts": {
     "build": "turbo run build",
     "lint": "turbo run lint",

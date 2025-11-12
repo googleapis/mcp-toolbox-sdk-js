@@ -7,9 +7,6 @@
   "scripts": {
     "lint": "npm run lint --workspaces",
     "fix": "npm run fix --workspaces",
-    "compile": "npm run compile --workspaces",
-    "compile:esm": "npm run compile:esm --workspaces",
-    "compile:cjs": "npm run compile:cjs --workspaces",
     "test:unit": "npm run test:unit --workspaces",
     "test:e2e": "npm run test:e2e --workspaces",
     "coverage": "npm run coverage --workspaces",

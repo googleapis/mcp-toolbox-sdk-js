@@ -4,15 +4,15 @@
   "workspaces": [
     "packages/*"
   ],
+  "packageManager": "npm@10.9.2",
   "scripts": {
-    "lint": "npm run lint --workspaces",
-    "fix": "npm run fix --workspaces",
-    "compile": "npm run compile --workspaces",
-    "compile:esm": "npm run compile:esm --workspaces",
-    "compile:cjs": "npm run compile:cjs --workspaces",
-    "test:unit": "npm run test:unit --workspaces",
-    "test:e2e": "npm run test:e2e --workspaces",
-    "coverage": "npm run coverage --workspaces"
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "fix": "turbo run fix",
+    "test:unit": "turbo run test:unit",
+    "test:e2e": "turbo run test:e2e",
+    "coverage": "turbo run coverage",
+    "clean": "turbo run clean"
   },
   "devDependencies": {
     "@google-cloud/secret-manager": "^6.1.1",
@@ -30,6 +30,7 @@
     "jest": "^30.2.0",
     "tmp": "^0.2.5",
     "ts-jest": "^29.4.5",
+    "turbo": "^2.6.1",
     "typescript": "^5.8.3"
   }
 }

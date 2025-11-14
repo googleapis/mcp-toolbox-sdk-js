@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.1.4](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.1.2...core-v0.1.4) (2025-11-14)
+
+
+### Features
+
+* Adds test case for auth token getter and client header conflict ([#103](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/103)) ([b5941a5](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/b5941a54e0c4976a0712a0d3e4253005e2759fa3))
+
+
+### Miscellaneous Chores
+
+* **deps:** bump axios from 1.9.0 to 1.12.0 in /packages/toolbox-core ([#104](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/104)) ([1c5a1a4](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/1c5a1a4e2ca9bbf3fac228a39d9802e0c592b939))
+* **deps:** update update mcp toolbox server version in integration tests to v0.19.1 to v0.19.1 ([#149](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/149)) ([2e9188d](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/2e9188d32878b57a15335676b043a16f6f14d9df))
+* export additional types from toolbox-core ([#116](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/116)) ([6ace767](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/6ace76785bc8161e083b1539fd86d51ea4f07724))
+* fix package config for release ([#152](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/152)) ([21c2803](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/21c280325e206dea2329019322d9d18dc0324995))
+* release main ([#134](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/134)) ([1c5fc6f](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/1c5fc6fc612a205568fdc70b318a1ccd5a530faa))
+* release main ([#140](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/140)) ([2ba9f28](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/2ba9f28c9a3836b63871296153c51d77255da15e))
+* release main ([#142](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/142)) ([c62c5a7](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/c62c5a76c174b2138902452a412c2a982cdda4d3))
+* release main ([#151](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/151)) ([e789722](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/e78972241980090398bf46c5f85571ac73183495))
+* release main ([#158](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/158)) ([3dcb014](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/3dcb014ac26e5b6b05f6256c36ee443b78cd4e0f))
+* update toolbox binary version ([#114](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/114)) ([bcb4182](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/bcb418248421e8cf49d179c2ab90037d3a952a4f))
+* update toolbox version ([#107](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/107)) ([0ca8f68](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/0ca8f680dc7bf91cdafd56168a32f871da49ff2f))
+* update toolbox version ([#112](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/112)) ([3e242e4](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/3e242e44c6a0c982f1d860788817acc1395ed198))
+
 ## [0.1.2](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.1.1...core-v0.1.2) (2025-08-19)
 
 

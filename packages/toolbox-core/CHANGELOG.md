@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.1.2...core-v0.1.4) (2025-11-14)
+
+
+### Miscellaneous Chores
+
+* export additional types from toolbox-core ([#116](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/116)) ([6ace767](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/6ace76785bc8161e083b1539fd86d51ea4f07724))
+
 ## [0.1.2](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.1.1...core-v0.1.2) (2025-08-19)
 
 

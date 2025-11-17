@@ -11,6 +11,7 @@
   ],
   "minimumReleaseAge": "3",
   "rebaseWhen": "conflicted",
+  "configMigration": "true",
   "dependencyDashboardLabels": [
     "type: process"
   ],

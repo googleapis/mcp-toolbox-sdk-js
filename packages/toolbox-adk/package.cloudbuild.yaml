@@ -19,31 +19,18 @@ steps:
     args:
       - -c
       - npm ci
+      - cd packages/toolbox-adk
+      - npm install
 
-  - id: Run unit tests
+  - id: Create package
     name: 'node:${_VERSION}'
     entrypoint: /bin/bash
     waitFor: ['Install dependencies']
     args:
       - '-c'
-      - npm run test:unit -w @toolbox-sdk/core
-
-  - id: Run integration tests
-    name: 'node:${_VERSION}'
-    entrypoint: /bin/bash
-    waitFor: ['Install dependencies']
-    env:
-      - TOOLBOX_URL=$_TOOLBOX_URL
-      - TOOLBOX_VERSION=$_TOOLBOX_VERSION
-      - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
-      - TOOLBOX_MANIFEST_VERSION=$_TOOLBOX_MANIFEST_VERSION
-    args:
-      - '-c'
-      - npm run test:e2e -w @toolbox-sdk/core
+      - npm pack ./packages/toolbox-adk
 
 options:
   logging: CLOUD_LOGGING_ONLY
 substitutions:
   _VERSION: '22.16.0'
-  _TOOLBOX_VERSION: '0.20.0'
-  _TOOLBOX_MANIFEST_VERSION: '34'

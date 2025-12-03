@@ -12,26 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Sync Labels
-on:
-  push:
-    branches:
-      - main
+steps:
+  - id: Install dependencies
+    name: 'node:${_VERSION}'
+    entrypoint: /bin/bash
+    args:
+      - -c
+      - npm ci
+      - cd packages/toolbox-adk
+      - npm install
 
-# Declare default permissions as read only.
-permissions: read-all
+  - id: Create package
+    name: 'node:${_VERSION}'
+    entrypoint: /bin/bash
+    waitFor: ['Install dependencies']
+    args:
+      - '-c'
+      - npm pack ./packages/toolbox-adk
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: 'read'
-      issues: 'write'
-      pull-requests: 'write'
-    steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-      - uses: micnncim/action-label-syncer@3abd5ab72fda571e69fffd97bd4e0033dd5f495c # v1.3.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          manifest: .github/labels.yaml
+options:
+  logging: CLOUD_LOGGING_ONLY
+substitutions:
+  _VERSION: '22.16.0'

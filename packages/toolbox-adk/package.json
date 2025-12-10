@@ -1,6 +1,6 @@
 {
     "name": "@toolbox-sdk/adk",
-    "version": "0.1.2",
+    "version": "0.1.5",
     "type": "module",
     "description": "JavaScript ADK SDK for interacting with the Toolbox service",
     "license": "Apache-2.0",
@@ -22,12 +22,14 @@
             "types": "./build/index.d.ts"
         }
     },
-    "files": [ "build/" ],
+    "files": [
+        "build/"
+    ],
     "repository": {
         "type": "git",
         "url": "git+https://github.com/googleapis/mcp-toolbox-sdk-js.git"
     },
-    "homepage": "https://github.com/googleapis/mcp-toolbox-sdk-js/blob/main/packages/toolbox-core",
+    "homepage": "https://github.com/googleapis/mcp-toolbox-sdk-js/blob/main/packages/toolbox-adk",
     "bugs": {
         "url": "https://github.com/googleapis/mcp-toolbox-sdk-js/issues"
     },

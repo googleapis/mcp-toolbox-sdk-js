@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.6](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.1.5...core-v0.1.6) (2025-12-12)
+
+
+### Miscellaneous Chores
+
+* **deps:** update mcp toolbox server version in integration tests to v0.22.0 ([#177](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/177)) ([b05d084](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/b05d084c285cdca4f252c71616304afba4765dcd))
+* **deps:** update mcp toolbox server version in integration tests to v0.23.0 ([#180](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/180)) ([3b16848](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/3b16848a1ad42e8ad7f13b73eed3006da4267f7e))
+
 ## [0.1.5](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.1.2...core-v0.1.5) (2025-12-03)
 
 ### Miscellaneous Chores

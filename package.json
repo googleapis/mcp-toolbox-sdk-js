@@ -23,7 +23,7 @@
     "@types/node": "^24.9.1",
     "@types/tmp": "^0.2.6",
     "cross-env": "^10.1.0",
-    "eslint": "^8.57.1",
+    "eslint": "^9.0.0",
     "fs-extra": "^11.3.2",
     "google-auth-library": "^10.4.2",
     "gts": "^6.0.2",

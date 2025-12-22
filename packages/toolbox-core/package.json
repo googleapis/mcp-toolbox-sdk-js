@@ -61,5 +61,8 @@
     },
     "peerDependencies": {
         "zod": "^3.24.4"
+    },
+    "devDependencies": {
+        "rimraf": "^6.1.2"
     }
 }

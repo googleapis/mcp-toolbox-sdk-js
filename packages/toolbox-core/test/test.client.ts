@@ -48,7 +48,9 @@ describe('ToolboxClient', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockTransport = new MockTransport(testBaseUrl);
-    (ToolboxTransport as unknown as jest.Mock).mockImplementation(() => mockTransport);
+    (ToolboxTransport as unknown as jest.Mock).mockImplementation(
+      () => mockTransport,
+    );
   });
 
   afterEach(async () => {
@@ -76,16 +78,14 @@ describe('ToolboxClient', () => {
         tools: {
           [toolName]: {
             description: 'A test tool',
-            parameters: [
-              {name: 'param1', type: 'string', description: 'desc'},
-            ],
+            parameters: [{name: 'param1', type: 'string', description: 'desc'}],
           },
         },
       };
 
       mockTransport.toolGet.mockResolvedValue(manifest);
       client = new ToolboxClient(testBaseUrl);
-      
+
       const tool = await client.loadTool(toolName);
 
       expect(mockTransport.toolGet).toHaveBeenCalledWith(toolName, {});
@@ -99,9 +99,9 @@ describe('ToolboxClient', () => {
         serverVersion: '1.0.0',
         tools: {
           existingTool: {
-             description: 'exists',
-             parameters: []
-          }
+            description: 'exists',
+            parameters: [],
+          },
         },
       };
 
@@ -109,7 +109,7 @@ describe('ToolboxClient', () => {
       client = new ToolboxClient(testBaseUrl);
 
       await expect(client.loadTool(toolName)).rejects.toThrow(
-        `Tool "${toolName}" not found`
+        `Tool "${toolName}" not found`,
       );
     });
 
@@ -143,7 +143,7 @@ describe('ToolboxClient', () => {
       expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
         toolName,
         {input: 'value'},
-        {} // headers
+        {}, // headers
       );
     });
 
@@ -153,7 +153,7 @@ describe('ToolboxClient', () => {
         serverVersion: '1.0.0',
         tools: {[toolName]: {description: 'Header Test', parameters: []}},
       };
-      
+
       mockTransport.toolGet.mockResolvedValue(manifest);
       mockTransport.toolInvoke.mockResolvedValue('ok');
 
@@ -164,11 +164,14 @@ describe('ToolboxClient', () => {
       await tool();
 
       // Check toolGet headers
-      expect(mockTransport.toolGet).toHaveBeenCalledWith(toolName, clientHeaders);
+      expect(mockTransport.toolGet).toHaveBeenCalledWith(
+        toolName,
+        clientHeaders,
+      );
       expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
-          toolName, 
-          {}, 
-          clientHeaders
+        toolName,
+        {},
+        clientHeaders,
       );
     });
 
@@ -176,25 +179,27 @@ describe('ToolboxClient', () => {
       const toolName = 'boundTest';
       const manifest: ZodManifest = {
         serverVersion: '1.0.0',
-        tools: {[toolName]: {
-            description: 'Bound Test', 
-            parameters: [{name: 'p1', type: 'string', description: 'p1'}]
-        }},
+        tools: {
+          [toolName]: {
+            description: 'Bound Test',
+            parameters: [{name: 'p1', type: 'string', description: 'p1'}],
+          },
+        },
       };
-      
+
       mockTransport.toolGet.mockResolvedValue(manifest);
       mockTransport.toolInvoke.mockResolvedValue('ok');
       client = new ToolboxClient(testBaseUrl);
 
       const tool = await client.loadTool(toolName, {}, {p1: 'boundValue'});
-      
+
       // Invoking tool without p1 should work because it's bound
       await tool();
 
       expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
-          toolName, 
-          {p1: 'boundValue'}, 
-          {}
+        toolName,
+        {p1: 'boundValue'},
+        {},
       );
     });
   });
@@ -240,7 +245,9 @@ describe('ToolboxClient', () => {
       mockTransport.toolsList.mockRejectedValue(new Error('API Unavailable'));
       client = new ToolboxClient(testBaseUrl);
 
-      await expect(client.loadToolset('set')).rejects.toThrow('API Unavailable');
+      await expect(client.loadToolset('set')).rejects.toThrow(
+        'API Unavailable',
+      );
     });
   });
 
@@ -255,61 +262,76 @@ describe('ToolboxClient', () => {
           description: 'Tool with Params',
           parameters: [
             {name: 'p1', type: 'string', description: 'Parameter 1'},
-            {name: 'authP', type: 'string', description: 'Auth', authSources: ['authSvc']},
+            {
+              name: 'authP',
+              type: 'string',
+              description: 'Auth',
+              authSources: ['authSvc'],
+            },
           ],
         },
       },
     };
 
     beforeEach(() => {
-        mockTransport.toolGet.mockResolvedValue(manifest);
-        mockTransport.toolsList.mockResolvedValue(manifest);
-        client = new ToolboxClient(testBaseUrl);
+      mockTransport.toolGet.mockResolvedValue(manifest);
+      mockTransport.toolsList.mockResolvedValue(manifest);
+      client = new ToolboxClient(testBaseUrl);
     });
 
     it('loadTool: should fail if unused bound parameter is provided', async () => {
-      await expect(client.loadTool(toolName, {}, {unused: '123'})).rejects.toThrow(
-        `Validation failed for tool '${toolName}': unused bound parameters: unused`
+      await expect(
+        client.loadTool(toolName, {}, {unused: '123'}),
+      ).rejects.toThrow(
+        `Validation failed for tool '${toolName}': unused bound parameters: unused`,
       );
     });
 
     it('loadTool: should fail if unused auth token is provided', async () => {
-      await expect(client.loadTool(toolName, {unusedAuth: () => 'abc'})).rejects.toThrow(
-        `Validation failed for tool '${toolName}': unused auth tokens: unusedAuth`
+      await expect(
+        client.loadTool(toolName, {unusedAuth: () => 'abc'}),
+      ).rejects.toThrow(
+        `Validation failed for tool '${toolName}': unused auth tokens: unusedAuth`,
       );
     });
 
     it('loadToolset (strict): should fail if unused bound parameter in toolset', async () => {
-      await expect(client.loadToolset('set', {}, {unused: '123'}, true)).rejects.toThrow(
-        /Validation failed for tool '.*': unused bound parameters: unused/
+      await expect(
+        client.loadToolset('set', {}, {unused: '123'}, true),
+      ).rejects.toThrow(
+        /Validation failed for tool '.*': unused bound parameters: unused/,
       );
     });
 
     it('loadToolset (non-strict): should fail if bound param unused by ANY tool', async () => {
-        // Here, p1 IS used by paramTool. So let's provide p1.
-        // And an unused one.
-        // Wait, non-strict means: throws only if the param is not used by ANY tool in the set.
-        
-        await expect(client.loadToolset('set', {}, {unusedGlobal: '123'}, false)).rejects.toThrow(
-             `Validation failed for toolset 'set': unused bound parameters could not be applied to any tool: unusedGlobal`
-        );
+      // Here, p1 IS used by paramTool. So let's provide p1.
+      // And an unused one.
+      // Wait, non-strict means: throws only if the param is not used by ANY tool in the set.
+
+      await expect(
+        client.loadToolset('set', {}, {unusedGlobal: '123'}, false),
+      ).rejects.toThrow(
+        `Validation failed for toolset 'set': unused bound parameters could not be applied to any tool: unusedGlobal`,
+      );
     });
 
     it('loadToolset (non-strict): should fail if auth token unused by ANY tool', async () => {
-        await expect(client.loadToolset('set', {unusedAuth: () => 'token'}, {}, false)).rejects.toThrow(
-             `Validation failed for toolset 'set': unused auth tokens could not be applied to any tool: unusedAuth`
-        );
+      await expect(
+        client.loadToolset('set', {unusedAuth: () => 'token'}, {}, false),
+      ).rejects.toThrow(
+        `Validation failed for toolset 'set': unused auth tokens could not be applied to any tool: unusedAuth`,
+      );
     });
 
     it('loadToolset (strict): should succeed when all inputs are used', async () => {
-        // p1 used by bound params, authSvc used by auth token
-        const tools = await client.loadToolset(
-            'set', 
-            {authSvc: () => 'token'}, 
-            {p1: 'val'}, 
-            true
-        );
-        expect(tools).toHaveLength(1);
+      // p1 used by bound params, authSvc used by auth token
+      const tools = await client.loadToolset(
+        'set',
+        {authSvc: () => 'token'},
+        {p1: 'val'},
+        true,
+      );
+      expect(tools).toHaveLength(1);
     });
   });
 });

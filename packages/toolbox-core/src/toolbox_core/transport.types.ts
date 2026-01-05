@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ZodManifest } from './protocol.js';
+import {ZodManifest} from './protocol.js';
 
 /**
  * Defines the contract for a 'smart' transport that handles both

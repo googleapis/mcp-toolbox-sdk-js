@@ -107,13 +107,9 @@ describe('ToolboxTool', () => {
 
     it('should warn when using an HTTP URL with authTokenGetters', () => {
       const httpTransport = new MockTransport('http://api.insecure.com');
-      ToolboxTool(
-        httpTransport,
-        toolName,
-        toolDescription,
-        basicParamSchema,
-        {service1: () => 'token'},
-      );
+      ToolboxTool(httpTransport, toolName, toolDescription, basicParamSchema, {
+        service1: () => 'token',
+      });
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         'Sending ID token over HTTP. User data may be exposed. Use HTTPS for secure communication.',
       );
@@ -269,12 +265,18 @@ describe('ToolboxTool', () => {
     });
 
     it('should call toolInvoke with the validated payload', async () => {
-      mockTransport.toolInvoke.mockResolvedValueOnce(mockApiResponseData['result']);
+      mockTransport.toolInvoke.mockResolvedValueOnce(
+        mockApiResponseData['result'],
+      );
 
       const result = await tool(validArgs);
 
       expect(mockTransport.toolInvoke).toHaveBeenCalledTimes(1);
-      expect(mockTransport.toolInvoke).toHaveBeenCalledWith(toolName, validArgs, {});
+      expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
+        toolName,
+        validArgs,
+        {},
+      );
       expect(result).toEqual(mockApiResponseData['result']);
     });
 
@@ -283,7 +285,11 @@ describe('ToolboxTool', () => {
       mockTransport.toolInvoke.mockRejectedValueOnce(apiError);
 
       await expect(tool(validArgs)).rejects.toThrow(apiError);
-      expect(mockTransport.toolInvoke).toHaveBeenCalledWith(toolName, validArgs, {});
+      expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
+        toolName,
+        validArgs,
+        {},
+      );
     });
 
     it('should omit null and undefined values from the final payload', async () => {

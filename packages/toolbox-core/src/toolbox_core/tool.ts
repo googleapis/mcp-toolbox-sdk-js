@@ -156,11 +156,7 @@ function ToolboxTool(
     }
 
     try {
-      const result = await transport.toolInvoke(
-        name,
-        filteredPayload,
-        headers,
-      );
+      const result = await transport.toolInvoke(name, filteredPayload, headers);
       return result;
     } catch (error) {
       throw error;

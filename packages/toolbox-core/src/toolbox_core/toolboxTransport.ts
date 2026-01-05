@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { ITransport } from './transport.types.js';
-import { ZodManifest, ZodManifestSchema } from './protocol.js';
+import axios, {AxiosInstance, AxiosResponse} from 'axios';
+import {ITransport} from './transport.types.js';
+import {ZodManifest, ZodManifestSchema} from './protocol.js';
 
 /**
  * Transport for the native Toolbox protocol.
@@ -42,7 +42,7 @@ export class ToolboxTransport implements ITransport {
   ): Promise<ZodManifest> {
     /** Helper method to perform GET requests and parse the ManifestSchema. */
     try {
-      const response: AxiosResponse = await this.#session.get(url, { headers });
+      const response: AxiosResponse = await this.#session.get(url, {headers});
       return ZodManifestSchema.parse(response.data);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {

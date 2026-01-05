@@ -41,7 +41,7 @@ describe('ToolboxTransport', () => {
     mockedAxios.isAxiosError.mockReturnValue(true);
 
     transport = new ToolboxTransport(baseUrl, mockSession);
-    
+
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
@@ -86,7 +86,9 @@ describe('ToolboxTransport', () => {
 
       const result = await transport.toolGet(toolName);
 
-      expect(mockSession.get).toHaveBeenCalledWith(expectedUrl, {headers: undefined});
+      expect(mockSession.get).toHaveBeenCalledWith(expectedUrl, {
+        headers: undefined,
+      });
       expect(result).toEqual(mockManifest);
     });
 
@@ -122,7 +124,7 @@ describe('ToolboxTransport', () => {
       });
 
       await expect(transport.toolGet(toolName)).rejects.toThrow(
-        /API request failed with status 404/
+        /API request failed with status 404/,
       );
     });
 
@@ -144,7 +146,9 @@ describe('ToolboxTransport', () => {
 
       await transport.toolsList();
 
-      expect(mockSession.get).toHaveBeenCalledWith(expectedUrl, {headers: undefined});
+      expect(mockSession.get).toHaveBeenCalledWith(expectedUrl, {
+        headers: undefined,
+      });
     });
 
     it('should fetch tools list for specific toolset', async () => {
@@ -156,7 +160,9 @@ describe('ToolboxTransport', () => {
 
       await transport.toolsList(toolsetName);
 
-      expect(mockSession.get).toHaveBeenCalledWith(expectedUrl, {headers: undefined});
+      expect(mockSession.get).toHaveBeenCalledWith(expectedUrl, {
+        headers: undefined,
+      });
     });
   });
 
@@ -174,7 +180,9 @@ describe('ToolboxTransport', () => {
 
       const result = await transport.toolInvoke(toolName, args, headers);
 
-      expect(mockSession.post).toHaveBeenCalledWith(expectedUrl, args, {headers});
+      expect(mockSession.post).toHaveBeenCalledWith(expectedUrl, args, {
+        headers,
+      });
       expect(result).toBe(mockResult);
     });
 
@@ -184,20 +192,25 @@ describe('ToolboxTransport', () => {
         data: {error: errorMsg},
       } as AxiosResponse);
 
-      await expect(transport.toolInvoke(toolName, args, headers)).rejects.toThrow(errorMsg);
+      await expect(
+        transport.toolInvoke(toolName, args, headers),
+      ).rejects.toThrow(errorMsg);
     });
 
     it('should warn if sending headers over HTTP', async () => {
       // transport is already http://api.example.com
       await transport.toolInvoke(toolName, args, headers).catch(() => {});
-      
+
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Sending data token over HTTP')
+        expect.stringContaining('Sending data token over HTTP'),
       );
     });
 
     it('should not warn if using HTTPS', async () => {
-      const httpsTransport = new ToolboxTransport('https://secure.example.com', mockSession);
+      const httpsTransport = new ToolboxTransport(
+        'https://secure.example.com',
+        mockSession,
+      );
       mockSession.post.mockResolvedValueOnce({data: {result: 'ok'}});
 
       await httpsTransport.toolInvoke(toolName, args, headers);
@@ -206,7 +219,7 @@ describe('ToolboxTransport', () => {
     });
 
     it('should handle axios errors', async () => {
-       mockSession.post.mockRejectedValueOnce({
+      mockSession.post.mockRejectedValueOnce({
         response: {
           status: 500,
           data: {error: 'Server Error'},
@@ -214,7 +227,9 @@ describe('ToolboxTransport', () => {
         isAxiosError: true,
       });
 
-      await expect(transport.toolInvoke(toolName, args, headers)).rejects.toThrow('Server Error');
+      await expect(
+        transport.toolInvoke(toolName, args, headers),
+      ).rejects.toThrow('Server Error');
     });
   });
 });

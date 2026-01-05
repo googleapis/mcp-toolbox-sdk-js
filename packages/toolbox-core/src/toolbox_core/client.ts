@@ -13,9 +13,7 @@
 // limitations under the License.
 
 import {ToolboxTool} from './tool.js';
-import {
-  AxiosInstance,
-} from 'axios';
+import {AxiosInstance} from 'axios';
 import {ITransport} from './transport.types.js';
 import {ToolboxTransport} from './toolboxTransport.js';
 import {
@@ -71,8 +69,6 @@ class ToolboxClient {
     );
     return Object.fromEntries(resolvedEntries);
   }
-
-
 
   /**
    * Creates a ToolboxTool instance from its schema.
@@ -195,7 +191,9 @@ class ToolboxClient {
       }
       return tool;
     } else {
-      throw new Error(`Tool "${name}" not found in manifest from ${this.#transport.baseUrl}/api/tool/${name}.`);
+      throw new Error(
+        `Tool "${name}" not found in manifest from ${this.#transport.baseUrl}/api/tool/${name}.`,
+      );
     }
   }
 

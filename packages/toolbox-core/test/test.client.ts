@@ -335,5 +335,13 @@ describe('ToolboxClient', () => {
       );
       expect(tools).toHaveLength(1);
     });
+
+    it('loadToolset (strict): should fail if unused auth token in toolset', async () => {
+      await expect(
+        client.loadToolset('set', {unusedAuth: () => 'token'}, {}, true),
+      ).rejects.toThrow(
+        /Validation failed for tool '.*': unused auth tokens: unusedAuth/,
+      );
+    });
   });
 });

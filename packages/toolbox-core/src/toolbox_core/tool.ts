@@ -155,12 +155,7 @@ function ToolboxTool(
       headers[getAuthHeaderName(authService)] = token;
     }
 
-    try {
-      const result = await transport.toolInvoke(name, filteredPayload, headers);
-      return result;
-    } catch (error) {
-      throw error;
-    }
+    return await transport.toolInvoke(name, filteredPayload, headers);
   };
   callable.toolName = name;
   callable.description = description;

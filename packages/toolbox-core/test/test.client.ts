@@ -64,7 +64,9 @@ describe('ToolboxClient', () => {
     });
 
     it('should pass provided axios session to transport', () => {
-      const mockSession: any = {get: jest.fn()};
+      const mockSession = {
+        get: jest.fn(),
+      } as unknown as import('axios').AxiosInstance;
       client = new ToolboxClient(testBaseUrl, mockSession);
       expect(ToolboxTransport).toHaveBeenCalledWith(testBaseUrl, mockSession);
     });
@@ -311,7 +313,7 @@ describe('ToolboxClient', () => {
       await expect(
         client.loadToolset('set', {}, {unusedGlobal: '123'}, false),
       ).rejects.toThrow(
-        `Validation failed for toolset 'set': unused bound parameters could not be applied to any tool: unusedGlobal`,
+        "Validation failed for toolset 'set': unused bound parameters could not be applied to any tool: unusedGlobal",
       );
     });
 
@@ -319,7 +321,7 @@ describe('ToolboxClient', () => {
       await expect(
         client.loadToolset('set', {unusedAuth: () => 'token'}, {}, false),
       ).rejects.toThrow(
-        `Validation failed for toolset 'set': unused auth tokens could not be applied to any tool: unusedAuth`,
+        "Validation failed for toolset 'set': unused auth tokens could not be applied to any tool: unusedAuth",
       );
     });
 

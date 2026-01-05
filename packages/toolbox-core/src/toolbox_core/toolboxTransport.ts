@@ -24,7 +24,6 @@ import {ZodManifest, ZodManifestSchema} from './protocol.js';
 export class ToolboxTransport implements ITransport {
   readonly #baseUrl: string;
   #session: AxiosInstance;
-  #manageSession = false;
 
   constructor(baseUrl: string, session?: AxiosInstance) {
     this.#baseUrl = baseUrl;

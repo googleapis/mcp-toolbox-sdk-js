@@ -17,6 +17,7 @@
 import axios, {AxiosInstance, AxiosResponse} from 'axios';
 import {ITransport} from './transport.types.js';
 import {ZodManifest, ZodManifestSchema} from './protocol.js';
+import {logApiError} from './errorUtils.js';
 
 /**
  * Transport for the native Toolbox protocol.
@@ -46,10 +47,12 @@ export class ToolboxTransport implements ITransport {
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         const errorText = JSON.stringify(error.response.data);
+        logApiError(`Error fetching data from ${url}:`, error);
         throw new Error(
           `API request failed with status ${error.response.status} (${error.response.statusText}). Server response: ${errorText}`,
         );
       }
+      logApiError(`Error fetching data from ${url}:`, error);
       throw error;
     }
   }
@@ -108,8 +111,10 @@ export class ToolboxTransport implements ITransport {
         const err =
           body?.error ||
           `unexpected status from server: ${error.response.status}`;
+        logApiError(`Error posting data to ${url}:`, error);
         throw new Error(err);
       }
+      logApiError(`Error posting data to ${url}:`, error);
       throw error;
     }
   }

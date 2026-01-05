@@ -14,7 +14,7 @@
 
 import {jest} from '@jest/globals';
 import {ToolboxClient} from '../src/toolbox_core/client.js';
-import {ITransport} from '../src/toolbox_core/itransport.js';
+import {ITransport} from '../src/toolbox_core/transport.types.js';
 import {ZodManifest} from '../src/toolbox_core/protocol.js';
 import {ToolboxTransport} from '../src/toolbox_core/toolboxTransport.js';
 

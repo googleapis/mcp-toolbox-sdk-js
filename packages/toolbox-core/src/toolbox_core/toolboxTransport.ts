@@ -15,7 +15,7 @@
  */
 
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { ITransport } from './itransport.js';
+import { ITransport } from './transport.types.js';
 import { ZodManifest, ZodManifestSchema } from './protocol.js';
 
 /**

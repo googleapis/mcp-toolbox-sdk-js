@@ -16,7 +16,7 @@ import {ToolboxTool} from './tool.js';
 import {
   AxiosInstance,
 } from 'axios';
-import {ITransport} from './itransport.js';
+import {ITransport} from './transport.types.js';
 import {ToolboxTransport} from './toolboxTransport.js';
 import {
   createZodSchemaFromParams,

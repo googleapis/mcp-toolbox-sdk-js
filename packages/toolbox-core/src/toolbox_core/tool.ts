@@ -14,7 +14,7 @@
 
 import {ZodObject, ZodError, ZodRawShape} from 'zod';
 
-import {ITransport} from './itransport.js';
+import {ITransport} from './transport.types.js';
 import {
   BoundParams,
   BoundValue,

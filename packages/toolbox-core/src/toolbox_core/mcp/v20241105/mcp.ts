@@ -26,7 +26,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
     url: string,
     request: types.MCPRequest<T> | types.MCPNotification,
     paramsOverride?: any,
-    headers?: Record<string, string>
+    headers?: Record<string, string>,
   ): Promise<T | null> {
     const params = paramsOverride || request.params;
     let payload: any;
@@ -60,7 +60,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
     if (response.status !== 200 && response.status !== 204) {
       const errorText = JSON.stringify(response.data);
       throw new Error(
-        `API request failed with status ${response.status} (${response.statusText}). Server response: ${errorText}`
+        `API request failed with status ${response.status} (${response.statusText}). Server response: ${errorText}`,
       );
     }
 
@@ -76,7 +76,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
       if (errResult.success) {
         const err = errResult.data.error;
         throw new Error(
-          `MCP request failed with code ${err.code}: ${err.message}`
+          `MCP request failed with code ${err.code}: ${err.message}`,
         );
       }
       throw new Error(`MCP request failed: ${JSON.stringify(jsonResp.error)}`);
@@ -109,7 +109,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
     const result = await this.#sendRequest(
       this._mcpBaseUrl,
       types.InitializeRequest,
-      params
+      params,
     );
 
     if (!result) {
@@ -120,7 +120,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
 
     if (result.protocolVersion !== this._protocolVersion) {
       throw new Error(
-        `MCP version mismatch: client does not support server version ${result.protocolVersion}`
+        `MCP version mismatch: client does not support server version ${result.protocolVersion}`,
       );
     }
 
@@ -131,13 +131,13 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
     await this.#sendRequest(
       this._mcpBaseUrl,
       types.InitializedNotification,
-      {}
+      {},
     );
   }
 
   async toolsList(
     toolsetName?: string,
-    headers?: Record<string, string>
+    headers?: Record<string, string>,
   ): Promise<ZodManifest> {
     await this.ensureInitialized();
     const url = `${this._mcpBaseUrl}${toolsetName || ''}`;
@@ -146,7 +146,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
       url,
       types.ListToolsRequest,
       {},
-      headers
+      headers,
     );
 
     if (!result) {
@@ -159,7 +159,10 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
 
     const toolsMap: Record<
       string,
-      {description: string; parameters: import('../../protocol.js').ParameterSchema[]}
+      {
+        description: string;
+        parameters: import('../../protocol.js').ParameterSchema[];
+      }
     > = {};
 
     for (const tool of result.tools) {
@@ -183,7 +186,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
 
   async toolGet(
     toolName: string,
-    headers?: Record<string, string>
+    headers?: Record<string, string>,
   ): Promise<ZodManifest> {
     const manifest = await this.toolsList(undefined, headers);
     if (!manifest.tools[toolName]) {
@@ -201,7 +204,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
   async toolInvoke(
     toolName: string,
     arguments_: Record<string, unknown>,
-    headers: Record<string, string>
+    headers: Record<string, string>,
   ): Promise<string> {
     await this.ensureInitialized();
 
@@ -214,12 +217,12 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
       this._mcpBaseUrl,
       types.CallToolRequest,
       params,
-      headers
+      headers,
     );
 
     if (!result) {
       throw new Error(
-        `Failed to invoke tool '${toolName}': No response from server.`
+        `Failed to invoke tool '${toolName}': No response from server.`,
       );
     }
 

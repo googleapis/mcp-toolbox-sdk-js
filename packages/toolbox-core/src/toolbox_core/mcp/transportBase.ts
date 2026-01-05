@@ -24,7 +24,6 @@ import {
   Protocol,
 } from '../protocol.js';
 
-
 export abstract class McpHttpTransportBase implements ITransport {
   protected _mcpBaseUrl: string;
   protected _protocolVersion: string;

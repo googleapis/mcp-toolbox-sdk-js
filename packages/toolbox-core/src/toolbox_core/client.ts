@@ -21,6 +21,7 @@ import {
   ParameterSchema,
   ZodManifestSchema,
   Protocol,
+  getSupportedMcpVersions,
 } from './protocol.js';
 import {McpHttpTransportV20241105} from './mcp/v20241105/mcp.js';
 import {BoundParams, identifyAuthRequirements, resolveValue} from './utils.js';
@@ -58,7 +59,7 @@ class ToolboxClient {
     this.#clientHeaders = clientHeaders || {};
     if (protocol === Protocol.TOOLBOX) {
       this.#transport = new ToolboxTransport(url, session || undefined);
-    } else if (Protocol.getSupportedMcpVersions().includes(protocol)) {
+    } else if (getSupportedMcpVersions().includes(protocol)) {
       if (protocol === Protocol.MCP_v20241105) {
         this.#transport = new McpHttpTransportV20241105(
           url,

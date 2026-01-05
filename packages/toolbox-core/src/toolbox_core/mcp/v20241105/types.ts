@@ -93,7 +93,7 @@ export type InitializeResult = z.infer<typeof InitializeResultSchema>;
 
 export const ToolSchema = BaseMetadataSchema.extend({
   description: z.string().optional().nullable(),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   inputSchema: z.record(z.any()),
 });
 export type Tool = z.infer<typeof ToolSchema>;

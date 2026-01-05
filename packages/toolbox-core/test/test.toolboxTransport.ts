@@ -114,18 +114,17 @@ describe('ToolboxTransport', () => {
 
     it('should handle axios errors', async () => {
       const errorMsg = 'Not Found';
-      mockSession.get.mockRejectedValueOnce({
+      const mockError = {
         response: {
           status: 404,
           statusText: 'Not Found',
           data: {error: errorMsg},
         },
         isAxiosError: true,
-      });
+      };
+      mockSession.get.mockRejectedValueOnce(mockError);
 
-      await expect(transport.toolGet(toolName)).rejects.toThrow(
-        /API request failed with status 404/,
-      );
+      await expect(transport.toolGet(toolName)).rejects.toEqual(mockError);
     });
 
     it('should rethrow non-axios errors', async () => {
@@ -219,17 +218,18 @@ describe('ToolboxTransport', () => {
     });
 
     it('should handle axios errors', async () => {
-      mockSession.post.mockRejectedValueOnce({
+      const mockError = {
         response: {
           status: 500,
           data: {error: 'Server Error'},
         },
         isAxiosError: true,
-      });
+      };
+      mockSession.post.mockRejectedValueOnce(mockError);
 
-      await expect(
-        transport.toolInvoke(toolName, args, headers),
-      ).rejects.toThrow('Server Error');
+      await expect(transport.toolInvoke(toolName, args, headers)).rejects.toEqual(
+        mockError,
+      );
     });
   });
 });

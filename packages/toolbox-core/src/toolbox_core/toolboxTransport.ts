@@ -45,13 +45,6 @@ export class ToolboxTransport implements ITransport {
       const response: AxiosResponse = await this.#session.get(url, {headers});
       return ZodManifestSchema.parse(response.data);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        const errorText = JSON.stringify(error.response.data);
-        logApiError(`Error fetching data from ${url}:`, error);
-        throw new Error(
-          `API request failed with status ${error.response.status} (${error.response.statusText}). Server response: ${errorText}`,
-        );
-      }
       logApiError(`Error fetching data from ${url}:`, error);
       throw error;
     }
@@ -106,14 +99,6 @@ export class ToolboxTransport implements ITransport {
       }
       return body.result;
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        const body = error.response.data;
-        const err =
-          body?.error ||
-          `unexpected status from server: ${error.response.status}`;
-        logApiError(`Error posting data to ${url}:`, error);
-        throw new Error(err);
-      }
       logApiError(`Error posting data to ${url}:`, error);
       throw error;
     }

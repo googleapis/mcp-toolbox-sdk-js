@@ -14,15 +14,24 @@
 
 import {ToolboxTool} from '../src/toolbox_core/tool.js';
 import {z, ZodObject, ZodRawShape} from 'zod';
-import {AxiosInstance, AxiosResponse} from 'axios';
+import {ITransport} from '../src/toolbox_core/itransport.js';
 import * as utils from '../src/toolbox_core/utils.js';
 import {ClientHeadersConfig} from '../src/toolbox_core/client.js';
 
-// Global mocks
-const mockAxiosPost = jest.fn();
-const mockSession = {
-  post: mockAxiosPost,
-} as unknown as AxiosInstance;
+// --- Mock Transport Implementation ---
+class MockTransport implements ITransport {
+  readonly baseUrl: string;
+  toolGet: jest.MockedFunction<ITransport['toolGet']>;
+  toolsList: jest.MockedFunction<ITransport['toolsList']>;
+  toolInvoke: jest.MockedFunction<ITransport['toolInvoke']>;
+
+  constructor(baseUrl: string = 'https://api.example.com') {
+    this.baseUrl = baseUrl;
+    this.toolGet = jest.fn();
+    this.toolsList = jest.fn();
+    this.toolInvoke = jest.fn();
+  }
+}
 
 // Mock the utils module
 jest.mock('../src/toolbox_core/utils', () => ({
@@ -34,36 +43,30 @@ jest.mock('../src/toolbox_core/utils', () => ({
 }));
 
 describe('ToolboxTool', () => {
-  // Common constants for the tool
-  const baseURL = 'https://api.example.com';
   const toolName = 'myTestTool';
   const toolDescription = 'This is a description for the test tool.';
 
-  // Variables to be initialized in beforeEach
   let basicParamSchema: ZodObject<ZodRawShape>;
   let consoleWarnSpy: jest.SpyInstance;
   let consoleErrorSpy: jest.SpyInstance;
+  let mockTransport: MockTransport;
   let tool: ReturnType<typeof ToolboxTool>;
 
   beforeEach(() => {
-    // Reset mocks before each test
-    mockAxiosPost.mockReset();
+    mockTransport = new MockTransport();
     (utils.resolveValue as jest.Mock).mockClear();
     (utils.identifyAuthRequirements as jest.Mock).mockClear();
 
-    // Initialize a basic schema used by many tests
     basicParamSchema = z.object({
       query: z.string().min(1, 'Query cannot be empty'),
       limit: z.number().optional(),
     });
 
-    // Spy on console to prevent logging and allow assertions
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
-    // Restore the original console methods
     consoleWarnSpy.mockRestore();
     consoleErrorSpy.mockRestore();
     jest.clearAllMocks();
@@ -72,8 +75,7 @@ describe('ToolboxTool', () => {
   describe('Factory Properties and Getters', () => {
     beforeEach(() => {
       tool = ToolboxTool(
-        mockSession,
-        baseURL,
+        mockTransport,
         toolName,
         toolDescription,
         basicParamSchema,
@@ -104,10 +106,9 @@ describe('ToolboxTool', () => {
     });
 
     it('should warn when using an HTTP URL with authTokenGetters', () => {
-      const httpBaseURL = 'http://api.insecure.com';
+      const httpTransport = new MockTransport('http://api.insecure.com');
       ToolboxTool(
-        mockSession,
-        httpBaseURL,
+        httpTransport,
         toolName,
         toolDescription,
         basicParamSchema,
@@ -119,10 +120,9 @@ describe('ToolboxTool', () => {
     });
 
     it('should warn when using an HTTP URL with clientHeaders', () => {
-      const httpBaseURL = 'http://api.insecure.com';
+      const httpTransport = new MockTransport('http://api.insecure.com');
       ToolboxTool(
-        mockSession,
-        httpBaseURL,
+        httpTransport,
         toolName,
         toolDescription,
         basicParamSchema,
@@ -144,15 +144,14 @@ describe('ToolboxTool', () => {
         .spyOn(basicParamSchema, 'omit')
         .mockImplementation(() => basicParamSchema);
       const currentTool = ToolboxTool(
-        mockSession,
-        baseURL,
+        mockTransport,
         toolName,
         toolDescription,
         basicParamSchema,
       );
       const parseSpy = jest.spyOn(basicParamSchema, 'parse');
       const callArgs = {query: 'test query'};
-      mockAxiosPost.mockResolvedValueOnce({data: 'success'} as AxiosResponse);
+      mockTransport.toolInvoke.mockResolvedValueOnce('success');
 
       await currentTool(callArgs);
 
@@ -163,8 +162,7 @@ describe('ToolboxTool', () => {
 
     it('should throw a formatted ZodError if argument validation fails', async () => {
       const currentTool = ToolboxTool(
-        mockSession,
-        baseURL,
+        mockTransport,
         toolName,
         toolDescription,
         basicParamSchema,
@@ -174,7 +172,7 @@ describe('ToolboxTool', () => {
       await expect(currentTool(invalidArgs)).rejects.toThrow(
         `Argument validation failed for tool "${toolName}":\n - query: Query cannot be empty`,
       );
-      expect(mockAxiosPost).not.toHaveBeenCalled();
+      expect(mockTransport.toolInvoke).not.toHaveBeenCalled();
     });
 
     it('should handle multiple ZodError issues in the validation error message', async () => {
@@ -183,8 +181,7 @@ describe('ToolboxTool', () => {
         age: z.number().positive('Age must be positive'),
       });
       const currentTool = ToolboxTool(
-        mockSession,
-        baseURL,
+        mockTransport,
         toolName,
         toolDescription,
         complexSchema,
@@ -196,7 +193,7 @@ describe('ToolboxTool', () => {
           `Argument validation failed for tool "${toolName}":\\s*-\\s*name: Name is required\\s*-\\s*age: Age must be positive`,
         ),
       );
-      expect(mockAxiosPost).not.toHaveBeenCalled();
+      expect(mockTransport.toolInvoke).not.toHaveBeenCalled();
     });
 
     it('should throw a generic error if paramSchema.parse throws a non-ZodError', async () => {
@@ -208,8 +205,7 @@ describe('ToolboxTool', () => {
         omit: jest.fn().mockReturnThis(),
       } as unknown as ZodObject<ZodRawShape>;
       const currentTool = ToolboxTool(
-        mockSession,
-        baseURL,
+        mockTransport,
         toolName,
         toolDescription,
         failingSchema,
@@ -219,7 +215,7 @@ describe('ToolboxTool', () => {
       await expect(currentTool(callArgs)).rejects.toThrow(
         `Argument validation failed: ${String(customError)}`,
       );
-      expect(mockAxiosPost).not.toHaveBeenCalled();
+      expect(mockTransport.toolInvoke).not.toHaveBeenCalled();
     });
 
     it('should use an empty object as default if no arguments are provided and schema allows it', async () => {
@@ -230,26 +226,24 @@ describe('ToolboxTool', () => {
         .mockImplementation(() => emptySchema);
       const parseSpy = jest.spyOn(emptySchema, 'parse');
       const currentTool = ToolboxTool(
-        mockSession,
-        baseURL,
+        mockTransport,
         toolName,
         toolDescription,
         emptySchema,
       );
-      mockAxiosPost.mockResolvedValueOnce({data: 'success'});
+      mockTransport.toolInvoke.mockResolvedValueOnce('success');
 
       await currentTool();
 
       expect(parseSpy).toHaveBeenCalledWith({});
-      expect(mockAxiosPost).toHaveBeenCalled();
+      expect(mockTransport.toolInvoke).toHaveBeenCalled();
       parseSpy.mockRestore();
       omitSpy.mockRestore();
     });
 
     it('should fail validation if no arguments are given and schema requires them', async () => {
       const currentTool = ToolboxTool(
-        mockSession,
-        baseURL,
+        mockTransport,
         toolName,
         toolDescription,
         basicParamSchema,
@@ -257,51 +251,39 @@ describe('ToolboxTool', () => {
       await expect(currentTool()).rejects.toThrow(
         'Argument validation failed for tool "myTestTool":\n - query: Required',
       );
-      expect(mockAxiosPost).not.toHaveBeenCalled();
+      expect(mockTransport.toolInvoke).not.toHaveBeenCalled();
     });
   });
 
   describe('Callable Function - API Call Execution', () => {
     const validArgs = {query: 'search term', limit: 10};
-    const expectedUrl = `${baseURL}/api/tool/${toolName}/invoke`;
     const mockApiResponseData = {result: 'Data from API'};
 
     beforeEach(() => {
       tool = ToolboxTool(
-        mockSession,
-        baseURL,
+        mockTransport,
         toolName,
         toolDescription,
         basicParamSchema,
       );
     });
 
-    it('should make a POST request to the correct URL with the validated payload', async () => {
-      mockAxiosPost.mockResolvedValueOnce({
-        data: mockApiResponseData,
-      } as AxiosResponse);
+    it('should call toolInvoke with the validated payload', async () => {
+      mockTransport.toolInvoke.mockResolvedValueOnce(mockApiResponseData['result']);
 
       const result = await tool(validArgs);
 
-      expect(mockAxiosPost).toHaveBeenCalledTimes(1);
-      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs, {
-        headers: {},
-      });
+      expect(mockTransport.toolInvoke).toHaveBeenCalledTimes(1);
+      expect(mockTransport.toolInvoke).toHaveBeenCalledWith(toolName, validArgs, {});
       expect(result).toEqual(mockApiResponseData['result']);
     });
 
-    it('should re-throw the error and log to console.error if API call fails', async () => {
+    it('should re-throw the error if toolInvoke fails', async () => {
       const apiError = new Error('API request failed');
-      mockAxiosPost.mockRejectedValueOnce(apiError);
+      mockTransport.toolInvoke.mockRejectedValueOnce(apiError);
 
       await expect(tool(validArgs)).rejects.toThrow(apiError);
-      expect(mockAxiosPost).toHaveBeenCalledWith(expectedUrl, validArgs, {
-        headers: {},
-      });
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        `Error posting data to ${expectedUrl}:`,
-        apiError.message,
-      );
+      expect(mockTransport.toolInvoke).toHaveBeenCalledWith(toolName, validArgs, {});
     });
 
     it('should omit null and undefined values from the final payload', async () => {
@@ -312,14 +294,13 @@ describe('ToolboxTool', () => {
       });
 
       const toolWithOptionalParams = ToolboxTool(
-        mockSession,
-        baseURL,
+        mockTransport,
         toolName,
         toolDescription,
         paramSchemaWithOptional,
       );
 
-      mockAxiosPost.mockResolvedValueOnce({data: 'success'} as AxiosResponse);
+      mockTransport.toolInvoke.mockResolvedValueOnce('success');
 
       const callArgs = {
         required_param: 'value',
@@ -329,21 +310,18 @@ describe('ToolboxTool', () => {
 
       await toolWithOptionalParams(callArgs);
 
-      expect(mockAxiosPost).toHaveBeenCalledWith(
-        expectedUrl,
+      expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
+        toolName,
         {required_param: 'value'},
-        {headers: {}},
+        {},
       );
     });
   });
 
   describe('Bound Parameters Functionality', () => {
-    const expectedUrl = `${baseURL}/api/tool/${toolName}/invoke`;
-
     beforeEach(() => {
       tool = ToolboxTool(
-        mockSession,
-        baseURL,
+        mockTransport,
         toolName,
         toolDescription,
         basicParamSchema,
@@ -362,46 +340,49 @@ describe('ToolboxTool', () => {
       expect(boundTool.boundParams).toEqual({limit: 20});
 
       // Also test execution
-      mockAxiosPost.mockResolvedValueOnce({data: 'success'});
+      mockTransport.toolInvoke.mockResolvedValueOnce('success');
+
       await boundTool({query: 'single bind test'});
-      expect(mockAxiosPost).toHaveBeenCalledWith(
-        expectedUrl,
+      expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
+        toolName,
         {query: 'single bind test', limit: 20},
-        {headers: {}},
+        {},
       );
     });
 
     it('should merge bound parameters with call arguments in the final payload', async () => {
       const boundTool = tool.bindParams({limit: 5});
-      mockAxiosPost.mockResolvedValueOnce({data: 'success'});
+      mockTransport.toolInvoke.mockResolvedValueOnce('success');
+
       await boundTool({query: 'specific query'});
-      expect(mockAxiosPost).toHaveBeenCalledWith(
-        expectedUrl,
+      expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
+        toolName,
         {
           query: 'specific query',
           limit: 5,
         },
-        {headers: {}},
+        {},
       );
     });
 
     it('should not require bound parameters to be provided at call time', async () => {
       const boundTool = tool.bindParams({query: 'default query'});
-      mockAxiosPost.mockResolvedValueOnce({data: 'success'});
+      mockTransport.toolInvoke.mockResolvedValueOnce('success');
+
       await boundTool({limit: 15});
-      expect(mockAxiosPost).toHaveBeenCalledWith(
-        expectedUrl,
+      expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
+        toolName,
         {
           query: 'default query',
           limit: 15,
         },
-        {headers: {}},
+        {},
       );
     });
 
     it('should validate only the user-provided arguments, not the bound ones', async () => {
       const boundTool = tool.bindParams({query: 'a valid query'});
-      mockAxiosPost.mockResolvedValueOnce({data: {result: 'success'}});
+      mockTransport.toolInvoke.mockResolvedValueOnce('success');
       // This call is valid because 'query' is bound, and no invalid args are passed
       await expect(boundTool()).resolves.toBe('success');
     });
@@ -422,29 +403,28 @@ describe('ToolboxTool', () => {
     it('should resolve function values in bound parameters before making the API call', async () => {
       const dynamicQuery = async () => 'resolved-query';
       const boundTool = tool.bindParams({query: dynamicQuery});
-      mockAxiosPost.mockResolvedValueOnce({data: 'success'});
+      mockTransport.toolInvoke.mockResolvedValueOnce('success');
+
       await boundTool({limit: 5});
       expect(utils.resolveValue).toHaveBeenCalledWith(dynamicQuery);
-      expect(mockAxiosPost).toHaveBeenCalledWith(
-        expectedUrl,
+      expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
+        toolName,
         {
           query: 'resolved-query',
           limit: 5,
         },
-        {headers: {}},
+        {},
       );
     });
   });
 
   describe('Authentication Functionality', () => {
-    const expectedUrl = `${baseURL}/api/tool/${toolName}/invoke`;
     const initialRequiredAuthn = {paramA: ['service1', 'service2']};
     const initialRequiredAuthz = ['service3'];
 
     beforeEach(() => {
       tool = ToolboxTool(
-        mockSession,
-        baseURL,
+        mockTransport,
         toolName,
         toolDescription,
         basicParamSchema,
@@ -499,8 +479,7 @@ describe('ToolboxTool', () => {
 
     it('should call the API with the correct auth headers', async () => {
       const readyTool = ToolboxTool(
-        mockSession,
-        baseURL,
+        mockTransport,
         toolName,
         toolDescription,
         basicParamSchema,
@@ -514,16 +493,14 @@ describe('ToolboxTool', () => {
         service1: () => 'token-one',
         service3: async () => 'token-three',
       });
-      mockAxiosPost.mockResolvedValue({data: 'success'});
+      mockTransport.toolInvoke.mockResolvedValue('success');
       await authedTool({query: 'a query'});
-      expect(mockAxiosPost).toHaveBeenCalledWith(
-        expectedUrl,
+      expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
+        toolName,
         {query: 'a query'},
         {
-          headers: {
-            service1_token: 'token-one',
-            service3_token: 'token-three',
-          },
+          service1_token: 'token-one',
+          service3_token: 'token-three',
         },
       );
     });
@@ -578,8 +555,7 @@ describe('ToolboxTool', () => {
 
     it('should throw an error if adding an auth token conflicts with a client header', () => {
       const toolWithClientHeader = ToolboxTool(
-        mockSession,
-        baseURL,
+        mockTransport,
         toolName,
         toolDescription,
         basicParamSchema,
@@ -607,8 +583,7 @@ describe('ToolboxTool', () => {
       };
 
       const toolWithConflict = ToolboxTool(
-        mockSession,
-        baseURL,
+        mockTransport,
         toolName,
         toolDescription,
         basicParamSchema,
@@ -619,19 +594,17 @@ describe('ToolboxTool', () => {
         clientHeaders, // Contains the conflicting 'service1_token'
       );
 
-      mockAxiosPost.mockResolvedValueOnce({data: {result: 'success'}});
+      mockTransport.toolInvoke.mockResolvedValueOnce('success');
 
       await toolWithConflict({query: 'test'});
 
       // Assert that the final headers sent to the API used the value from the auth token
-      expect(mockAxiosPost).toHaveBeenCalledWith(
-        expectedUrl,
+      expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
+        toolName,
         {query: 'test'},
         {
-          headers: {
-            service1_token: 'value-from-auth',
-            'x-another-header': 'client-value',
-          },
+          service1_token: 'value-from-auth',
+          'x-another-header': 'client-value',
         },
       );
     });
@@ -643,8 +616,7 @@ describe('ToolboxTool', () => {
       };
 
       const toolWithBadHeader = ToolboxTool(
-        mockSession,
-        baseURL,
+        mockTransport,
         toolName,
         toolDescription,
         basicParamSchema,

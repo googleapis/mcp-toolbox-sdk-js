@@ -1,0 +1,233 @@
+/**
+ * Copyright 2025 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import {McpHttpTransportBase} from '../transportBase.js';
+import * as types from './types.js';
+
+import {ZodManifest} from '../../protocol.js';
+
+import {v4 as uuidv4} from 'uuid';
+
+export class McpHttpTransportV20241105 extends McpHttpTransportBase {
+  async #sendRequest<T>(
+    url: string,
+    request: types.MCPRequest<T> | types.MCPNotification,
+    paramsOverride?: any,
+    headers?: Record<string, string>
+  ): Promise<T | null> {
+    const params = paramsOverride || request.params;
+    let payload: any;
+
+    // Check if it's notification
+    // Simple check: Notification doesn't assume response ID in Python logic implies "not expect response".
+    // TS logic:
+    // If request has getResultModel, it's a Request.
+    // If not, it's Notification?
+    // My types for MCPRequest have getResultModel.
+    const isNotification = !('getResultModel' in request);
+    const method = request.method;
+
+    if (isNotification) {
+      payload = {
+        jsonrpc: '2.0',
+        method,
+        params,
+      };
+    } else {
+      payload = {
+        jsonrpc: '2.0',
+        id: uuidv4(),
+        method,
+        params,
+      };
+    }
+
+    const response = await this._session.post(url, payload, {headers});
+
+    if (response.status !== 200 && response.status !== 204) {
+      const errorText = JSON.stringify(response.data);
+      throw new Error(
+        `API request failed with status ${response.status} (${response.statusText}). Server response: ${errorText}`
+      );
+    }
+
+    if (response.status === 204) {
+      return null;
+    }
+
+    const jsonResp = response.data;
+
+    if (jsonResp.error) {
+      // Validate error structure
+      const errResult = types.JSONRPCErrorSchema.safeParse(jsonResp);
+      if (errResult.success) {
+        const err = errResult.data.error;
+        throw new Error(
+          `MCP request failed with code ${err.code}: ${err.message}`
+        );
+      }
+      throw new Error(`MCP request failed: ${JSON.stringify(jsonResp.error)}`);
+    }
+
+    // Parse Result
+    if (!isNotification && 'getResultModel' in request) {
+      const rpcRespResult = types.JSONRPCResponseSchema.safeParse(jsonResp);
+      if (rpcRespResult.success) {
+        // Validate result against specific model
+        const resultModel = request.getResultModel();
+        return resultModel.parse(rpcRespResult.data.result);
+      }
+      throw new Error('Failed to parse JSON-RPC response structure');
+    }
+
+    return null;
+  }
+
+  protected async initializeSession(): Promise<void> {
+    const params: types.InitializeRequestParams = {
+      protocolVersion: this._protocolVersion,
+      capabilities: {},
+      clientInfo: {
+        name: 'toolbox-js-sdk',
+        version: '0.1.0', // TODO: Get version dynamically
+      },
+    };
+
+    const result = await this.#sendRequest(
+      this._mcpBaseUrl,
+      types.InitializeRequest,
+      params
+    );
+
+    if (!result) {
+      throw new Error('Initialization failed: No response');
+    }
+
+    this._serverVersion = result.serverInfo.version;
+
+    if (result.protocolVersion !== this._protocolVersion) {
+      throw new Error(
+        `MCP version mismatch: client does not support server version ${result.protocolVersion}`
+      );
+    }
+
+    if (!result.capabilities.tools) {
+      throw new Error("Server does not support the 'tools' capability.");
+    }
+
+    await this.#sendRequest(
+      this._mcpBaseUrl,
+      types.InitializedNotification,
+      {}
+    );
+  }
+
+  async toolsList(
+    toolsetName?: string,
+    headers?: Record<string, string>
+  ): Promise<ZodManifest> {
+    await this.ensureInitialized();
+    const url = `${this._mcpBaseUrl}${toolsetName || ''}`;
+
+    const result = await this.#sendRequest(
+      url,
+      types.ListToolsRequest,
+      {},
+      headers
+    );
+
+    if (!result) {
+      throw new Error('Failed to list tools: No response from server.');
+    }
+
+    if (this._serverVersion === null) {
+      throw new Error('Server version not available.');
+    }
+
+    const toolsMap: Record<
+      string,
+      {description: string; parameters: import('../../protocol.js').ParameterSchema[]}
+    > = {};
+
+    for (const tool of result.tools) {
+      toolsMap[tool.name] = this.convertToolSchema(tool);
+    }
+
+    // Need to cast to ZodManifest compatible structure
+    // ZodManifest expects tools to be record of ZodToolSchema
+    // My convertToolSchema returns { description, parameters }.
+    // ZodManifest tools value is { description, parameters, authRequired? }.
+    // Matches.
+
+    // Warning: ZodManifest from protocol.ts might differ from ManifestSchema logic if user implied something else.
+    // Assuming ZodManifest is correct return type for ITransport.
+
+    return {
+      serverVersion: this._serverVersion,
+      tools: toolsMap as any, // Cast to verify structure compliance or rely on structural typing
+    };
+  }
+
+  async toolGet(
+    toolName: string,
+    headers?: Record<string, string>
+  ): Promise<ZodManifest> {
+    const manifest = await this.toolsList(undefined, headers);
+    if (!manifest.tools[toolName]) {
+      throw new Error(`Tool '${toolName}' not found.`);
+    }
+
+    return {
+      serverVersion: manifest.serverVersion,
+      tools: {
+        [toolName]: manifest.tools[toolName],
+      },
+    };
+  }
+
+  async toolInvoke(
+    toolName: string,
+    arguments_: Record<string, unknown>,
+    headers: Record<string, string>
+  ): Promise<string> {
+    await this.ensureInitialized();
+
+    const params: types.CallToolRequestParams = {
+      name: toolName,
+      arguments: arguments_,
+    };
+
+    const result = await this.#sendRequest(
+      this._mcpBaseUrl,
+      types.CallToolRequest,
+      params,
+      headers
+    );
+
+    if (!result) {
+      throw new Error(
+        `Failed to invoke tool '${toolName}': No response from server.`
+      );
+    }
+
+    const textContent = result.content
+      .filter(c => c.type === 'text')
+      .map(c => c.text)
+      .join('');
+
+    return textContent || 'null';
+  }
+}

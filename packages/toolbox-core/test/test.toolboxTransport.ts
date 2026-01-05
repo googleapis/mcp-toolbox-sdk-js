@@ -227,9 +227,9 @@ describe('ToolboxTransport', () => {
       };
       mockSession.post.mockRejectedValueOnce(mockError);
 
-      await expect(transport.toolInvoke(toolName, args, headers)).rejects.toEqual(
-        mockError,
-      );
+      await expect(
+        transport.toolInvoke(toolName, args, headers),
+      ).rejects.toEqual(mockError);
     });
   });
 });

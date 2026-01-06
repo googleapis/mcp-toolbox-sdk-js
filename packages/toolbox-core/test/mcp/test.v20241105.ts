@@ -17,7 +17,9 @@ import {jest} from '@jest/globals';
 import axios, {AxiosInstance} from 'axios';
 
 jest.mock('axios', () => {
-  const actual = jest.requireActual('axios') as typeof import('axios');
+  const actual = jest.requireActual('axios') as {
+    default: typeof import('axios');
+  };
   return {
     __esModule: true,
     ...actual,
@@ -142,9 +144,13 @@ describe('McpHttpTransportV20241105', () => {
 
       mockSession.post.mockResolvedValueOnce(initResponse);
 
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       await expect(transport.toolsList()).rejects.toThrow(
         /MCP version mismatch/,
       );
+      errorSpy.mockRestore();
     });
 
     it('should throw error if tools capability missing', async () => {
@@ -163,9 +169,13 @@ describe('McpHttpTransportV20241105', () => {
 
       mockSession.post.mockResolvedValueOnce(initResponse);
 
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       await expect(transport.toolsList()).rejects.toThrow(
         /Server does not support the 'tools' capability/,
       );
+      errorSpy.mockRestore();
     });
 
     it('should throw error if initialization returns no response (204)', async () => {
@@ -174,9 +184,13 @@ describe('McpHttpTransportV20241105', () => {
         data: null,
       });
 
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       await expect(transport.toolsList()).rejects.toThrow(
         'Initialization failed: No response',
       );
+      errorSpy.mockRestore();
     });
 
     it('should handle initialized notification returning 202 without error', async () => {
@@ -320,9 +334,13 @@ describe('McpHttpTransportV20241105', () => {
         data: null,
       });
 
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       await expect(transport.toolsList()).rejects.toThrow(
         'Failed to list tools: No response from server.',
       );
+      errorSpy.mockRestore();
     });
 
     it('should throw if server version is not available after init', async () => {
@@ -343,9 +361,13 @@ describe('McpHttpTransportV20241105', () => {
           'ensureInitialized',
         )
         .mockResolvedValue(undefined);
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       await expect(transport.toolsList()).rejects.toThrow(
         'Server version not available.',
       );
+      errorSpy.mockRestore();
     });
   });
 
@@ -411,9 +433,13 @@ describe('McpHttpTransportV20241105', () => {
 
       mockSession.post.mockResolvedValueOnce(listResponse);
 
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       await expect(transport.toolGet('missing')).rejects.toThrow(
         /Tool 'missing' not found/,
       );
+      errorSpy.mockRestore();
     });
   });
 
@@ -534,9 +560,13 @@ describe('McpHttpTransportV20241105', () => {
         data: null,
       });
 
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       await expect(transport.toolInvoke('testTool', {}, {})).rejects.toThrow(
         "Failed to invoke tool 'testTool': No response from server.",
       );
+      errorSpy.mockRestore();
     });
 
     it('should throw if JSON-RPC response structure is invalid', async () => {

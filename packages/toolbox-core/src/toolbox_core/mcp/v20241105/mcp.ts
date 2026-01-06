@@ -123,19 +123,27 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
     );
 
     if (!result) {
-      throw new Error('Initialization failed: No response');
+      const error = new Error('Initialization failed: No response');
+      logApiError('MCP Initialization Error', error);
+      throw error;
     }
 
     this._serverVersion = result.serverInfo.version;
 
     if (result.protocolVersion !== this._protocolVersion) {
-      throw new Error(
+      const error = new Error(
         `MCP version mismatch: client does not support server version ${result.protocolVersion}`,
       );
+      logApiError('MCP Initialization Error', error);
+      throw error;
     }
 
     if (!result.capabilities.tools) {
-      throw new Error("Server does not support the 'tools' capability.");
+      const error = new Error(
+        "Server does not support the 'tools' capability.",
+      );
+      logApiError('MCP Initialization Error', error);
+      throw error;
     }
 
     await this.#sendRequest(
@@ -160,11 +168,15 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
     );
 
     if (!result) {
-      throw new Error('Failed to list tools: No response from server.');
+      const error = new Error('Failed to list tools: No response from server.');
+      logApiError(`Error listing tools from ${url}`, error);
+      throw error;
     }
 
     if (this._serverVersion === null) {
-      throw new Error('Server version not available.');
+      const error = new Error('Server version not available.');
+      logApiError('Error listing tools', error);
+      throw error;
     }
 
     const toolsMap: Record<
@@ -192,7 +204,9 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
   ): Promise<ZodManifest> {
     const manifest = await this.toolsList(undefined, headers);
     if (!manifest.tools[toolName]) {
-      throw new Error(`Tool '${toolName}' not found.`);
+      const error = new Error(`Tool '${toolName}' not found.`);
+      logApiError(`Error getting tool ${toolName}`, error);
+      throw error;
     }
 
     return {
@@ -223,9 +237,11 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
     );
 
     if (!result) {
-      throw new Error(
+      const error = new Error(
         `Failed to invoke tool '${toolName}': No response from server.`,
       );
+      logApiError(`Error invoking tool ${toolName}`, error);
+      throw error;
     }
 
     const textContent = result.content

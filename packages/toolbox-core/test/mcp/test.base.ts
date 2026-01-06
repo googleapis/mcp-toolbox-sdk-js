@@ -265,5 +265,73 @@ describe('McpHttpTransportBase', () => {
         }),
       );
     });
+
+    it('should handle tool with auth metadata', () => {
+      const toolData = {
+        name: 'authTool',
+        description: 'Auth required',
+        inputSchema: {
+          properties: {
+            secureParam: {type: 'string'},
+          },
+        },
+        _meta: {
+          'toolbox/authInvoke': ['scope:read'],
+          'toolbox/authParam': {
+            secureParam: ['scope:admin'],
+          },
+        },
+      };
+
+      const result = transport.testConvertToolSchema(toolData);
+      expect(result.authRequired).toEqual(['scope:read']);
+      const param = result.parameters.find(p => p.name === 'secureParam');
+      expect(param?.authSources).toEqual(['scope:admin']);
+    });
+
+    it('should handle minimal tool definition (defaults)', () => {
+      const toolData = {
+        name: 'minimal',
+        // No description, no inputSchema
+      };
+
+      const result = transport.testConvertToolSchema(toolData);
+      expect(result.description).toBe('');
+      expect(result.parameters).toEqual([]);
+      expect(result.authRequired).toBeUndefined();
+    });
+
+    it('should handle array without items (default to string)', () => {
+      const toolData = {
+        name: 'arrayDefault',
+        inputSchema: {
+          properties: {
+            list: {type: 'array'}, // No items defined
+          },
+        },
+      };
+
+      const result = transport.testConvertToolSchema(toolData);
+      expect(result.parameters[0]).toEqual(
+        expect.objectContaining({
+          type: 'array',
+          items: {type: 'string'},
+        }),
+      );
+    });
+
+    it('should handle partial auth metadata', () => {
+      const toolData = {
+        name: 'partialAuth',
+        inputSchema: {properties: {a: {type: 'string'}}},
+        _meta: {
+          'toolbox/authInvoke': 'not-an-array', // Should be ignored
+          'toolbox/authParam': 'not-an-object', // Should be ignored
+        },
+      };
+      const result = transport.testConvertToolSchema(toolData);
+      expect(result.authRequired).toBeUndefined();
+      expect(result.parameters[0].authSources).toBeUndefined();
+    });
   });
 });

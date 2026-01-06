@@ -314,6 +314,26 @@ describe('McpHttpTransportV20241105', () => {
         'Failed to list tools: No response from server.',
       );
     });
+
+    it('should throw if server version is not available after init', async () => {
+      mockSession.post.mockReset();
+      mockSession.post.mockResolvedValueOnce({
+        data: {
+          jsonrpc: '2.0',
+          id: '2',
+          result: {
+            tools: [],
+          },
+        },
+        status: 200,
+      });
+      jest
+        .spyOn(transport as any, 'ensureInitialized')
+        .mockResolvedValue(undefined);
+      await expect(transport.toolsList()).rejects.toThrow(
+        'Server version not available.',
+      );
+    });
   });
 
   describe('toolGet', () => {

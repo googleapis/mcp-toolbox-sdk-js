@@ -328,7 +328,10 @@ describe('McpHttpTransportV20241105', () => {
         status: 200,
       });
       jest
-        .spyOn(transport as any, 'ensureInitialized')
+        .spyOn(
+          transport as unknown as {ensureInitialized: () => Promise<void>},
+          'ensureInitialized',
+        )
         .mockResolvedValue(undefined);
       await expect(transport.toolsList()).rejects.toThrow(
         'Server version not available.',

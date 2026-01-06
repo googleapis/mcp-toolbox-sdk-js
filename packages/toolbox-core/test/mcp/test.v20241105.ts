@@ -435,7 +435,9 @@ describe('McpHttpTransportV20241105', () => {
     });
 
     it('should handle JSON-RPC errors', async () => {
-      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       const errorResponse = {
         data: {
           jsonrpc: '2.0',
@@ -457,7 +459,9 @@ describe('McpHttpTransportV20241105', () => {
     });
 
     it('should handle HTTP errors', async () => {
-      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       const httpErrorResponse = {
         data: 'Server Error',
         status: 500,
@@ -503,7 +507,9 @@ describe('McpHttpTransportV20241105', () => {
     });
 
     it('should throw if JSON-RPC response structure is invalid', async () => {
-      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       const invalidResponse = {
         data: {
           jsonrpc: '2.0',
@@ -523,7 +529,9 @@ describe('McpHttpTransportV20241105', () => {
     });
 
     it('should throw explicit error for malformed error object', async () => {
-      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       const malformedErrorResponse = {
         data: {
           jsonrpc: '2.0',

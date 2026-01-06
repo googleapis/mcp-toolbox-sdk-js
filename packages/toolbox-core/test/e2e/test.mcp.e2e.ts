@@ -306,8 +306,6 @@ describe('ToolboxClient E2E MCP Tests', () => {
     });
 
     it('should fail when a tool with a param requiring auth is run with insufficient auth claims', async () => {
-      expect.assertions(2);
-
       const tool = await commonToolboxClient.loadTool(
         'get-row-by-content-auth',
         {
@@ -316,6 +314,7 @@ describe('ToolboxClient E2E MCP Tests', () => {
       );
       try {
         await tool();
+        throw new Error('Expected tool invocation to fail');
       } catch (error) {
         expect(error).toBeInstanceOf(AxiosError);
         const axiosError = error as AxiosError;

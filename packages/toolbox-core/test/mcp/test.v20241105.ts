@@ -157,6 +157,17 @@ describe('McpHttpTransportV20241105', () => {
         /Server does not support the 'tools' capability/
       );
     });
+
+    it('should throw error if initialization returns no response (204)', async () => {
+      mockSession.post.mockResolvedValueOnce({
+        status: 204,
+        data: null,
+      });
+
+      await expect(transport.toolsList()).rejects.toThrow(
+        'Initialization failed: No response'
+      );
+    });
   });
 
   describe('toolsList', () => {
@@ -211,6 +222,17 @@ describe('McpHttpTransportV20241105', () => {
       expect(manifest.tools['testTool']).toBeDefined();
       expect(manifest.tools['testTool'].description).toBe('A test tool');
       expect(manifest.tools['testTool'].parameters).toBeDefined();
+    });
+
+    it('should throw if toolsList returns no response (204)', async () => {
+      mockSession.post.mockResolvedValueOnce({
+        status: 204,
+        data: null,
+      });
+
+      await expect(transport.toolsList()).rejects.toThrow(
+        'Failed to list tools: No response from server.'
+      );
     });
   });
 
@@ -384,6 +406,53 @@ describe('McpHttpTransportV20241105', () => {
 
       const result = await transport.toolInvoke('testTool', {}, {});
       expect(result).toBe('null');
+      expect(result).toBe('null');
+    });
+
+    it('should throw if toolInvoke returns no response (204)', async () => {
+      mockSession.post.mockResolvedValueOnce({
+        status: 204,
+        data: null,
+      });
+
+      await expect(transport.toolInvoke('testTool', {}, {})).rejects.toThrow(
+        "Failed to invoke tool 'testTool': No response from server."
+      );
+    });
+
+    it('should throw if JSON-RPC response structure is invalid', async () => {
+      const invalidResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '3',
+          // Missing 'result' and 'error'
+          somethingElse: true,
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(invalidResponse);
+
+      await expect(transport.toolInvoke('testTool', {}, {})).rejects.toThrow(
+        'Failed to parse JSON-RPC response structure'
+      );
+    });
+
+    it('should throw explicit error for malformed error object', async () => {
+      const malformedErrorResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '3',
+          error: 'Just a string error', // Invalid, should be object with code/message
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(malformedErrorResponse);
+
+      await expect(transport.toolInvoke('testTool', {}, {})).rejects.toThrow(
+        'MCP request failed: "Just a string error"'
+      );
     });
   });
 });

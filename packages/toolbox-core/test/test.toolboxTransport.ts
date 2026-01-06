@@ -16,7 +16,6 @@ import {ToolboxTransport} from '../src/toolbox_core/toolboxTransport.js';
 import axios, {AxiosInstance, AxiosResponse} from 'axios';
 import {ZodError} from 'zod';
 
-// Mock axios
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
@@ -25,6 +24,7 @@ describe('ToolboxTransport', () => {
   let transport: ToolboxTransport;
   let mockSession: jest.Mocked<AxiosInstance>;
   let consoleWarnSpy: jest.SpyInstance;
+  let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
     mockSession = {
@@ -43,19 +43,19 @@ describe('ToolboxTransport', () => {
     transport = new ToolboxTransport(baseUrl, mockSession);
 
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
     jest.clearAllMocks();
     consoleWarnSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
   });
 
   describe('constructor', () => {
     it('should use provided axios session', () => {
       expect(transport.baseUrl).toBe(baseUrl);
       // We can't easily check private #session, but we verified mockedAxios.create wasn't called here
-      // if we passed one. Wait, we mocked create to return mockSession anyway.
-      // Let's test the other case:
     });
 
     it('should create new axios session if none provided', () => {

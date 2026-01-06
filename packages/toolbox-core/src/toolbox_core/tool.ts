@@ -216,7 +216,7 @@ function ToolboxTool(
         `Authentication source(s) \`${unusedAuth.join(', ')}\` unused by tool \`${this.toolName}\`.`,
       );
     }
-    
+
     return ToolboxTool(
       transport,
       this.toolName,

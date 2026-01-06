@@ -258,7 +258,9 @@ describe('ToolboxClient E2E MCP Tests', () => {
         expect(axiosError.response?.status).toBe(401);
         expect(axiosError.response?.data).toEqual(
           expect.objectContaining({
-            error: expect.stringMatching(/unauthorized|missing or invalid authentication header/),
+            error: expect.stringMatching(
+              /unauthorized|missing or invalid authentication header/,
+            ),
           }),
         );
       }

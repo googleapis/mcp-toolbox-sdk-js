@@ -16,6 +16,7 @@ import {McpHttpTransportBase} from '../transportBase.js';
 import * as types from './types.js';
 
 import {ZodManifest} from '../../protocol.js';
+import {logApiError} from '../../errorUtils.js';
 
 import {v4 as uuidv4} from 'uuid';
 
@@ -29,12 +30,6 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
     const params = paramsOverride || request.params;
     let payload: types.JSONRPCRequest | types.JSONRPCNotification;
 
-    // Check if it's notification
-    // Simple check: Notification doesn't assume response ID in Python logic implies "not expect response".
-    // TS logic:
-    // If request has getResultModel, it's a Request.
-    // If not, it's Notification?
-    // My types for MCPRequest have getResultModel.
     const isNotification = !('getResultModel' in request);
     const method = request.method;
 
@@ -42,7 +37,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
       payload = {
         jsonrpc: '2.0',
         method,
-        params: params as Record<string, unknown>, // Casting to match schema expectations if needed, or refine types
+        params: params as Record<string, unknown>,
       };
     } else {
       payload = {
@@ -53,49 +48,54 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
       };
     }
 
-    const response = await this._session.post(url, payload, {headers});
+    try {
+      const response = await this._session.post(url, payload, {headers});
 
-    if (
-      response.status !== 200 &&
-      response.status !== 204 &&
-      response.status !== 202
-    ) {
-      const errorText = JSON.stringify(response.data);
-      throw new Error(
-        `API request failed with status ${response.status} (${response.statusText}). Server response: ${errorText}`,
-      );
-    }
-
-    if (response.status === 204 || response.status === 202) {
-      return null;
-    }
-
-    const jsonResp = response.data;
-
-    if (jsonResp.error) {
-      // Validate error structure
-      const errResult = types.JSONRPCErrorSchema.safeParse(jsonResp);
-      if (errResult.success) {
-        const err = errResult.data.error;
+      if (
+        response.status !== 200 &&
+        response.status !== 204 &&
+        response.status !== 202
+      ) {
+        const errorText = JSON.stringify(response.data);
         throw new Error(
-          `MCP request failed with code ${err.code}: ${err.message}`,
+          `API request failed with status ${response.status} (${response.statusText}). Server response: ${errorText}`,
         );
       }
-      throw new Error(`MCP request failed: ${JSON.stringify(jsonResp.error)}`);
-    }
 
-    // Parse Result
-    if (!isNotification && 'getResultModel' in request) {
-      const rpcRespResult = types.JSONRPCResponseSchema.safeParse(jsonResp);
-      if (rpcRespResult.success) {
-        // Validate result against specific model
-        const resultModel = request.getResultModel();
-        return resultModel.parse(rpcRespResult.data.result);
+      if (response.status === 204 || response.status === 202) {
+        return null;
       }
-      throw new Error('Failed to parse JSON-RPC response structure');
-    }
 
-    return null;
+      const jsonResp = response.data;
+
+      if (jsonResp.error) {
+        const errResult = types.JSONRPCErrorSchema.safeParse(jsonResp);
+        if (errResult.success) {
+          const err = errResult.data.error;
+          throw new Error(
+            `MCP request failed with code ${err.code}: ${err.message}`,
+          );
+        }
+        throw new Error(
+          `MCP request failed: ${JSON.stringify(jsonResp.error)}`,
+        );
+      }
+
+      // Parse Result
+      if (!isNotification && 'getResultModel' in request) {
+        const rpcRespResult = types.JSONRPCResponseSchema.safeParse(jsonResp);
+        if (rpcRespResult.success) {
+          const resultModel = request.getResultModel();
+          return resultModel.parse(rpcRespResult.data.result);
+        }
+        throw new Error('Failed to parse JSON-RPC response structure');
+      }
+
+      return null;
+    } catch (error) {
+      logApiError(`Error posting data to ${url}:`, error);
+      throw error;
+    }
   }
 
   protected async initializeSession(): Promise<void> {

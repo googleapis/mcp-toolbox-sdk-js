@@ -55,14 +55,18 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
 
     const response = await this._session.post(url, payload, {headers});
 
-    if (response.status !== 200 && response.status !== 204) {
+    if (
+      response.status !== 200 &&
+      response.status !== 204 &&
+      response.status !== 202
+    ) {
       const errorText = JSON.stringify(response.data);
       throw new Error(
         `API request failed with status ${response.status} (${response.statusText}). Server response: ${errorText}`,
       );
     }
 
-    if (response.status === 204) {
+    if (response.status === 204 || response.status === 202) {
       return null;
     }
 
@@ -160,24 +164,13 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
       {
         description: string;
         parameters: import('../../protocol.js').ParameterSchema[];
+        authRequired?: string[];
       }
     > = {};
 
     for (const tool of result.tools) {
-      toolsMap[tool.name] = this.convertToolSchema({
-        description: tool.description ?? undefined,
-        inputSchema: tool.inputSchema as any,
-      });
+      toolsMap[tool.name] = this.convertToolSchema(tool);
     }
-
-    // Need to cast to ZodManifest compatible structure
-    // ZodManifest expects tools to be record of ZodToolSchema
-    // My convertToolSchema returns { description, parameters }.
-    // ZodManifest tools value is { description, parameters, authRequired? }.
-    // Matches.
-
-    // Warning: ZodManifest from protocol.ts might differ from ManifestSchema logic if user implied something else.
-    // Assuming ZodManifest is correct return type for ITransport.
 
     return {
       serverVersion: this._serverVersion,

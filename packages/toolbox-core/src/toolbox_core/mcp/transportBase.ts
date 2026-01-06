@@ -60,7 +60,27 @@ export abstract class McpHttpTransportBase implements ITransport {
   protected convertToolSchema(toolData: any): {
     description: string;
     parameters: ParameterSchema[];
+    authRequired?: string[];
   } {
+    let paramAuth: Record<string, string[]> | null = null;
+    let invokeAuth: string[] = [];
+
+    if (toolData._meta && typeof toolData._meta === 'object') {
+      const meta = toolData._meta;
+      if (
+        meta['toolbox/authParam'] &&
+        typeof meta['toolbox/authParam'] === 'object'
+      ) {
+        paramAuth = meta['toolbox/authParam'];
+      }
+      if (
+        meta['toolbox/authInvoke'] &&
+        Array.isArray(meta['toolbox/authInvoke'])
+      ) {
+        invokeAuth = meta['toolbox/authInvoke'];
+      }
+    }
+
     const parameters: ParameterSchema[] = [];
     const inputSchema = toolData.inputSchema || {};
     const properties = inputSchema.properties || {};
@@ -71,10 +91,17 @@ export abstract class McpHttpTransportBase implements ITransport {
       any,
     ][]) {
       const typeSchema = this._convertTypeSchema(schema);
+
+      let authSources: string[] | undefined;
+      if (paramAuth && paramAuth[name]) {
+        authSources = paramAuth[name];
+      }
+
       parameters.push({
         name,
         description: schema.description || '',
         required: required.has(name),
+        authSources,
         ...typeSchema,
       } as ParameterSchema);
     }
@@ -82,6 +109,7 @@ export abstract class McpHttpTransportBase implements ITransport {
     return {
       description: toolData.description || '',
       parameters,
+      authRequired: invokeAuth.length > 0 ? invokeAuth : undefined,
     };
   }
 

@@ -91,9 +91,9 @@ export type InitializeResult = z.infer<typeof InitializeResultSchema>;
 
 export const ToolSchema = BaseMetadataSchema.extend({
   description: z.string().optional().nullable(),
-
   inputSchema: z.record(z.unknown()),
 });
+
 export type Tool = z.infer<typeof ToolSchema>;
 
 export const ListToolsResultSchema = z.object({

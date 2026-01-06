@@ -168,6 +168,45 @@ describe('McpHttpTransportV20241105', () => {
         'Initialization failed: No response',
       );
     });
+
+    it('should handle initialized notification returning 202 without error', async () => {
+      const initResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '1',
+          result: {
+            protocolVersion: '2024-11-05',
+            capabilities: {tools: {}},
+            serverInfo: {name: 'test-server', version: '1.0.0'},
+          },
+        },
+        status: 200,
+      };
+
+      const initializedNotificationResponse = {
+        data: '',
+        status: 202,
+        statusText: 'Accepted',
+      };
+
+      mockSession.post
+        .mockResolvedValueOnce(initResponse)
+        .mockResolvedValueOnce(initializedNotificationResponse);
+
+      const listResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '2',
+          result: {
+            tools: [],
+          },
+        },
+        status: 200,
+      };
+      mockSession.post.mockResolvedValueOnce(listResponse);
+
+      await expect(transport.toolsList()).resolves.not.toThrow();
+    });
   });
 
   describe('toolsList', () => {
@@ -222,6 +261,47 @@ describe('McpHttpTransportV20241105', () => {
       expect(manifest.tools['testTool']).toBeDefined();
       expect(manifest.tools['testTool'].description).toBe('A test tool');
       expect(manifest.tools['testTool'].parameters).toBeDefined();
+    });
+
+    it('should correctly map auth fields', async () => {
+      const listResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '2',
+          result: {
+            tools: [
+              {
+                name: 'authTool',
+                description: 'Tool with auth',
+                inputSchema: {
+                  type: 'object',
+                  properties: {
+                    x: {
+                      type: 'string',
+                    },
+                  },
+                },
+                _meta: {
+                  'toolbox/authInvoke': ['service-auth'],
+                  'toolbox/authParam': {
+                    x: ['param-auth'],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(listResponse);
+
+      const manifest = await transport.toolsList();
+      const tool = manifest.tools['authTool'];
+
+      expect(tool).toBeDefined();
+      expect(tool.authRequired).toEqual(['service-auth']);
+      expect(tool.parameters[0].authSources).toEqual(['param-auth']);
     });
 
     it('should throw if toolsList returns no response (204)', async () => {

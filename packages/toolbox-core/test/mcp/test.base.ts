@@ -79,7 +79,7 @@ class TestMcpTransport extends McpHttpTransportBase {
     return this.toolInvokeMock(toolName, arguments_, headers);
   }
 
-  public testConvertToolSchema(toolData: any) {
+  public testConvertToolSchema(toolData: Record<string, unknown>) {
     return this.convertToolSchema(toolData);
   }
 
@@ -130,11 +130,7 @@ describe('McpHttpTransportBase', () => {
     });
 
     it('should set protocol version', () => {
-      const transport = new TestMcpTransport(
-        testBaseUrl,
-        undefined,
-        Protocol.MCP_v20241105,
-      );
+      new TestMcpTransport(testBaseUrl, undefined, Protocol.MCP_v20241105);
     });
   });
 

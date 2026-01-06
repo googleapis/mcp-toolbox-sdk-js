@@ -21,28 +21,28 @@ export const JSONRPCRequestSchema = z.object({
   jsonrpc: z.literal('2.0').default('2.0'),
   id: z.union([z.string(), z.number()]).optional(), // Default handled in usage, or logic
   method: z.string(),
-  params: z.record(z.any()).optional().nullable(),
+  params: z.record(z.unknown()).optional().nullable(),
 });
 export type JSONRPCRequest = z.infer<typeof JSONRPCRequestSchema>;
 
 export const JSONRPCNotificationSchema = z.object({
   jsonrpc: z.literal('2.0').default('2.0'),
   method: z.string(),
-  params: z.record(z.any()).optional().nullable(),
+  params: z.record(z.unknown()).optional().nullable(),
 });
 export type JSONRPCNotification = z.infer<typeof JSONRPCNotificationSchema>;
 
 export const JSONRPCResponseSchema = z.object({
   jsonrpc: z.literal('2.0'),
   id: z.union([z.string(), z.number()]),
-  result: z.record(z.any()),
+  result: z.record(z.unknown()),
 });
 export type JSONRPCResponse = z.infer<typeof JSONRPCResponseSchema>;
 
 export const ErrorDataSchema = z.object({
   code: z.number().int(),
   message: z.string(),
-  data: z.any().optional().nullable(),
+  data: z.unknown().optional().nullable(),
 });
 export type ErrorData = z.infer<typeof ErrorDataSchema>;
 
@@ -76,8 +76,8 @@ export type InitializeRequestParams = z.infer<
 >;
 
 export const ServerCapabilitiesSchema = z.object({
-  prompts: z.record(z.any()).optional().nullable(),
-  tools: z.record(z.any()).optional().nullable(),
+  prompts: z.record(z.unknown()).optional().nullable(),
+  tools: z.record(z.unknown()).optional().nullable(),
 });
 export type ServerCapabilities = z.infer<typeof ServerCapabilitiesSchema>;
 
@@ -92,7 +92,7 @@ export type InitializeResult = z.infer<typeof InitializeResultSchema>;
 export const ToolSchema = BaseMetadataSchema.extend({
   description: z.string().optional().nullable(),
 
-  inputSchema: z.record(z.any()),
+  inputSchema: z.record(z.unknown()),
 });
 export type Tool = z.infer<typeof ToolSchema>;
 
@@ -116,13 +116,13 @@ export type CallToolResult = z.infer<typeof CallToolResultSchema>;
 // Generic Request/Notification types for internal usage (not full schemas)
 export type MCPRequest<T> = {
   method: string;
-  params?: Record<string, any> | any | null; // Allow Schema-like types too?
+  params?: Record<string, unknown> | unknown | null;
   getResultModel: () => z.ZodType<T>;
 };
 
 export type MCPNotification = {
   method: string;
-  params?: Record<string, any> | any | null;
+  params?: Record<string, unknown> | unknown | null;
 };
 
 // Request/Notification Classes/Factories
@@ -145,7 +145,7 @@ export const ListToolsRequest: MCPRequest<ListToolsResult> = {
 
 export const CallToolRequestParamsSchema = z.object({
   name: z.string(),
-  arguments: z.record(z.any()),
+  arguments: z.record(z.unknown()),
 });
 export type CallToolRequestParams = z.infer<typeof CallToolRequestParamsSchema>;
 

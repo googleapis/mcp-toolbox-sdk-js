@@ -23,11 +23,11 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
   async #sendRequest<T>(
     url: string,
     request: types.MCPRequest<T> | types.MCPNotification,
-    paramsOverride?: any,
+    paramsOverride?: unknown,
     headers?: Record<string, string>,
   ): Promise<T | null> {
     const params = paramsOverride || request.params;
-    let payload: any;
+    let payload: types.JSONRPCRequest | types.JSONRPCNotification;
 
     // Check if it's notification
     // Simple check: Notification doesn't assume response ID in Python logic implies "not expect response".
@@ -42,14 +42,14 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
       payload = {
         jsonrpc: '2.0',
         method,
-        params,
+        params: params as Record<string, unknown>, // Casting to match schema expectations if needed, or refine types
       };
     } else {
       payload = {
         jsonrpc: '2.0',
         id: uuidv4(),
         method,
-        params,
+        params: params as Record<string, unknown>,
       };
     }
 
@@ -164,7 +164,10 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
     > = {};
 
     for (const tool of result.tools) {
-      toolsMap[tool.name] = this.convertToolSchema(tool);
+      toolsMap[tool.name] = this.convertToolSchema({
+        description: tool.description ?? undefined,
+        inputSchema: tool.inputSchema as any,
+      });
     }
 
     // Need to cast to ZodManifest compatible structure
@@ -178,7 +181,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
 
     return {
       serverVersion: this._serverVersion,
-      tools: toolsMap as any, // Cast to verify structure compliance or rely on structural typing
+      tools: toolsMap as unknown as ZodManifest['tools'], // Cast to verify structure compliance or rely on structural typing
     };
   }
 

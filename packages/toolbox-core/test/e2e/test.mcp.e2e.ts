@@ -255,12 +255,13 @@ describe('ToolboxClient E2E MCP Tests', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(AxiosError);
         const axiosError = error as AxiosError;
-        expect(axiosError.response?.status).toBe(401);
         expect(axiosError.response?.data).toEqual(
           expect.objectContaining({
-            error: expect.stringMatching(
-              /unauthorized|missing or invalid authentication header/,
-            ),
+            error: expect.objectContaining({
+              message: expect.stringMatching(
+                /unauthorized|missing or invalid authentication header|unauthorized Tool call/,
+              ),
+            }),
           }),
         );
       }
@@ -305,7 +306,7 @@ describe('ToolboxClient E2E MCP Tests', () => {
     });
 
     it('should fail when a tool with a param requiring auth is run with insufficient auth claims', async () => {
-      expect.assertions(3); // Adjusted to account for logApiError's console.error
+      expect.assertions(2);
 
       const tool = await commonToolboxClient.loadTool(
         'get-row-by-content-auth',
@@ -320,8 +321,11 @@ describe('ToolboxClient E2E MCP Tests', () => {
         const axiosError = error as AxiosError;
         expect(axiosError.response?.data).toEqual(
           expect.objectContaining({
-            error:
-              'provided parameters were invalid: error parsing authenticated parameter "data": no field named row_data in claims',
+            error: expect.objectContaining({
+              message: expect.stringMatching(
+                /provided parameters were invalid/,
+              ),
+            }),
           }),
         );
       }

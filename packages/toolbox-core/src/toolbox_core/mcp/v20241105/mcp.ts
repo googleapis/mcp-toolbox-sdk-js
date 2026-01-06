@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import {AxiosError} from 'axios';
 import {McpHttpTransportBase} from '../transportBase.js';
 import * as types from './types.js';
 
@@ -70,14 +71,21 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
 
       if (jsonResp.error) {
         const errResult = types.JSONRPCErrorSchema.safeParse(jsonResp);
+        let message = `MCP request failed: ${JSON.stringify(jsonResp.error)}`;
+        let code = 'MCP_ERROR';
+
         if (errResult.success) {
           const err = errResult.data.error;
-          throw new Error(
-            `MCP request failed with code ${err.code}: ${err.message}`,
-          );
+          message = `MCP request failed with code ${err.code}: ${err.message}`;
+          code = String(err.code);
         }
-        throw new Error(
-          `MCP request failed: ${JSON.stringify(jsonResp.error)}`,
+
+        throw new AxiosError(
+          message,
+          code,
+          response.config,
+          response.request,
+          response,
         );
       }
 
@@ -104,7 +112,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
       capabilities: {},
       clientInfo: {
         name: 'toolbox-js-sdk',
-        version: '0.1.0', // TODO: Get version dynamically
+        version: '0.1.0',
       },
     };
 

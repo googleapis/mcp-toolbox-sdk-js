@@ -16,7 +16,17 @@ import {McpHttpTransportV20241105} from '../../src/toolbox_core/mcp/v20241105/mc
 import {jest} from '@jest/globals';
 import axios, {AxiosInstance} from 'axios';
 
-jest.mock('axios');
+jest.mock('axios', () => {
+  const actual = jest.requireActual('axios') as typeof import('axios');
+  return {
+    __esModule: true,
+    ...actual,
+    default: {
+      ...actual.default,
+      create: jest.fn(),
+    },
+  };
+});
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('McpHttpTransportV20241105', () => {

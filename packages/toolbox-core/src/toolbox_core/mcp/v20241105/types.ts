@@ -55,7 +55,7 @@ export type JSONRPCError = z.infer<typeof JSONRPCErrorSchema>;
 
 export const BaseMetadataSchema = z.object({
   name: z.string(),
-});
+}).passthrough();
 export type BaseMetadata = z.infer<typeof BaseMetadataSchema>;
 
 export const ImplementationSchema = BaseMetadataSchema.extend({

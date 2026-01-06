@@ -22,6 +22,24 @@ import {
   Protocol,
 } from '../protocol.js';
 
+interface JsonSchema {
+  type?: string;
+  items?: JsonSchema;
+  properties?: Record<string, JsonSchema>;
+  additionalProperties?: boolean | JsonSchema;
+  description?: string;
+  required?: string[];
+}
+
+interface ToolDefinition {
+  description?: string;
+  inputSchema?: JsonSchema;
+  _meta?: {
+    'toolbox/authParam'?: Record<string, string[]>;
+    'toolbox/authInvoke'?: string[];
+  };
+}
+
 export abstract class McpHttpTransportBase implements ITransport {
   protected _mcpBaseUrl: string;
   protected _protocolVersion: string;
@@ -55,16 +73,17 @@ export abstract class McpHttpTransportBase implements ITransport {
     return this._mcpBaseUrl;
   }
 
-  protected convertToolSchema(toolData: any): {
+  protected convertToolSchema(toolData: unknown): {
     description: string;
     parameters: ParameterSchema[];
     authRequired?: string[];
   } {
+    const data = toolData as ToolDefinition;
     let paramAuth: Record<string, string[]> | null = null;
     let invokeAuth: string[] = [];
 
-    if (toolData._meta && typeof toolData._meta === 'object') {
-      const meta = toolData._meta;
+    if (data._meta && typeof data._meta === 'object') {
+      const meta = data._meta;
       if (
         meta['toolbox/authParam'] &&
         typeof meta['toolbox/authParam'] === 'object'
@@ -80,13 +99,13 @@ export abstract class McpHttpTransportBase implements ITransport {
     }
 
     const parameters: ParameterSchema[] = [];
-    const inputSchema = toolData.inputSchema || {};
+    const inputSchema = data.inputSchema || {};
     const properties = inputSchema.properties || {};
     const required = new Set<string>(inputSchema.required || []);
 
     for (const [name, schema] of Object.entries(properties) as [
       string,
-      any,
+      JsonSchema,
     ][]) {
       const typeSchema = this._convertTypeSchema(schema);
 
@@ -105,13 +124,14 @@ export abstract class McpHttpTransportBase implements ITransport {
     }
 
     return {
-      description: toolData.description || '',
+      description: data.description || '',
       parameters,
       authRequired: invokeAuth.length > 0 ? invokeAuth : undefined,
     };
   }
 
-  private _convertTypeSchema(schema: any): TypeSchema {
+  private _convertTypeSchema(schemaData: unknown): TypeSchema {
+    const schema = schemaData as JsonSchema;
     if (schema.type === 'array') {
       return {
         type: 'array',
@@ -124,7 +144,11 @@ export abstract class McpHttpTransportBase implements ITransport {
         typeof schema.additionalProperties === 'object'
       ) {
         additionalProperties = {
-          type: schema.additionalProperties.type,
+          type: schema.additionalProperties.type as
+            | 'string'
+            | 'integer'
+            | 'float'
+            | 'boolean',
         } as PrimitiveTypeSchema;
       } else {
         additionalProperties = schema.additionalProperties !== false;
@@ -134,7 +158,14 @@ export abstract class McpHttpTransportBase implements ITransport {
         additionalProperties,
       };
     } else {
-      return {type: schema.type} as PrimitiveTypeSchema;
+      return {
+        type: schema.type as
+          | 'string'
+          | 'integer'
+          | 'float'
+          | 'boolean'
+          | undefined,
+      } as PrimitiveTypeSchema;
     }
   }
 

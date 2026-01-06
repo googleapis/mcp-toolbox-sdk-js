@@ -28,7 +28,12 @@ describe('ToolboxClient E2E MCP Tests', () => {
   const projectId = (globalThis as CustomGlobal).__GOOGLE_CLOUD_PROJECT__;
 
   beforeAll(async () => {
-    commonToolboxClient = new ToolboxClient(testBaseUrl, undefined, undefined, Protocol.MCP_v20241105);
+    commonToolboxClient = new ToolboxClient(
+      testBaseUrl,
+      undefined,
+      undefined,
+      Protocol.MCP_v20241105,
+    );
   });
 
   beforeEach(async () => {

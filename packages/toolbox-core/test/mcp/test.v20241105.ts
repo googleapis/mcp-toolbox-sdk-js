@@ -48,7 +48,7 @@ describe('McpHttpTransportV20241105', () => {
       // Mock responses for initialization
       // 1. InitializeRequest -> result with tools capability
       // 2. InitializedNotification -> (no response needed usually, or empty)
-      
+
       const initResponse = {
         data: {
           jsonrpc: '2.0',
@@ -73,7 +73,7 @@ describe('McpHttpTransportV20241105', () => {
         },
         status: 200,
       };
-      
+
       mockSession.post
         .mockResolvedValueOnce(initResponse)
         .mockResolvedValueOnce(initializedNotificationResponse);
@@ -88,7 +88,7 @@ describe('McpHttpTransportV20241105', () => {
         },
         status: 200,
       };
-      
+
       mockSession.post.mockResolvedValueOnce(listResponse);
 
       await transport.toolsList();
@@ -103,7 +103,7 @@ describe('McpHttpTransportV20241105', () => {
             clientInfo: expect.any(Object),
           }),
         }),
-        expect.any(Object)
+        expect.any(Object),
       );
 
       expect(mockSession.post).toHaveBeenNthCalledWith(
@@ -112,7 +112,7 @@ describe('McpHttpTransportV20241105', () => {
         expect.objectContaining({
           method: 'notifications/initialized',
         }),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -133,7 +133,7 @@ describe('McpHttpTransportV20241105', () => {
       mockSession.post.mockResolvedValueOnce(initResponse);
 
       await expect(transport.toolsList()).rejects.toThrow(
-        /MCP version mismatch/
+        /MCP version mismatch/,
       );
     });
 
@@ -154,7 +154,7 @@ describe('McpHttpTransportV20241105', () => {
       mockSession.post.mockResolvedValueOnce(initResponse);
 
       await expect(transport.toolsList()).rejects.toThrow(
-        /Server does not support the 'tools' capability/
+        /Server does not support the 'tools' capability/,
       );
     });
 
@@ -165,7 +165,7 @@ describe('McpHttpTransportV20241105', () => {
       });
 
       await expect(transport.toolsList()).rejects.toThrow(
-        'Initialization failed: No response'
+        'Initialization failed: No response',
       );
     });
   });
@@ -186,7 +186,7 @@ describe('McpHttpTransportV20241105', () => {
         status: 200,
       };
       const notifResponse = {data: {}, status: 200};
-      
+
       mockSession.post
         .mockResolvedValueOnce(initResponse)
         .mockResolvedValueOnce(notifResponse);
@@ -231,7 +231,7 @@ describe('McpHttpTransportV20241105', () => {
       });
 
       await expect(transport.toolsList()).rejects.toThrow(
-        'Failed to list tools: No response from server.'
+        'Failed to list tools: No response from server.',
       );
     });
   });
@@ -299,7 +299,7 @@ describe('McpHttpTransportV20241105', () => {
       mockSession.post.mockResolvedValueOnce(listResponse);
 
       await expect(transport.toolGet('missing')).rejects.toThrow(
-        /Tool 'missing' not found/
+        /Tool 'missing' not found/,
       );
     });
   });
@@ -307,7 +307,7 @@ describe('McpHttpTransportV20241105', () => {
   describe('toolInvoke', () => {
     beforeEach(() => {
       // Init sequence
-       const initResponse = {
+      const initResponse = {
         data: {
           jsonrpc: '2.0',
           id: '1',
@@ -330,9 +330,7 @@ describe('McpHttpTransportV20241105', () => {
           jsonrpc: '2.0',
           id: '3',
           result: {
-            content: [
-              {type: 'text', text: 'Result output'},
-            ],
+            content: [{type: 'text', text: 'Result output'}],
           },
         },
         status: 200,
@@ -351,13 +349,13 @@ describe('McpHttpTransportV20241105', () => {
             arguments: {arg: 'val'},
           },
         }),
-        expect.any(Object)
+        expect.any(Object),
       );
       expect(result).toBe('Result output');
     });
 
     it('should handle JSON-RPC errors', async () => {
-       const errorResponse = {
+      const errorResponse = {
         data: {
           jsonrpc: '2.0',
           id: '3',
@@ -372,21 +370,21 @@ describe('McpHttpTransportV20241105', () => {
       mockSession.post.mockResolvedValueOnce(errorResponse);
 
       await expect(transport.toolInvoke('badTool', {}, {})).rejects.toThrow(
-        /MCP request failed with code -32601: Method not found/
+        /MCP request failed with code -32601: Method not found/,
       );
     });
-    
+
     it('should handle HTTP errors', async () => {
       const httpErrorResponse = {
         data: 'Server Error',
         status: 500,
         statusText: 'Internal Server Error',
       };
-      
+
       mockSession.post.mockResolvedValueOnce(httpErrorResponse);
 
       await expect(transport.toolInvoke('testTool', {}, {})).rejects.toThrow(
-        /API request failed with status 500/
+        /API request failed with status 500/,
       );
     });
 
@@ -416,7 +414,7 @@ describe('McpHttpTransportV20241105', () => {
       });
 
       await expect(transport.toolInvoke('testTool', {}, {})).rejects.toThrow(
-        "Failed to invoke tool 'testTool': No response from server."
+        "Failed to invoke tool 'testTool': No response from server.",
       );
     });
 
@@ -434,7 +432,7 @@ describe('McpHttpTransportV20241105', () => {
       mockSession.post.mockResolvedValueOnce(invalidResponse);
 
       await expect(transport.toolInvoke('testTool', {}, {})).rejects.toThrow(
-        'Failed to parse JSON-RPC response structure'
+        'Failed to parse JSON-RPC response structure',
       );
     });
 
@@ -451,7 +449,7 @@ describe('McpHttpTransportV20241105', () => {
       mockSession.post.mockResolvedValueOnce(malformedErrorResponse);
 
       await expect(transport.toolInvoke('testTool', {}, {})).rejects.toThrow(
-        'MCP request failed: "Just a string error"'
+        'MCP request failed: "Just a string error"',
       );
     });
   });

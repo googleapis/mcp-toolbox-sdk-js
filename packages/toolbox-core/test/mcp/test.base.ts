@@ -22,25 +22,28 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 class TestMcpTransport extends McpHttpTransportBase {
   public initializeSessionMock = jest.fn<() => Promise<void>>();
-  public toolGetMock = jest.fn<
-    (
-      toolName: string,
-      headers?: Record<string, string>,
-    ) => Promise<ZodManifest>
-  >();
-  public toolsListMock = jest.fn<
-    (
-      toolsetName?: string,
-      headers?: Record<string, string>,
-    ) => Promise<ZodManifest>
-  >();
-  public toolInvokeMock = jest.fn<
-    (
-      toolName: string,
-      arguments_: Record<string, unknown>,
-      headers: Record<string, string>,
-    ) => Promise<string>
-  >();
+  public toolGetMock =
+    jest.fn<
+      (
+        toolName: string,
+        headers?: Record<string, string>,
+      ) => Promise<ZodManifest>
+    >();
+  public toolsListMock =
+    jest.fn<
+      (
+        toolsetName?: string,
+        headers?: Record<string, string>,
+      ) => Promise<ZodManifest>
+    >();
+  public toolInvokeMock =
+    jest.fn<
+      (
+        toolName: string,
+        arguments_: Record<string, unknown>,
+        headers: Record<string, string>,
+      ) => Promise<string>
+    >();
 
   constructor(
     baseUrl: string,

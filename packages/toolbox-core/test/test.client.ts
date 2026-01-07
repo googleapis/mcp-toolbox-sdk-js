@@ -96,20 +96,28 @@ describe('ToolboxClient', () => {
   });
 
   describe('Initialization', () => {
-    it('should initialize with the correct base URL (default Toolbox)', () => {
+    it('should initialize with the correct base URL (default MCP)', () => {
       client = new ToolboxClient(testBaseUrl);
-      expect(ToolboxTransport).toHaveBeenCalledWith(testBaseUrl, undefined);
+      expect(McpHttpTransportV20250618).toHaveBeenCalledWith(
+        testBaseUrl,
+        undefined,
+        Protocol.MCP_v20250618,
+      );
     });
 
-    it('should pass provided axios session to transport (Toolbox)', () => {
+    it('should pass provided axios session to transport (default MCP)', () => {
       const mockSession = {
         get: jest.fn(),
       } as unknown as import('axios').AxiosInstance;
       client = new ToolboxClient(testBaseUrl, mockSession);
-      expect(ToolboxTransport).toHaveBeenCalledWith(testBaseUrl, mockSession);
+      expect(McpHttpTransportV20250618).toHaveBeenCalledWith(
+        testBaseUrl,
+        mockSession,
+        Protocol.MCP_v20250618,
+      );
     });
 
-    it('should initialize with MCP transport (default) when specified', () => {
+    it('should initialize with MCP transport (explicit) when specified', () => {
       client = new ToolboxClient(
         testBaseUrl,
         undefined,

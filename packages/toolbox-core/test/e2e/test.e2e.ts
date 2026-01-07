@@ -14,6 +14,7 @@
 
 import {ToolboxClient} from '../../src/toolbox_core/client';
 import {ToolboxTool} from '../../src/toolbox_core/tool';
+import {Protocol} from '../../src/toolbox_core/protocol';
 
 import {AxiosError} from 'axios';
 import {CustomGlobal} from './types';
@@ -27,7 +28,12 @@ describe('ToolboxClient E2E Tests', () => {
   const projectId = (globalThis as CustomGlobal).__GOOGLE_CLOUD_PROJECT__;
 
   beforeAll(async () => {
-    commonToolboxClient = new ToolboxClient(testBaseUrl);
+    commonToolboxClient = new ToolboxClient(
+      testBaseUrl,
+      undefined,
+      undefined,
+      Protocol.TOOLBOX,
+    );
   });
 
   beforeEach(async () => {

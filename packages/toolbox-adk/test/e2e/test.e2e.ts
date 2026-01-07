@@ -14,6 +14,7 @@
 
 import {ToolboxClient} from '../../src/toolbox_adk/client.js';
 import {ToolboxTool} from '../../src/toolbox_adk/tool.js';
+import {Protocol} from '@toolbox-sdk/core';
 
 import {AxiosError} from 'axios';
 import {CustomGlobal} from './types.js';
@@ -30,7 +31,12 @@ describe('ToolboxClient E2E Tests', () => {
   const mockToolContext = {} as ToolContext;
 
   beforeAll(async () => {
-    commonToolboxClient = new ToolboxClient(testBaseUrl);
+    commonToolboxClient = new ToolboxClient(
+      testBaseUrl,
+      undefined,
+      undefined,
+      Protocol.TOOLBOX,
+    );
   });
 
   beforeEach(async () => {

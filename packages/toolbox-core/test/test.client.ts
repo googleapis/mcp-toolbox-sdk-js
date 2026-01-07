@@ -20,6 +20,7 @@ import {ToolboxClient} from '../src/toolbox_core/client.js';
 import {ToolboxTransport} from '../src/toolbox_core/toolboxTransport.js';
 import {McpHttpTransportV20241105} from '../src/toolbox_core/mcp/v20241105/mcp.js';
 import {McpHttpTransportV20250326} from '../src/toolbox_core/mcp/v20250326/mcp.js';
+import {McpHttpTransportV20250618} from '../src/toolbox_core/mcp/v20250618/mcp.js';
 
 // --- Mock Transport Implementation ---
 class MockTransport implements ITransport {
@@ -59,6 +60,14 @@ jest.mock('../src/toolbox_core/mcp/v20250326/mcp', () => {
   };
 });
 
+// Mock the McpHttpTransportV20250618 module
+jest.mock('../src/toolbox_core/mcp/v20250618/mcp', () => {
+  return {
+    __esModule: true,
+    McpHttpTransportV20250618: jest.fn(),
+  };
+});
+
 describe('ToolboxClient', () => {
   const testBaseUrl = 'https://api.example.com';
   let mockTransport: MockTransport;
@@ -75,6 +84,9 @@ describe('ToolboxClient', () => {
       () => mockTransport,
     );
     (McpHttpTransportV20250326 as unknown as jest.Mock).mockImplementation(
+      () => mockTransport,
+    );
+    (McpHttpTransportV20250618 as unknown as jest.Mock).mockImplementation(
       () => mockTransport,
     );
   });
@@ -104,10 +116,10 @@ describe('ToolboxClient', () => {
         undefined,
         Protocol.MCP,
       );
-      expect(McpHttpTransportV20250326).toHaveBeenCalledWith(
+      expect(McpHttpTransportV20250618).toHaveBeenCalledWith(
         testBaseUrl,
         undefined,
-        Protocol.MCP_v20250326,
+        Protocol.MCP_v20250618,
       );
     });
 
@@ -122,6 +134,34 @@ describe('ToolboxClient', () => {
         testBaseUrl,
         undefined,
         Protocol.MCP_v20241105,
+      );
+    });
+
+    it('should initialize with MCP v20250326 transport when specified', () => {
+      client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP_v20250326,
+      );
+      expect(McpHttpTransportV20250326).toHaveBeenCalledWith(
+        testBaseUrl,
+        undefined,
+        Protocol.MCP_v20250326,
+      );
+    });
+
+    it('should initialize with MCP v20250618 transport when specified', () => {
+      client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP_v20250618,
+      );
+      expect(McpHttpTransportV20250618).toHaveBeenCalledWith(
+        testBaseUrl,
+        undefined,
+        Protocol.MCP_v20250618,
       );
     });
 

@@ -19,6 +19,7 @@ import type {ToolboxClient as ToolboxClientType} from '../src/toolbox_core/clien
 import {ToolboxClient} from '../src/toolbox_core/client.js';
 import {ToolboxTransport} from '../src/toolbox_core/toolboxTransport.js';
 import {McpHttpTransportV20241105} from '../src/toolbox_core/mcp/v20241105/mcp.js';
+import {McpHttpTransportV20250326} from '../src/toolbox_core/mcp/v20250326/mcp.js';
 
 // --- Mock Transport Implementation ---
 class MockTransport implements ITransport {
@@ -50,6 +51,14 @@ jest.mock('../src/toolbox_core/mcp/v20241105/mcp', () => {
   };
 });
 
+// Mock the McpHttpTransportV20250326 module
+jest.mock('../src/toolbox_core/mcp/v20250326/mcp', () => {
+  return {
+    __esModule: true,
+    McpHttpTransportV20250326: jest.fn(),
+  };
+});
+
 describe('ToolboxClient', () => {
   const testBaseUrl = 'https://api.example.com';
   let mockTransport: MockTransport;
@@ -63,6 +72,9 @@ describe('ToolboxClient', () => {
     );
     // Explicitly reference the imported symbol which should be the mock
     (McpHttpTransportV20241105 as unknown as jest.Mock).mockImplementation(
+      () => mockTransport,
+    );
+    (McpHttpTransportV20250326 as unknown as jest.Mock).mockImplementation(
       () => mockTransport,
     );
   });
@@ -85,12 +97,26 @@ describe('ToolboxClient', () => {
       expect(ToolboxTransport).toHaveBeenCalledWith(testBaseUrl, mockSession);
     });
 
-    it('should initialize with MCP transport when specified', () => {
+    it('should initialize with MCP transport (default) when specified', () => {
       client = new ToolboxClient(
         testBaseUrl,
         undefined,
         undefined,
         Protocol.MCP,
+      );
+      expect(McpHttpTransportV20250326).toHaveBeenCalledWith(
+        testBaseUrl,
+        undefined,
+        Protocol.MCP_v20250326,
+      );
+    });
+
+    it('should initialize with MCP v20241105 transport when specified', () => {
+      client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP_v20241105,
       );
       expect(McpHttpTransportV20241105).toHaveBeenCalledWith(
         testBaseUrl,

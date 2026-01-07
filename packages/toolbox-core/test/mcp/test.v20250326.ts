@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {McpHttpTransportV20241105} from '../../src/toolbox_core/mcp/v20241105/mcp.js';
+import {McpHttpTransportV20250326} from '../../src/toolbox_core/mcp/v20250326/mcp.js';
 import {jest} from '@jest/globals';
 import axios, {AxiosInstance} from 'axios';
 
@@ -33,10 +33,10 @@ jest.mock('axios', () => {
 });
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-describe('McpHttpTransportV20241105', () => {
+describe('McpHttpTransportV20250326', () => {
   const testBaseUrl = 'http://test.loc';
   let mockSession: jest.Mocked<AxiosInstance>;
-  let transport: McpHttpTransportV20241105;
+  let transport: McpHttpTransportV20250326;
 
   beforeEach(() => {
     mockSession = {
@@ -50,10 +50,10 @@ describe('McpHttpTransportV20241105', () => {
     } as unknown as jest.Mocked<AxiosInstance>;
 
     mockedAxios.create.mockReturnValue(mockSession);
-    transport = new McpHttpTransportV20241105(
+    transport = new McpHttpTransportV20250326(
       testBaseUrl,
       mockSession,
-      Protocol.MCP_v20241105,
+      Protocol.MCP_v20250326,
     );
   });
 
@@ -68,11 +68,12 @@ describe('McpHttpTransportV20241105', () => {
       // 2. InitializedNotification -> (no response needed usually, or empty)
 
       const initResponse = {
+        headers: {'mcp-session-id': 'sess-1'},
         data: {
           jsonrpc: '2.0',
           id: '1',
           result: {
-            protocolVersion: '2024-11-05',
+            protocolVersion: '2025-03-26',
             capabilities: {
               tools: {},
             },
@@ -117,7 +118,7 @@ describe('McpHttpTransportV20241105', () => {
         expect.objectContaining({
           method: 'initialize',
           params: expect.objectContaining({
-            protocolVersion: '2024-11-05',
+            protocolVersion: '2025-03-26',
             clientInfo: expect.any(Object),
           }),
         }),
@@ -136,6 +137,7 @@ describe('McpHttpTransportV20241105', () => {
 
     it('should throw error on protocol version mismatch', async () => {
       const initResponse = {
+        headers: {'mcp-session-id': 'sess-1'},
         data: {
           jsonrpc: '2.0',
           id: '1',
@@ -161,11 +163,12 @@ describe('McpHttpTransportV20241105', () => {
 
     it('should throw error if tools capability missing', async () => {
       const initResponse = {
+        headers: {'mcp-session-id': 'sess-1'},
         data: {
           jsonrpc: '2.0',
           id: '1',
           result: {
-            protocolVersion: '2024-11-05',
+            protocolVersion: '2025-03-26',
             capabilities: {}, // No tools
             serverInfo: {name: 'server', version: '1.0'},
           },
@@ -188,6 +191,7 @@ describe('McpHttpTransportV20241105', () => {
       mockSession.post.mockResolvedValueOnce({
         status: 204,
         data: null,
+        headers: {},
       });
 
       const errorSpy = jest
@@ -199,13 +203,40 @@ describe('McpHttpTransportV20241105', () => {
       errorSpy.mockRestore();
     });
 
-    it('should handle initialized notification returning 202 without error', async () => {
+    it('should throw error if Mcp-Session-Id header is missing', async () => {
       const initResponse = {
+        headers: {}, // Missing session ID
         data: {
           jsonrpc: '2.0',
           id: '1',
           result: {
-            protocolVersion: '2024-11-05',
+            protocolVersion: '2025-03-26',
+            capabilities: {tools: {}},
+            serverInfo: {name: 'test-server', version: '1.0.0'},
+          },
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(initResponse);
+
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+      await expect(transport.toolsList()).rejects.toThrow(
+        'Server did not return a Mcp-Session-Id during initialization.',
+      );
+      errorSpy.mockRestore();
+    });
+
+    it('should handle initialized notification returning 202 without error', async () => {
+      const initResponse = {
+        headers: {'mcp-session-id': 'sess-1'},
+        data: {
+          jsonrpc: '2.0',
+          id: '1',
+          result: {
+            protocolVersion: '2025-03-26',
             capabilities: {tools: {}},
             serverInfo: {name: 'test-server', version: '1.0.0'},
           },
@@ -243,11 +274,12 @@ describe('McpHttpTransportV20241105', () => {
     beforeEach(() => {
       // Setup successful init for tool tests
       const initResponse = {
+        headers: {'mcp-session-id': 'sess-1'},
         data: {
           jsonrpc: '2.0',
           id: '1',
           result: {
-            protocolVersion: '2024-11-05',
+            protocolVersion: '2025-03-26',
             capabilities: {tools: {}},
             serverInfo: {name: 'test-server', version: '1.0.0'},
           },
@@ -380,11 +412,12 @@ describe('McpHttpTransportV20241105', () => {
   describe('toolGet', () => {
     beforeEach(() => {
       const initResponse = {
+        headers: {'mcp-session-id': 'sess-1'},
         data: {
           jsonrpc: '2.0',
           id: '1',
           result: {
-            protocolVersion: '2024-11-05',
+            protocolVersion: '2025-03-26',
             capabilities: {tools: {}},
             serverInfo: {name: 'test-server', version: '1.0.0'},
           },
@@ -453,11 +486,12 @@ describe('McpHttpTransportV20241105', () => {
     beforeEach(() => {
       // Init sequence
       const initResponse = {
+        headers: {'mcp-session-id': 'sess-1'},
         data: {
           jsonrpc: '2.0',
           id: '1',
           result: {
-            protocolVersion: '2024-11-05',
+            protocolVersion: '2025-03-26',
             capabilities: {tools: {}},
             serverInfo: {name: 'test-server', version: '1.0.0'},
           },
@@ -494,7 +528,7 @@ describe('McpHttpTransportV20241105', () => {
             arguments: {arg: 'val'},
           },
         }),
-        expect.any(Object),
+        expect.objectContaining({headers: {'Mcp-Session-Id': 'sess-1'}}),
       );
       expect(result).toBe('Result output');
     });

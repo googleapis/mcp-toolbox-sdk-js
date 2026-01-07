@@ -17,3 +17,4 @@
 // Export the main factory function and the core tool type
 export {ToolboxClient} from './client.js';
 export {ToolboxTool} from './tool.js';
+export {Protocol} from '@toolbox-sdk/core';

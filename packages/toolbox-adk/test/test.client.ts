@@ -34,6 +34,7 @@ type MockCoreClientConstructor = (
   url: string,
   session?: AxiosInstance | null,
   clientHeaders?: ClientHeadersConfig | null,
+  protocol?: string | null,
 ) => MockCoreClient;
 
 const mockLoadTool =
@@ -66,6 +67,10 @@ const MockToolboxTool = jest.fn();
 
 jest.unstable_mockModule('@toolbox-sdk/core', () => ({
   ToolboxClient: MockCoreToolboxClient,
+  Protocol: {
+    MCP: 'mcp-default',
+    TOOLBOX: 'toolbox',
+  },
 }));
 
 jest.unstable_mockModule('../src/toolbox_adk/tool.js', () => ({
@@ -94,6 +99,7 @@ describe('ToolboxClient', () => {
       'http://test.url',
       mockSession,
       mockHeaders,
+      'mcp-default',
     );
   });
 

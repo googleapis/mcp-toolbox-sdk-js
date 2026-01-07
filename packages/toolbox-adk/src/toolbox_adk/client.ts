@@ -17,6 +17,7 @@ import {
   AuthTokenGetters,
   BoundParams,
   ClientHeadersConfig,
+  Protocol,
 } from '@toolbox-sdk/core';
 import {ToolboxTool, CoreTool} from './tool.js';
 import type {AxiosInstance} from 'axios';
@@ -44,8 +45,14 @@ export class ToolboxClient {
     url: string,
     session?: AxiosInstance | null,
     clientHeaders?: ClientHeadersConfig | null,
+    protocol: Protocol = Protocol.MCP,
   ) {
-    this.coreClient = new CoreToolboxClient(url, session, clientHeaders);
+    this.coreClient = new CoreToolboxClient(
+      url,
+      session,
+      clientHeaders,
+      protocol,
+    );
   }
 
   /**

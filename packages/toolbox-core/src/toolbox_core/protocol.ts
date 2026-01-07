@@ -17,11 +17,12 @@ import {z, ZodRawShape, ZodTypeAny, ZodObject} from 'zod';
 export enum Protocol {
   TOOLBOX = 'toolbox',
   MCP_v20241105 = '2024-11-05',
-  MCP = MCP_v20241105, // Default MCP
+  MCP_v20250326 = '2025-03-26',
+  MCP = MCP_v20250326, // Default MCP
 }
 
 export function getSupportedMcpVersions(): Protocol[] {
-  return [Protocol.MCP_v20241105];
+  return [Protocol.MCP_v20241105, Protocol.MCP_v20250326];
 }
 
 // Type Definitions

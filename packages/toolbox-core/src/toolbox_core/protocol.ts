@@ -18,11 +18,16 @@ export enum Protocol {
   TOOLBOX = 'toolbox',
   MCP_v20241105 = '2024-11-05',
   MCP_v20250326 = '2025-03-26',
-  MCP = MCP_v20250326, // Default MCP
+  MCP_v20250618 = '2025-06-18',
+  MCP = MCP_v20250618, // Default MCP
 }
 
 export function getSupportedMcpVersions(): Protocol[] {
-  return [Protocol.MCP_v20241105, Protocol.MCP_v20250326];
+  return [
+    Protocol.MCP_v20241105,
+    Protocol.MCP_v20250326,
+    Protocol.MCP_v20250618,
+  ];
 }
 
 // Type Definitions

@@ -13,10 +13,12 @@
 // limitations under the License.
 
 import {jest} from '@jest/globals';
-import {ToolboxClient} from '../src/toolbox_core/client.js';
 import {ITransport} from '../src/toolbox_core/transport.types.js';
-import {ZodManifest} from '../src/toolbox_core/protocol.js';
+import {ZodManifest, Protocol} from '../src/toolbox_core/protocol.js';
+import type {ToolboxClient as ToolboxClientType} from '../src/toolbox_core/client.js';
+import {ToolboxClient} from '../src/toolbox_core/client.js';
 import {ToolboxTransport} from '../src/toolbox_core/toolboxTransport.js';
+import {McpHttpTransportV20241105} from '../src/toolbox_core/mcp/v20241105/mcp.js';
 
 // --- Mock Transport Implementation ---
 class MockTransport implements ITransport {
@@ -33,22 +35,34 @@ class MockTransport implements ITransport {
   }
 }
 
-// Mock the ToolboxTransport module to return our MockTransport
+// Mock the ToolboxTransport module
 jest.mock('../src/toolbox_core/toolboxTransport.js', () => {
   return {
     ToolboxTransport: jest.fn(),
   };
 });
 
+// Mock the McpHttpTransportV20241105 module
+jest.mock('../src/toolbox_core/mcp/v20241105/mcp', () => {
+  return {
+    __esModule: true,
+    McpHttpTransportV20241105: jest.fn(),
+  };
+});
+
 describe('ToolboxClient', () => {
   const testBaseUrl = 'https://api.example.com';
   let mockTransport: MockTransport;
-  let client: ToolboxClient;
+  let client: ToolboxClientType;
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockTransport = new MockTransport(testBaseUrl);
     (ToolboxTransport as unknown as jest.Mock).mockImplementation(
+      () => mockTransport,
+    );
+    // Explicitly reference the imported symbol which should be the mock
+    (McpHttpTransportV20241105 as unknown as jest.Mock).mockImplementation(
       () => mockTransport,
     );
   });
@@ -58,17 +72,52 @@ describe('ToolboxClient', () => {
   });
 
   describe('Initialization', () => {
-    it('should initialize with the correct base URL', () => {
+    it('should initialize with the correct base URL (default Toolbox)', () => {
       client = new ToolboxClient(testBaseUrl);
       expect(ToolboxTransport).toHaveBeenCalledWith(testBaseUrl, undefined);
     });
 
-    it('should pass provided axios session to transport', () => {
+    it('should pass provided axios session to transport (Toolbox)', () => {
       const mockSession = {
         get: jest.fn(),
       } as unknown as import('axios').AxiosInstance;
       client = new ToolboxClient(testBaseUrl, mockSession);
       expect(ToolboxTransport).toHaveBeenCalledWith(testBaseUrl, mockSession);
+    });
+
+    it('should initialize with MCP transport when specified', () => {
+      client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP,
+      );
+      expect(McpHttpTransportV20241105).toHaveBeenCalledWith(
+        testBaseUrl,
+        undefined,
+        Protocol.MCP_v20241105,
+      );
+    });
+
+    it('should initialize with ToolboxTransport when specified', () => {
+      client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.TOOLBOX,
+      );
+      expect(ToolboxTransport).toHaveBeenCalledWith(testBaseUrl, undefined);
+    });
+
+    it('should throw error for unsupported protocol', () => {
+      expect(() => {
+        new ToolboxClient(
+          testBaseUrl,
+          undefined,
+          undefined,
+          'unknown-protocol' as Protocol,
+        );
+      }).toThrow('Unsupported protocol version: unknown-protocol');
     });
   });
 

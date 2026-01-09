@@ -14,6 +14,16 @@
 
 import {z, ZodRawShape, ZodTypeAny, ZodObject} from 'zod';
 
+export enum Protocol {
+  TOOLBOX = 'toolbox',
+  MCP_v20241105 = '2024-11-05',
+  MCP = MCP_v20241105, // Default MCP
+}
+
+export function getSupportedMcpVersions(): Protocol[] {
+  return [Protocol.MCP_v20241105];
+}
+
 // Type Definitions
 interface StringType {
   type: 'string';

@@ -4,10 +4,12 @@
         "<rootDir>/test/mcp/*.ts"
     ],
     "preset": "ts-jest",
+    "extensionsToTreatAsEsm": [".ts"],
     "transform": {
       "^.+\\.ts$": [
         "ts-jest",
         {
+          "useESM": true,
           "tsconfig": "tsconfig.test.json"
         }
       ]

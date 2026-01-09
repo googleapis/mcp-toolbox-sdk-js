@@ -12,29 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {McpHttpTransportV20241105} from '../../src/toolbox_core/mcp/v20241105/mcp.js';
 import {jest} from '@jest/globals';
-import axios, {AxiosInstance} from 'axios';
+import type {AxiosInstance} from 'axios';
 
-jest.mock('axios', () => {
-  const actual = jest.requireActual('axios') as {
-    default: typeof import('axios');
-  };
-  return {
-    __esModule: true,
-    ...actual,
-    default: {
-      ...actual.default,
-      create: jest.fn(),
-    },
-  };
-});
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+jest.unstable_mockModule('axios', () => ({
+  default: {
+    create: jest.fn(),
+    isAxiosError: jest.fn(() => true),
+  },
+  AxiosError: class extends Error {
+    constructor(message: string) {
+      super(message);
+    }
+  },
+  isAxiosError: jest.fn(),
+}));
+
+const {default: axios} = await import('axios');
+const {McpHttpTransportV20241105} = await import(
+  '../../src/toolbox_core/mcp/v20241105/mcp.js'
+);
+
+const mockedAxios = axios as unknown as jest.Mocked<typeof axios>;
 
 describe('McpHttpTransportV20241105', () => {
   const testBaseUrl = 'http://test.loc';
   let mockSession: jest.Mocked<AxiosInstance>;
-  let transport: McpHttpTransportV20241105;
+  let transport: InstanceType<typeof McpHttpTransportV20241105>;
 
   beforeEach(() => {
     mockSession = {

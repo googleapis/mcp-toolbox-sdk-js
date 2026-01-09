@@ -13,19 +13,14 @@
 // limitations under the License.
 
 import {ToolboxTool} from './tool.js';
-import axios from 'axios';
+import {AxiosInstance} from 'axios';
+import {ITransport} from './transport.types.js';
+import {ToolboxTransport} from './toolboxTransport.js';
 import {
-  type AxiosInstance,
-  type AxiosRequestConfig,
-  type AxiosResponse,
-} from 'axios';
-import {
-  ZodManifestSchema,
   createZodSchemaFromParams,
   ParameterSchema,
+  ZodManifestSchema,
 } from './protocol.js';
-import {logApiError} from './errorUtils.js';
-import {ZodError} from 'zod';
 import {BoundParams, identifyAuthRequirements, resolveValue} from './utils.js';
 import {AuthTokenGetters, RequiredAuthnParams} from './tool.js';
 
@@ -41,8 +36,7 @@ export type ClientHeadersConfig = Record<string, ClientHeaderProvider>;
  * An asynchronous client for interacting with a Toolbox service.
  */
 class ToolboxClient {
-  #baseUrl: string;
-  #session: AxiosInstance;
+  #transport: ITransport;
   #clientHeaders: ClientHeadersConfig;
 
   /**
@@ -58,8 +52,7 @@ class ToolboxClient {
     session?: AxiosInstance | null,
     clientHeaders?: ClientHeadersConfig | null,
   ) {
-    this.#baseUrl = url;
-    this.#session = session || axios.create({baseURL: this.#baseUrl});
+    this.#transport = new ToolboxTransport(url, session || undefined);
     this.#clientHeaders = clientHeaders || {};
   }
 
@@ -75,47 +68,6 @@ class ToolboxClient {
       }),
     );
     return Object.fromEntries(resolvedEntries);
-  }
-
-  /**
-   * Fetches and parses the manifest from a given API path.
-   * @param {string} apiPath - The API path to fetch the manifest from (e.g., "/api/tool/mytool").
-   * @returns {Promise<Manifest>} A promise that resolves to the parsed manifest.
-   * @throws {Error} If there's an error fetching data or if the manifest structure is invalid.
-   */
-  async #fetchAndParseManifest(apiPath: string): Promise<Manifest> {
-    const url = `${this.#baseUrl}${apiPath}`;
-    try {
-      const headers = await this.#resolveClientHeaders();
-      const config: AxiosRequestConfig = {headers};
-      const response: AxiosResponse = await this.#session.get(url, config);
-      const responseData = response.data;
-
-      try {
-        const manifest = ZodManifestSchema.parse(responseData);
-        return manifest;
-      } catch (validationError) {
-        let detailedMessage = `Invalid manifest structure received from ${url}: `;
-        if (validationError instanceof ZodError) {
-          const issueDetails = validationError.issues;
-          detailedMessage += JSON.stringify(issueDetails, null, 2);
-        } else if (validationError instanceof Error) {
-          detailedMessage += validationError.message;
-        } else {
-          detailedMessage += 'Unknown validation error.';
-        }
-        throw new Error(detailedMessage);
-      }
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message.startsWith('Invalid manifest structure received from')
-      ) {
-        throw error;
-      }
-      logApiError(`Error fetching data from ${url}:`, error);
-      throw error;
-    }
   }
 
   /**
@@ -159,8 +111,7 @@ class ToolboxClient {
     const paramZodSchema = createZodSchemaFromParams(params);
 
     const tool = ToolboxTool(
-      this.#session,
-      this.#baseUrl,
+      this.#transport,
       toolName,
       toolSchema.description,
       paramZodSchema,
@@ -195,8 +146,8 @@ class ToolboxClient {
     authTokenGetters: AuthTokenGetters | null = {},
     boundParams: BoundParams | null = {},
   ): Promise<ReturnType<typeof ToolboxTool>> {
-    const apiPath = `/api/tool/${name}`;
-    const manifest = await this.#fetchAndParseManifest(apiPath);
+    const headers = await this.#resolveClientHeaders();
+    const manifest = await this.#transport.toolGet(name, headers);
 
     if (
       manifest.tools &&
@@ -240,7 +191,9 @@ class ToolboxClient {
       }
       return tool;
     } else {
-      throw new Error(`Tool "${name}" not found in manifest from ${apiPath}.`);
+      throw new Error(
+        `Tool "${name}" not found in manifest from ${this.#transport.baseUrl}/api/tool/${name}.`,
+      );
     }
   }
 
@@ -262,9 +215,9 @@ class ToolboxClient {
     strict = false,
   ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
     const toolsetName = name || '';
-    const apiPath = `/api/toolset/${toolsetName}`;
+    const headers = await this.#resolveClientHeaders();
 
-    const manifest = await this.#fetchAndParseManifest(apiPath);
+    const manifest = await this.#transport.toolsList(toolsetName, headers);
     const tools: Array<ReturnType<typeof ToolboxTool>> = [];
 
     const overallUsedAuthKeys: Set<string> = new Set();

@@ -16,6 +16,9 @@
 
 export {ToolboxClient} from './client.js';
 
+// Export transport classes
+export {ToolboxTransport} from './toolboxTransport.js';
+
 // Export the main factory function and the core tool type
 export {ToolboxTool} from './tool.js';
 

@@ -13,9 +13,8 @@
 // limitations under the License.
 
 import {ZodObject, ZodError, ZodRawShape} from 'zod';
-import {AxiosInstance, AxiosResponse} from 'axios';
 
-import {logApiError} from './errorUtils.js';
+import {ITransport} from './transport.types.js';
 import {
   BoundParams,
   BoundValue,
@@ -41,8 +40,7 @@ function getAuthHeaderName(authTokenName: string): string {
  * Creates a callable tool function representing a specific tool on a remote
  * Toolbox server.
  *
- * @param {AxiosInstance} session - The Axios session for making HTTP requests.
- * @param {string} baseUrl - The base URL of the Toolbox Server API.
+ * @param {ITransport} transport - The transport for making API requests.
  * @param {string} name - The name of the remote tool.
  * @param {string} description - A description of the remote tool.
  * @param {ZodObject<any>} paramSchema - The Zod schema for validating the tool's parameters.
@@ -55,8 +53,7 @@ function getAuthHeaderName(authTokenName: string): string {
  * called, invokes the tool with the provided arguments.
  */
 function ToolboxTool(
-  session: AxiosInstance,
-  baseUrl: string,
+  transport: ITransport,
   name: string,
   description: string,
   paramSchema: ZodObject<ZodRawShape>,
@@ -69,14 +66,13 @@ function ToolboxTool(
   if (
     (Object.keys(authTokenGetters).length > 0 ||
       Object.keys(clientHeaders).length > 0) &&
-    !baseUrl.startsWith('https://')
+    !transport.baseUrl.startsWith('https://')
   ) {
     console.warn(
       'Sending ID token over HTTP. User data may be exposed. Use HTTPS for secure communication.',
     );
   }
 
-  const toolUrl = `${baseUrl}/api/tool/${name}/invoke`;
   const boundKeys = Object.keys(boundParams);
   const userParamSchema = paramSchema.omit(
     Object.fromEntries(boundKeys.map(k => [k, true])),
@@ -159,19 +155,7 @@ function ToolboxTool(
       headers[getAuthHeaderName(authService)] = token;
     }
 
-    try {
-      const response: AxiosResponse = await session.post(
-        toolUrl,
-        filteredPayload,
-        {
-          headers,
-        },
-      );
-      return response.data.result;
-    } catch (error) {
-      logApiError(`Error posting data to ${toolUrl}:`, error);
-      throw error;
-    }
+    return await transport.toolInvoke(name, filteredPayload, headers);
   };
   callable.toolName = name;
   callable.description = description;
@@ -234,8 +218,7 @@ function ToolboxTool(
     }
 
     return ToolboxTool(
-      session,
-      baseUrl,
+      transport,
       this.toolName,
       this.description,
       this.params,
@@ -271,8 +254,7 @@ function ToolboxTool(
 
     const newBoundParams = {...this.boundParams, ...paramsToBind};
     return ToolboxTool(
-      session,
-      baseUrl,
+      transport,
       this.toolName,
       this.description,
       this.params,

@@ -12,7 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// We use 'require' rather than a dynamic import to avoid TypeScript
-// including 'package.json' in the build's root directory structure.
-const pkg = require('../../package.json');
-export const VERSION = pkg.version;
+export const VERSION = '0.1.5'; // x-release-please-version

@@ -20,7 +20,7 @@ import {ZodManifest} from '../../protocol.js';
 import {logApiError} from '../../errorUtils.js';
 
 import {v4 as uuidv4} from 'uuid';
-import { VERSION } from '../../version.js';
+import {VERSION} from '../../version.js';
 
 export class McpHttpTransportV20250618 extends McpHttpTransportBase {
   async #sendRequest<T>(

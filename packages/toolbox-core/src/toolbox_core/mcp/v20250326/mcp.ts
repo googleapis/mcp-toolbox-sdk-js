@@ -20,6 +20,7 @@ import {ZodManifest} from '../../protocol.js';
 import {logApiError} from '../../errorUtils.js';
 
 import {v4 as uuidv4} from 'uuid';
+import {VERSION} from '../../version.js';
 
 export class McpHttpTransportV20250326 extends McpHttpTransportBase {
   private _sessionId: string | null = null;
@@ -131,7 +132,7 @@ export class McpHttpTransportV20250326 extends McpHttpTransportBase {
       capabilities: {},
       clientInfo: {
         name: 'toolbox-js-sdk',
-        version: '0.1.0',
+        version: VERSION,
       },
     };
 

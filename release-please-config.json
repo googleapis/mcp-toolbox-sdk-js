@@ -12,7 +12,11 @@
     ],
     "packages": {
       "packages/toolbox-core": {
-        "component": "core"
+        "component": "core",
+        "extra-files": [
+          "src/toolbox_core/version.ts"
+        ]
+
       },
       "packages/toolbox-adk": {
         "component": "adk"

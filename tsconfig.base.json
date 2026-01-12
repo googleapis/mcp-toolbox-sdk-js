@@ -9,8 +9,7 @@
       "ES2023",
       "DOM"
     ],
-    "skipLibCheck": true,
-    "resolveJsonModule": true
+    "skipLibCheck": true
   },
   "exclude": [
     "node_modules",

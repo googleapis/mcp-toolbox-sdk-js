@@ -20,8 +20,6 @@ import {ZodManifest} from '../../protocol.js';
 import {logApiError} from '../../errorUtils.js';
 
 import {v4 as uuidv4} from 'uuid';
-import pkg from '../../../../package.json' with {type: 'json'};
-const {version} = pkg;
 
 export class McpHttpTransportV20241105 extends McpHttpTransportBase {
   async #sendRequest<T>(
@@ -109,13 +107,12 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
   }
 
   protected async initializeSession(): Promise<void> {
-
     const params: types.InitializeRequestParams = {
       protocolVersion: this._protocolVersion,
       capabilities: {},
       clientInfo: {
         name: 'toolbox-js-sdk',
-        version: version,
+        version: '0.1.0',
       },
     };
 

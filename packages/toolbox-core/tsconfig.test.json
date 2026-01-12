@@ -3,7 +3,6 @@
     "compilerOptions": {
       "rootDir": ".",
       "outDir": "build",
-      "isolatedModules": true,
       "esModuleInterop": true,
       "sourceMap": true,
       "types": ["jest", "node"]

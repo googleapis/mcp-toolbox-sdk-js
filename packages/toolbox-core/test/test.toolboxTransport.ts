@@ -125,6 +125,10 @@ describe('ToolboxTransport', () => {
       mockSession.get.mockRejectedValueOnce(mockError);
 
       await expect(transport.toolGet(toolName)).rejects.toEqual(mockError);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Error fetching data from'),
+        expect.anything(),
+      );
     });
 
     it('should rethrow non-axios errors', async () => {
@@ -133,6 +137,10 @@ describe('ToolboxTransport', () => {
       mockedAxios.isAxiosError.mockReturnValueOnce(false);
 
       await expect(transport.toolGet(toolName)).rejects.toThrow(error);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Error fetching data from'),
+        expect.anything(),
+      );
     });
   });
 
@@ -230,6 +238,10 @@ describe('ToolboxTransport', () => {
       await expect(
         transport.toolInvoke(toolName, args, headers),
       ).rejects.toEqual(mockError);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Error posting data to'),
+        expect.anything(),
+      );
     });
   });
 });

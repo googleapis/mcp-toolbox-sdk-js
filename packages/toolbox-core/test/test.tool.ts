@@ -48,7 +48,6 @@ describe('ToolboxTool', () => {
 
   let basicParamSchema: ZodObject<ZodRawShape>;
   let consoleWarnSpy: jest.SpyInstance;
-  let consoleErrorSpy: jest.SpyInstance;
   let mockTransport: MockTransport;
   let tool: ReturnType<typeof ToolboxTool>;
 
@@ -63,12 +62,10 @@ describe('ToolboxTool', () => {
     });
 
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
     consoleWarnSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
     jest.clearAllMocks();
   });
 

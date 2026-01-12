@@ -20,7 +20,10 @@ import {
   createZodSchemaFromParams,
   ParameterSchema,
   ZodManifestSchema,
+  Protocol,
+  getSupportedMcpVersions,
 } from './protocol.js';
+import {McpHttpTransportV20241105} from './mcp/v20241105/mcp.js';
 import {BoundParams, identifyAuthRequirements, resolveValue} from './utils.js';
 import {AuthTokenGetters, RequiredAuthnParams} from './tool.js';
 
@@ -51,9 +54,24 @@ class ToolboxClient {
     url: string,
     session?: AxiosInstance | null,
     clientHeaders?: ClientHeadersConfig | null,
+    protocol: Protocol = Protocol.TOOLBOX,
   ) {
-    this.#transport = new ToolboxTransport(url, session || undefined);
     this.#clientHeaders = clientHeaders || {};
+    if (protocol === Protocol.TOOLBOX) {
+      this.#transport = new ToolboxTransport(url, session || undefined);
+    } else if (getSupportedMcpVersions().includes(protocol)) {
+      if (protocol === Protocol.MCP_v20241105) {
+        this.#transport = new McpHttpTransportV20241105(
+          url,
+          session || undefined,
+          protocol,
+        );
+      } else {
+        throw new Error(`Unsupported MCP protocol version: ${protocol}`);
+      }
+    } else {
+      throw new Error(`Unsupported protocol version: ${protocol}`);
+    }
   }
 
   /**

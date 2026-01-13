@@ -107,7 +107,9 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
     }
   }
 
-  protected async initializeSession(): Promise<void> {
+  protected async initializeSession(
+    headers?: Record<string, string>,
+  ): Promise<void> {
     const params: types.InitializeRequestParams = {
       protocolVersion: this._protocolVersion,
       capabilities: {},
@@ -121,6 +123,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
       this._mcpBaseUrl,
       types.InitializeRequest,
       params,
+      headers,
     );
 
     if (!result) {
@@ -151,6 +154,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
       this._mcpBaseUrl,
       types.InitializedNotification,
       {},
+      headers,
     );
   }
 
@@ -158,7 +162,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
     toolsetName?: string,
     headers?: Record<string, string>,
   ): Promise<ZodManifest> {
-    await this.ensureInitialized();
+    await this.ensureInitialized(headers);
     const url = `${this._mcpBaseUrl}${toolsetName || ''}`;
 
     const result = await this.#sendRequest(
@@ -223,7 +227,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
     arguments_: Record<string, unknown>,
     headers: Record<string, string>,
   ): Promise<string> {
-    await this.ensureInitialized();
+    await this.ensureInitialized(headers);
 
     const params: types.CallToolRequestParams = {
       name: toolName,

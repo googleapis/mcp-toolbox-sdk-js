@@ -237,6 +237,59 @@ describe('McpHttpTransportV20241105', () => {
 
       await expect(transport.toolsList()).resolves.not.toThrow();
     });
+
+    it('should propagate headers during initialization', async () => {
+      const initResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '1',
+          result: {
+            protocolVersion: '2024-11-05',
+            capabilities: {tools: {}},
+            serverInfo: {name: 'test-server', version: '1.0.0'},
+          },
+        },
+        status: 200,
+      };
+
+      const initializedNotificationResponse = {
+        data: {jsonrpc: '2.0'},
+        status: 200,
+      };
+
+      const listResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '2',
+          result: {tools: []},
+        },
+        status: 200,
+      };
+
+      mockSession.post
+        .mockResolvedValueOnce(initResponse)
+        .mockResolvedValueOnce(initializedNotificationResponse)
+        .mockResolvedValueOnce(listResponse);
+
+      const testHeaders = {'X-Test-Header': 'test-value'};
+      await transport.toolsList(undefined, testHeaders);
+
+      // Verify Initialize request has headers
+      expect(mockSession.post).toHaveBeenNthCalledWith(
+        1,
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({headers: testHeaders}),
+      );
+
+      // Verify Initialized notification has headers
+      expect(mockSession.post).toHaveBeenNthCalledWith(
+        2,
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({headers: testHeaders}),
+      );
+    });
   });
 
   describe('toolsList', () => {

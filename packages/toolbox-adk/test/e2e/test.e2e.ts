@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ToolboxClient} from '../../src/toolbox_adk/client.js';
-import {ToolboxTool} from '../../src/toolbox_adk/tool.js';
+import {
+  ToolboxClient,
+  ToolboxTool,
+  Protocol,
+} from '../../src/toolbox_adk/index.js';
 
 import {AxiosError} from 'axios';
 import {CustomGlobal} from './types.js';
@@ -30,7 +33,12 @@ describe('ToolboxClient E2E Tests', () => {
   const mockToolContext = {} as ToolContext;
 
   beforeAll(async () => {
-    commonToolboxClient = new ToolboxClient(testBaseUrl);
+    commonToolboxClient = new ToolboxClient(
+      testBaseUrl,
+      undefined,
+      undefined,
+      Protocol.TOOLBOX,
+    );
   });
 
   beforeEach(async () => {

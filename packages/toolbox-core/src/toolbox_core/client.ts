@@ -56,7 +56,7 @@ class ToolboxClient {
     url: string,
     session?: AxiosInstance | null,
     clientHeaders?: ClientHeadersConfig | null,
-    protocol: Protocol = Protocol.TOOLBOX,
+    protocol: Protocol = Protocol.MCP,
   ) {
     this.#clientHeaders = clientHeaders || {};
     if (protocol === Protocol.TOOLBOX) {

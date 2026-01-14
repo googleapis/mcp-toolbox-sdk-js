@@ -62,9 +62,11 @@ export abstract class McpHttpTransportBase implements ITransport {
     this._session = session || axios.create();
   }
 
-  protected async ensureInitialized(): Promise<void> {
+  protected async ensureInitialized(
+    headers?: Record<string, string>,
+  ): Promise<void> {
     if (!this._initPromise) {
-      this._initPromise = this.initializeSession();
+      this._initPromise = this.initializeSession(headers);
     }
     await this._initPromise;
   }
@@ -169,7 +171,9 @@ export abstract class McpHttpTransportBase implements ITransport {
     }
   }
 
-  protected abstract initializeSession(): Promise<void>;
+  protected abstract initializeSession(
+    headers?: Record<string, string>,
+  ): Promise<void>;
 
   abstract toolGet(
     toolName: string,

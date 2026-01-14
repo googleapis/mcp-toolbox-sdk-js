@@ -21,6 +21,8 @@ involving Large Language Models (LLMs).
     - [Quickstart](#quickstart)
     - [Usage](#usage)
     - [Transport Protocols](#transport-protocols)
+        - [Available Protocols](#available-protocols)
+        - [Specifying a Protocol](#specifying-a-protocol)
     - [Loading Tools](#loading-tools)
         - [Load a toolset](#load-a-toolset)
         - [Load a single tool](#load-a-single-tool)

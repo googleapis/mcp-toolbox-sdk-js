@@ -20,6 +20,7 @@ involving Large Language Models (LLMs).
     - [Installation](#installation)
     - [Quickstart](#quickstart)
     - [Usage](#usage)
+    - [Transport Protocols](#transport-protocols)
     - [Loading Tools](#loading-tools)
         - [Load a toolset](#load-a-toolset)
         - [Load a single tool](#load-a-single-tool)
@@ -122,6 +123,34 @@ All interactions for loading and invoking tools happen through this client.
 > [!NOTE]
 > For advanced use cases, you can provide an external `AxiosInstance`
 > during initialization (e.g., `ToolboxClient(url, my_session)`).
+
+
+## Transport Protocols
+
+The SDK supports multiple transport protocols to communicate with the Toolbox server. You can specify the protocol version during client initialization.
+
+### Available Protocols
+
+- `Protocol.MCP`: The default protocol (currently aliases to `MCP_v20250618`).
+- `Protocol.MCP_v20241105`: Use this for compatibility with older MCP servers (November 2024 version).
+- `Protocol.MCP_v20250326`: March 2025 version.
+- `Protocol.MCP_v20250618`: June 2025 version.
+- `Protocol.TOOLBOX`: Legacy Toolbox protocol.
+
+### Specifying a Protocol
+
+You can explicitly set the protocol by passing the `protocol` argument to the `ToolboxClient` constructor.
+
+```javascript
+import { ToolboxClient, Protocol } from '@toolbox-sdk/adk';
+
+const URL = 'http://127.0.0.1:5000';
+
+// Initialize with a specific protocol version
+const client = new ToolboxClient(URL, null, null, Protocol.MCP_v20241105);
+
+const tools = await client.loadToolset();
+```
 
 ## Loading Tools
 

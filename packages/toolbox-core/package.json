@@ -17,14 +17,14 @@
     ],
     "exports": {
         ".": {
-            "import": "./build/index.js",
+            "import": "./build/esm/index.js",
             "require": "./build/cjs/index.js",
-            "types": "./build/index.d.ts"
+            "types": "./build/esm/index.d.ts"
         },
         "./auth": {
-            "import": "./build/authMethods.js",
+            "import": "./build/esm/authMethods.js",
             "require": "./build/cjs/authMethods.js",
-            "types": "./build/authMethods.d.ts"
+            "types": "./build/esm/authMethods.d.ts"
         }
     },
     "files": [
@@ -63,6 +63,7 @@
         "zod": "^3.24.4"
     },
     "devDependencies": {
+        "@types/uuid": "^10.0.0",
         "rimraf": "^6.1.2"
     }
 }

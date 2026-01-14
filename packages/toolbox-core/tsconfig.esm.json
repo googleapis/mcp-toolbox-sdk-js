@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src/toolbox_core",
-    "outDir": "build"
+    "outDir": "build/esm"
   },
   "include": [
     "src/**/*.ts"

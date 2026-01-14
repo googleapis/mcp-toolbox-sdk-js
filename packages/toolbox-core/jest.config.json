@@ -1,6 +1,7 @@
 {
     "testMatch": [
-        "<rootDir>/test/*.ts"
+        "<rootDir>/test/*.ts",
+        "<rootDir>/test/mcp/*.ts"
     ],
     "preset": "ts-jest",
     "transform": {

@@ -670,5 +670,69 @@ describe('McpHttpTransportV20241105', () => {
       );
       errorSpy.mockRestore();
     });
+
+    it('should merge multiple valid JSON text chunks into a JSON list', async () => {
+      const invokeResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '3',
+          result: {
+            content: [
+              {type: 'text', text: '{"id": 1, "val": "a"}'},
+              {type: 'text', text: '{"id": 2, "val": "b"}'},
+            ],
+          },
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(invokeResponse);
+
+      const result = await transport.toolInvoke('testTool', {}, {});
+
+      expect(result).toBe('[{"id": 1, "val": "a"},{"id": 2, "val": "b"}]');
+    });
+
+    it('should verify current broken behavior (concatenation) for non-JSON chunks', async () => {
+      const invokeResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '3',
+          result: {
+            content: [
+              {type: 'text', text: 'part1'},
+              {type: 'text', text: 'part2'},
+            ],
+          },
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(invokeResponse);
+
+      const result = await transport.toolInvoke('testTool', {}, {});
+      expect(result).toBe('part1part2');
+    });
+
+    it('should NOT merge if chunks are not valid JSON (mixed)', async () => {
+      const invokeResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '3',
+          result: {
+            content: [
+              {type: 'text', text: '{"id": 1}'},
+              {type: 'text', text: 'part2'},
+            ],
+          },
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(invokeResponse);
+
+      const result = await transport.toolInvoke('testTool', {}, {});
+      expect(result).toBe('{"id": 1}part2');
+    });
   });
 });

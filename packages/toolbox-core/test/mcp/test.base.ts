@@ -91,6 +91,12 @@ class TestMcpTransport extends McpHttpTransportBase {
   public getSession(): AxiosInstance {
     return this._session;
   }
+
+  public testProcessToolResultContent(
+    content: {type?: string; text?: string}[],
+  ): string {
+    return this.processToolResultContent(content);
+  }
 }
 
 describe('McpHttpTransportBase', () => {
@@ -332,6 +338,75 @@ describe('McpHttpTransportBase', () => {
       const result = transport.testConvertToolSchema(toolData);
       expect(result.authRequired).toBeUndefined();
       expect(result.parameters[0].authSources).toBeUndefined();
+    });
+  });
+
+  describe('processToolResultContent', () => {
+    let transport: TestMcpTransport;
+
+    beforeEach(() => {
+      transport = new TestMcpTransport(testBaseUrl);
+    });
+
+    it('should return single text content directly', () => {
+      const content = [{type: 'text', text: 'hello'}];
+      expect(transport.testProcessToolResultContent(content)).toBe('hello');
+    });
+
+    it('should concatenate multiple text contents if not all valid JSON objects', () => {
+      const content = [
+        {type: 'text', text: 'part1'},
+        {type: 'text', text: 'part2'},
+      ];
+      expect(transport.testProcessToolResultContent(content)).toBe('part1part2');
+    });
+
+    it('should merge multiple valid JSON object contents into a list', () => {
+      const content = [
+        {type: 'text', text: '{"a": 1}'},
+        {type: 'text', text: '{"b": 2}'},
+      ];
+      expect(transport.testProcessToolResultContent(content)).toBe(
+        '[{"a": 1},{"b": 2}]',
+      );
+    });
+
+    it('should fallback to concatenation if any content is invalid JSON', () => {
+      const content = [
+        {type: 'text', text: '{"a": 1}'},
+        {type: 'text', text: 'invalid-json'},
+      ];
+      expect(transport.testProcessToolResultContent(content)).toBe(
+        '{"a": 1}invalid-json',
+      );
+    });
+
+    it('should fallback to concatenation if JSON is not an object (e.g. array)', () => {
+      const content = [
+        {type: 'text', text: '{"a": 1}'},
+        {type: 'text', text: '[1, 2]'}, // Array, not object
+      ];
+      expect(transport.testProcessToolResultContent(content)).toBe(
+        '{"a": 1}[1, 2]',
+      );
+    });
+
+    it('should filter out non-text content', () => {
+      const content = [
+        {type: 'text', text: 'hello'},
+        {type: 'image', text: 'ignore me'}, // Should be ignored (or handled as non-text)
+      ];
+      // Note: non-text types might not have 'text' field, but if they do, our filter checks type='text'
+      expect(transport.testProcessToolResultContent(content)).toBe('hello');
+    });
+
+    it('should return "null" if content is empty', () => {
+      expect(transport.testProcessToolResultContent([])).toBe('null');
+    });
+
+    it('should return "null" if no text content is found', () => {
+      const content = [{type: 'image', data: '...'}];
+      expect(transport.testProcessToolResultContent(content)).toBe('null');
     });
   });
 });

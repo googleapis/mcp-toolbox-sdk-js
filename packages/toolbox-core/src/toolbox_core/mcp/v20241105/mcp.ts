@@ -249,25 +249,6 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
       throw error;
     }
 
-    const textContentItems = result.content
-      .filter(c => c.type === 'text')
-      .map(c => c.text);
-
-    if (textContentItems.length > 1) {
-      const allJson = textContentItems.every(item => {
-        try {
-          JSON.parse(item);
-          return true;
-        } catch {
-          return false;
-        }
-      });
-
-      if (allJson) {
-        return `[${textContentItems.join(',')}]`;
-      }
-    }
-
-    return textContentItems.join('') || 'null';
+    return this.processToolResultContent(result.content);
   }
 }

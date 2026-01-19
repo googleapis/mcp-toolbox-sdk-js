@@ -171,6 +171,35 @@ export abstract class McpHttpTransportBase implements ITransport {
     }
   }
 
+  protected processToolResultContent(
+    content: {type?: string; text?: string}[],
+  ): string {
+    const textContentItems = content
+      .filter(c => c.type === 'text' && typeof c.text === 'string')
+      .map(c => c.text as string);
+
+    if (textContentItems.length > 1) {
+      const allJsonObjects = textContentItems.every(item => {
+        try {
+          const parsed = JSON.parse(item);
+          return (
+            typeof parsed === 'object' &&
+            parsed !== null &&
+            !Array.isArray(parsed)
+          );
+        } catch {
+          return false;
+        }
+      });
+
+      if (allJsonObjects) {
+        return `[${textContentItems.join(',')}]`;
+      }
+    }
+
+    return textContentItems.join('') || 'null';
+  }
+
   protected abstract initializeSession(
     headers?: Record<string, string>,
   ): Promise<void>;

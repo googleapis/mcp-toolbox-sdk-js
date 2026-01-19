@@ -26,6 +26,7 @@ import {
 import {McpHttpTransportV20241105} from './mcp/v20241105/mcp.js';
 import {McpHttpTransportV20250618} from './mcp/v20250618/mcp.js';
 import {McpHttpTransportV20250326} from './mcp/v20250326/mcp.js';
+import {McpHttpTransportV20251125} from './mcp/v20251125/mcp.js';
 import {BoundParams, identifyAuthRequirements, resolveValue} from './utils.js';
 import {AuthTokenGetters, RequiredAuthnParams} from './tool.js';
 
@@ -76,6 +77,12 @@ class ToolboxClient {
         );
       } else if (protocol === Protocol.MCP_v20250618) {
         this.#transport = new McpHttpTransportV20250618(
+          url,
+          session || undefined,
+          protocol,
+        );
+      } else if (protocol === Protocol.MCP_v20251125) {
+        this.#transport = new McpHttpTransportV20251125(
           url,
           session || undefined,
           protocol,

@@ -358,7 +358,9 @@ describe('McpHttpTransportBase', () => {
         {type: 'text', text: 'part1'},
         {type: 'text', text: 'part2'},
       ];
-      expect(transport.testProcessToolResultContent(content)).toBe('part1part2');
+      expect(transport.testProcessToolResultContent(content)).toBe(
+        'part1part2',
+      );
     });
 
     it('should merge multiple valid JSON object contents into a list', () => {

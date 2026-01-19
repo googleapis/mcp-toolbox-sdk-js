@@ -255,11 +255,6 @@ export class McpHttpTransportV20250618 extends McpHttpTransportBase {
       throw error;
     }
 
-    const textContent = result.content
-      .filter(c => c.type === 'text')
-      .map(c => c.text)
-      .join('');
-
-    return textContent || 'null';
+    return this.processToolResultContent(result.content);
   }
 }

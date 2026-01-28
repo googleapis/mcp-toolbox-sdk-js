@@ -131,7 +131,7 @@ The SDK supports multiple transport protocols to communicate with the Toolbox se
 
 ### Available Protocols
 
-- `Protocol.MCP`: The default protocol (currently aliases to `MCP_v20251125`).
+- `Protocol.MCP`: The default protocol (currently aliases to `MCP_v20250618`).
 - `Protocol.MCP_v20241105`: Use this for compatibility with older MCP servers (November 2024 version).
 - `Protocol.MCP_v20250326`: March 2025 version.
 - `Protocol.MCP_v20250618`: June 2025 version.

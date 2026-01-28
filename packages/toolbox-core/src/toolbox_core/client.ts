@@ -64,18 +64,27 @@ class ToolboxClient {
       this.#transport = new ToolboxTransport(url, session || undefined);
     } else if (getSupportedMcpVersions().includes(protocol)) {
       if (protocol === Protocol.MCP_v20241105) {
+        console.warn(
+          'A more latest version of MCP: v2025-11-25 is available. Please use MCP_v20251125 to use the latest features.',
+        );
         this.#transport = new McpHttpTransportV20241105(
           url,
           session || undefined,
           protocol,
         );
       } else if (protocol === Protocol.MCP_v20250326) {
+        console.warn(
+          'A more latest version of MCP: v2025-11-25 is available. Please use MCP_v20251125 to use the latest features.',
+        );
         this.#transport = new McpHttpTransportV20250326(
           url,
           session || undefined,
           protocol,
         );
       } else if (protocol === Protocol.MCP_v20250618) {
+        console.warn(
+          'A more latest version of MCP: v2025-11-25 is available. Please use MCP_v20251125 to use the latest features.',
+        );
         this.#transport = new McpHttpTransportV20250618(
           url,
           session || undefined,

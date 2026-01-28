@@ -63,41 +63,43 @@ class ToolboxClient {
     if (protocol === Protocol.TOOLBOX) {
       this.#transport = new ToolboxTransport(url, session || undefined);
     } else if (getSupportedMcpVersions().includes(protocol)) {
-      if (protocol === Protocol.MCP_v20241105) {
+      if (protocol !== Protocol.MCP_v20251125) {
         console.warn(
-          'A more latest version of MCP: v2025-11-25 is available. Please use MCP_v20251125 to use the latest features.',
+          'A newer version of MCP: v2025-11-25 is available. Please use MCP_v20251125 to use the latest features.',
         );
-        this.#transport = new McpHttpTransportV20241105(
-          url,
-          session || undefined,
-          protocol,
-        );
-      } else if (protocol === Protocol.MCP_v20250326) {
-        console.warn(
-          'A more latest version of MCP: v2025-11-25 is available. Please use MCP_v20251125 to use the latest features.',
-        );
-        this.#transport = new McpHttpTransportV20250326(
-          url,
-          session || undefined,
-          protocol,
-        );
-      } else if (protocol === Protocol.MCP_v20250618) {
-        console.warn(
-          'A more latest version of MCP: v2025-11-25 is available. Please use MCP_v20251125 to use the latest features.',
-        );
-        this.#transport = new McpHttpTransportV20250618(
-          url,
-          session || undefined,
-          protocol,
-        );
-      } else if (protocol === Protocol.MCP_v20251125) {
-        this.#transport = new McpHttpTransportV20251125(
-          url,
-          session || undefined,
-          protocol,
-        );
-      } else {
-        throw new Error(`Unsupported MCP protocol version: ${protocol}`);
+      }
+
+      switch (protocol) {
+        case Protocol.MCP_v20241105:
+          this.#transport = new McpHttpTransportV20241105(
+            url,
+            session || undefined,
+            protocol,
+          );
+          break;
+        case Protocol.MCP_v20250326:
+          this.#transport = new McpHttpTransportV20250326(
+            url,
+            session || undefined,
+            protocol,
+          );
+          break;
+        case Protocol.MCP_v20250618:
+          this.#transport = new McpHttpTransportV20250618(
+            url,
+            session || undefined,
+            protocol,
+          );
+          break;
+        case Protocol.MCP_v20251125:
+          this.#transport = new McpHttpTransportV20251125(
+            url,
+            session || undefined,
+            protocol,
+          );
+          break;
+        default:
+          throw new Error(`Unsupported MCP protocol version: ${protocol}`);
       }
     } else {
       throw new Error(`Unsupported protocol version: ${protocol}`);
@@ -175,6 +177,37 @@ class ToolboxClient {
     return {tool, usedAuthKeys, usedBoundKeys};
   }
 
+  #validateToolUsage(
+    name: string,
+    providedAuthKeys: Set<string>,
+    usedAuthKeys: Set<string>,
+    providedBoundKeys: Set<string>,
+    usedBoundKeys: Set<string>,
+  ): void {
+    const unusedAuth = [...providedAuthKeys].filter(
+      key => !usedAuthKeys.has(key),
+    );
+    const unusedBound = [...providedBoundKeys].filter(
+      key => !usedBoundKeys.has(key),
+    );
+
+    const errorMessages: string[] = [];
+    if (unusedAuth.length > 0) {
+      errorMessages.push(`unused auth tokens: ${unusedAuth.join(', ')}`);
+    }
+    if (unusedBound.length > 0) {
+      errorMessages.push(
+        `unused bound parameters: ${unusedBound.join(', ')}`,
+      );
+    }
+
+    if (errorMessages.length > 0) {
+      throw new Error(
+        `Validation failed for tool '${name}': ${errorMessages.join('; ')}.`,
+      );
+    }
+  }
+
   /**
    * Asynchronously loads a tool from the server.
    * Retrieves the schema for the specified tool from the Toolbox server and
@@ -209,34 +242,13 @@ class ToolboxClient {
         boundParams || {},
       );
 
-      const providedAuthKeys = new Set(
-        authTokenGetters ? Object.keys(authTokenGetters) : [],
+      this.#validateToolUsage(
+        name,
+        new Set(authTokenGetters ? Object.keys(authTokenGetters) : []),
+        usedAuthKeys,
+        new Set(boundParams ? Object.keys(boundParams) : []),
+        usedBoundKeys,
       );
-      const providedBoundKeys = new Set(
-        boundParams ? Object.keys(boundParams) : [],
-      );
-      const unusedAuth = [...providedAuthKeys].filter(
-        key => !usedAuthKeys.has(key),
-      );
-      const unusedBound = [...providedBoundKeys].filter(
-        key => !usedBoundKeys.has(key),
-      );
-
-      const errorMessages: string[] = [];
-      if (unusedAuth.length > 0) {
-        errorMessages.push(`unused auth tokens: ${unusedAuth.join(', ')}`);
-      }
-      if (unusedBound.length > 0) {
-        errorMessages.push(
-          `unused bound parameters: ${unusedBound.join(', ')}`,
-        );
-      }
-
-      if (errorMessages.length > 0) {
-        throw new Error(
-          `Validation failed for tool '${name}': ${errorMessages.join('; ')}.`,
-        );
-      }
       return tool;
     } else {
       throw new Error(
@@ -287,26 +299,13 @@ class ToolboxClient {
       tools.push(tool);
 
       if (strict) {
-        const unusedAuth = [...providedAuthKeys].filter(
-          key => !usedAuthKeys.has(key),
+        this.#validateToolUsage(
+          toolName,
+          providedAuthKeys,
+          usedAuthKeys,
+          providedBoundKeys,
+          usedBoundKeys,
         );
-        const unusedBound = [...providedBoundKeys].filter(
-          key => !usedBoundKeys.has(key),
-        );
-        const errorMessages: string[] = [];
-        if (unusedAuth.length > 0) {
-          errorMessages.push(`unused auth tokens: ${unusedAuth.join(', ')}`);
-        }
-        if (unusedBound.length > 0) {
-          errorMessages.push(
-            `unused bound parameters: ${unusedBound.join(', ')}`,
-          );
-        }
-        if (errorMessages.length > 0) {
-          throw new Error(
-            `Validation failed for tool '${toolName}': ${errorMessages.join('; ')}.`,
-          );
-        }
       } else {
         usedAuthKeys.forEach(key => overallUsedAuthKeys.add(key));
         usedBoundKeys.forEach(key => overallUsedBoundParams.add(key));

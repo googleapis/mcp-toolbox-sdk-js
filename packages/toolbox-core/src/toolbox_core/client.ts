@@ -63,32 +63,43 @@ class ToolboxClient {
     if (protocol === Protocol.TOOLBOX) {
       this.#transport = new ToolboxTransport(url, session || undefined);
     } else if (getSupportedMcpVersions().includes(protocol)) {
-      if (protocol === Protocol.MCP_v20241105) {
-        this.#transport = new McpHttpTransportV20241105(
-          url,
-          session || undefined,
-          protocol,
+      if (protocol !== Protocol.MCP_v20251125) {
+        console.warn(
+          'A newer version of MCP: v2025-11-25 is available. Please use MCP_v20251125 to use the latest features.',
         );
-      } else if (protocol === Protocol.MCP_v20250326) {
-        this.#transport = new McpHttpTransportV20250326(
-          url,
-          session || undefined,
-          protocol,
-        );
-      } else if (protocol === Protocol.MCP_v20250618) {
-        this.#transport = new McpHttpTransportV20250618(
-          url,
-          session || undefined,
-          protocol,
-        );
-      } else if (protocol === Protocol.MCP_v20251125) {
-        this.#transport = new McpHttpTransportV20251125(
-          url,
-          session || undefined,
-          protocol,
-        );
-      } else {
-        throw new Error(`Unsupported MCP protocol version: ${protocol}`);
+      }
+
+      switch (protocol) {
+        case Protocol.MCP_v20241105:
+          this.#transport = new McpHttpTransportV20241105(
+            url,
+            session || undefined,
+            protocol,
+          );
+          break;
+        case Protocol.MCP_v20250326:
+          this.#transport = new McpHttpTransportV20250326(
+            url,
+            session || undefined,
+            protocol,
+          );
+          break;
+        case Protocol.MCP_v20250618:
+          this.#transport = new McpHttpTransportV20250618(
+            url,
+            session || undefined,
+            protocol,
+          );
+          break;
+        case Protocol.MCP_v20251125:
+          this.#transport = new McpHttpTransportV20251125(
+            url,
+            session || undefined,
+            protocol,
+          );
+          break;
+        default:
+          throw new Error(`Unsupported MCP protocol version: ${protocol}`);
       }
     } else {
       throw new Error(`Unsupported protocol version: ${protocol}`);

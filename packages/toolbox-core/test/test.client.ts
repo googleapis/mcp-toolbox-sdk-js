@@ -110,10 +110,10 @@ describe('ToolboxClient', () => {
   describe('Initialization', () => {
     it('should initialize with the correct base URL (default MCP)', () => {
       client = new ToolboxClient(testBaseUrl);
-      expect(McpHttpTransportV20251125).toHaveBeenCalledWith(
+      expect(McpHttpTransportV20250618).toHaveBeenCalledWith(
         testBaseUrl,
         undefined,
-        Protocol.MCP_v20251125,
+        Protocol.MCP_v20250618,
       );
     });
 
@@ -122,10 +122,10 @@ describe('ToolboxClient', () => {
         get: jest.fn(),
       } as unknown as import('axios').AxiosInstance;
       client = new ToolboxClient(testBaseUrl, mockSession);
-      expect(McpHttpTransportV20251125).toHaveBeenCalledWith(
+      expect(McpHttpTransportV20250618).toHaveBeenCalledWith(
         testBaseUrl,
         mockSession,
-        Protocol.MCP_v20251125,
+        Protocol.MCP_v20250618,
       );
     });
 
@@ -136,10 +136,10 @@ describe('ToolboxClient', () => {
         undefined,
         Protocol.MCP,
       );
-      expect(McpHttpTransportV20251125).toHaveBeenCalledWith(
+      expect(McpHttpTransportV20250618).toHaveBeenCalledWith(
         testBaseUrl,
         undefined,
-        Protocol.MCP_v20251125,
+        Protocol.MCP_v20250618,
       );
     });
 

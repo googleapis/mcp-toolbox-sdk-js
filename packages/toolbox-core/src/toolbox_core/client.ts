@@ -177,37 +177,6 @@ class ToolboxClient {
     return {tool, usedAuthKeys, usedBoundKeys};
   }
 
-  #validateToolUsage(
-    name: string,
-    providedAuthKeys: Set<string>,
-    usedAuthKeys: Set<string>,
-    providedBoundKeys: Set<string>,
-    usedBoundKeys: Set<string>,
-  ): void {
-    const unusedAuth = [...providedAuthKeys].filter(
-      key => !usedAuthKeys.has(key),
-    );
-    const unusedBound = [...providedBoundKeys].filter(
-      key => !usedBoundKeys.has(key),
-    );
-
-    const errorMessages: string[] = [];
-    if (unusedAuth.length > 0) {
-      errorMessages.push(`unused auth tokens: ${unusedAuth.join(', ')}`);
-    }
-    if (unusedBound.length > 0) {
-      errorMessages.push(
-        `unused bound parameters: ${unusedBound.join(', ')}`,
-      );
-    }
-
-    if (errorMessages.length > 0) {
-      throw new Error(
-        `Validation failed for tool '${name}': ${errorMessages.join('; ')}.`,
-      );
-    }
-  }
-
   /**
    * Asynchronously loads a tool from the server.
    * Retrieves the schema for the specified tool from the Toolbox server and
@@ -242,13 +211,34 @@ class ToolboxClient {
         boundParams || {},
       );
 
-      this.#validateToolUsage(
-        name,
-        new Set(authTokenGetters ? Object.keys(authTokenGetters) : []),
-        usedAuthKeys,
-        new Set(boundParams ? Object.keys(boundParams) : []),
-        usedBoundKeys,
+      const providedAuthKeys = new Set(
+        authTokenGetters ? Object.keys(authTokenGetters) : [],
       );
+      const providedBoundKeys = new Set(
+        boundParams ? Object.keys(boundParams) : [],
+      );
+      const unusedAuth = [...providedAuthKeys].filter(
+        key => !usedAuthKeys.has(key),
+      );
+      const unusedBound = [...providedBoundKeys].filter(
+        key => !usedBoundKeys.has(key),
+      );
+
+      const errorMessages: string[] = [];
+      if (unusedAuth.length > 0) {
+        errorMessages.push(`unused auth tokens: ${unusedAuth.join(', ')}`);
+      }
+      if (unusedBound.length > 0) {
+        errorMessages.push(
+          `unused bound parameters: ${unusedBound.join(', ')}`,
+        );
+      }
+
+      if (errorMessages.length > 0) {
+        throw new Error(
+          `Validation failed for tool '${name}': ${errorMessages.join('; ')}.`,
+        );
+      }
       return tool;
     } else {
       throw new Error(
@@ -299,13 +289,26 @@ class ToolboxClient {
       tools.push(tool);
 
       if (strict) {
-        this.#validateToolUsage(
-          toolName,
-          providedAuthKeys,
-          usedAuthKeys,
-          providedBoundKeys,
-          usedBoundKeys,
+        const unusedAuth = [...providedAuthKeys].filter(
+          key => !usedAuthKeys.has(key),
         );
+        const unusedBound = [...providedBoundKeys].filter(
+          key => !usedBoundKeys.has(key),
+        );
+        const errorMessages: string[] = [];
+        if (unusedAuth.length > 0) {
+          errorMessages.push(`unused auth tokens: ${unusedAuth.join(', ')}`);
+        }
+        if (unusedBound.length > 0) {
+          errorMessages.push(
+            `unused bound parameters: ${unusedBound.join(', ')}`,
+          );
+        }
+        if (errorMessages.length > 0) {
+          throw new Error(
+            `Validation failed for tool '${toolName}': ${errorMessages.join('; ')}.`,
+          );
+        }
       } else {
         usedAuthKeys.forEach(key => overallUsedAuthKeys.add(key));
         usedBoundKeys.forEach(key => overallUsedBoundParams.add(key));

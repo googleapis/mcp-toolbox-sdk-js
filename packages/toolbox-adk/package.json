@@ -1,6 +1,6 @@
 {
     "name": "@toolbox-sdk/adk",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "type": "module",
     "description": "JavaScript ADK SDK for interacting with the Toolbox service",
     "license": "Apache-2.0",

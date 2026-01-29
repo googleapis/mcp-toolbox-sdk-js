@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v0.2.0...adk-v0.2.1) (2026-01-29)
+
+
+### Bug Fixes
+
+* update clean scripts ([#230](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/230)) ([5f7d200](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/5f7d2004a313af3b4a5ed7a726674e6d3825ebc8))
+
 ## [0.2.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v0.1.5...adk-v0.2.0) (2026-01-29)
 
 

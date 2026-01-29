@@ -14,9 +14,9 @@
       "packages/toolbox-core": {
         "component": "core",
         "extra-files": [
-          "src/toolbox_core/version.ts"
+          "src/toolbox_core/version.ts",
+          "package-lock.json"
         ]
-
       },
       "packages/toolbox-adk": {
         "component": "adk"

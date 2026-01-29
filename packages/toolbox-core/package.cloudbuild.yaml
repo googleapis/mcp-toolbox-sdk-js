@@ -37,7 +37,7 @@ steps:
     args:
       - '-c'
       - |
-        tar -txf *.tgz
+        tar -xf *.tgz
         if [ ! -f package/build/esm/index.js ]; then echo "Missing esm index"; exit 1; fi
         if [ ! -f package/build/cjs/index.js ]; then echo "Missing cjs index"; exit 1; fi
 

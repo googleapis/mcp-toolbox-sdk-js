@@ -40,7 +40,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies to update lockfile
-        run: npm install
+        run: npm install --package-lock-only --ignore-scripts
 
       - name: Commit and Push changes
         run: |

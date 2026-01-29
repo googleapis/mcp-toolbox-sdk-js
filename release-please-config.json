@@ -14,23 +14,12 @@
       "packages/toolbox-core": {
         "component": "core",
         "extra-files": [
-          "src/toolbox_core/version.ts",
-          {
-            "type": "json",
-            "path": "package-lock.json",
-            "jsonpath": "$.packages['packages/toolbox-core'].version"
-          }
+          "src/toolbox_core/version.ts"
         ]
+
       },
       "packages/toolbox-adk": {
-        "component": "adk",
-        "extra-files": [
-          {
-            "type": "json",
-            "path": "package-lock.json",
-            "jsonpath": "$.packages['packages/toolbox-adk'].version"
-          }
-        ]
+        "component": "adk"
       }
     },
     "separate-pull-requests": true

@@ -19,6 +19,7 @@ export enum Protocol {
   MCP_v20241105 = '2024-11-05',
   MCP_v20250326 = '2025-03-26',
   MCP_v20250618 = '2025-06-18',
+  MCP_v20251125 = '2025-11-25',
   MCP = MCP_v20250618, // Default MCP
 }
 
@@ -27,6 +28,7 @@ export function getSupportedMcpVersions(): Protocol[] {
     Protocol.MCP_v20241105,
     Protocol.MCP_v20250326,
     Protocol.MCP_v20250618,
+    Protocol.MCP_v20251125,
   ];
 }
 

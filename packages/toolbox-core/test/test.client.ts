@@ -21,6 +21,7 @@ import {ToolboxTransport} from '../src/toolbox_core/toolboxTransport.js';
 import {McpHttpTransportV20241105} from '../src/toolbox_core/mcp/v20241105/mcp.js';
 import {McpHttpTransportV20250326} from '../src/toolbox_core/mcp/v20250326/mcp.js';
 import {McpHttpTransportV20250618} from '../src/toolbox_core/mcp/v20250618/mcp.js';
+import {McpHttpTransportV20251125} from '../src/toolbox_core/mcp/v20251125/mcp.js';
 
 // --- Mock Transport Implementation ---
 class MockTransport implements ITransport {
@@ -68,6 +69,14 @@ jest.mock('../src/toolbox_core/mcp/v20250618/mcp', () => {
   };
 });
 
+// Mock the McpHttpTransportV20251125 module
+jest.mock('../src/toolbox_core/mcp/v20251125/mcp', () => {
+  return {
+    __esModule: true,
+    McpHttpTransportV20251125: jest.fn(),
+  };
+});
+
 describe('ToolboxClient', () => {
   const testBaseUrl = 'https://api.example.com';
   let mockTransport: MockTransport;
@@ -87,6 +96,9 @@ describe('ToolboxClient', () => {
       () => mockTransport,
     );
     (McpHttpTransportV20250618 as unknown as jest.Mock).mockImplementation(
+      () => mockTransport,
+    );
+    (McpHttpTransportV20251125 as unknown as jest.Mock).mockImplementation(
       () => mockTransport,
     );
   });
@@ -159,17 +171,17 @@ describe('ToolboxClient', () => {
       );
     });
 
-    it('should initialize with MCP v20250618 transport when specified', () => {
+    it('should initialize with MCP v20251125 transport when specified', () => {
       client = new ToolboxClient(
         testBaseUrl,
         undefined,
         undefined,
-        Protocol.MCP_v20250618,
+        Protocol.MCP_v20251125,
       );
-      expect(McpHttpTransportV20250618).toHaveBeenCalledWith(
+      expect(McpHttpTransportV20251125).toHaveBeenCalledWith(
         testBaseUrl,
         undefined,
-        Protocol.MCP_v20250618,
+        Protocol.MCP_v20251125,
       );
     });
 

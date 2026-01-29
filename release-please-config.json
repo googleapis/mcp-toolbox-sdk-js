@@ -15,13 +15,21 @@
         "component": "core",
         "extra-files": [
           "src/toolbox_core/version.ts",
-          "package-lock.json"
+          {
+            "type": "json",
+            "path": "package-lock.json",
+            "jsonpath": "$.packages['packages/toolbox-core'].version"
+          }
         ]
       },
       "packages/toolbox-adk": {
         "component": "adk",
         "extra-files": [
-          "package-lock.json"
+          {
+            "type": "json",
+            "path": "package-lock.json",
+            "jsonpath": "$.packages['packages/toolbox-adk'].version"
+          }
         ]
       }
     },

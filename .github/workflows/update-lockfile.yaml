@@ -30,9 +30,17 @@ jobs:
 
       - name: Commit and Push changes
         run: |
+          # Check if package-lock.json changed
+          if git diff --quiet package-lock.json; then
+            echo "No changes to package-lock.json"
+            exit 0
+          fi
+
+          # Configure git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+          # Commit and push
           git add package-lock.json
           git commit -m "chore: update package-lock.json"
           git push

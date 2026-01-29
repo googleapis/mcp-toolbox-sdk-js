@@ -51,10 +51,10 @@ jobs:
           fi
 
           # Configure git
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "release-please[bot]"
+          git config user.email "55107282+release-please[bot]@users.noreply.github.com"
 
           # Commit and push
           git add package-lock.json
           git commit -m "chore: update package-lock.json"
-          git push
+          git push origin HEAD:${{ github.head_ref }}

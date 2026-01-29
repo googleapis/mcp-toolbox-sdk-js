@@ -28,13 +28,13 @@ jobs:
     if: startsWith(github.head_ref, 'release-please--')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -51,10 +51,10 @@ jobs:
           fi
 
           # Configure git
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "release-please[bot]"
+          git config user.email "55107282+release-please[bot]@users.noreply.github.com"
 
           # Commit and push
           git add package-lock.json
           git commit -m "chore: update package-lock.json"
-          git push
+          git push origin HEAD:${{ github.head_ref }}

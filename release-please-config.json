@@ -22,5 +22,13 @@
         "component": "adk"
       }
     },
-    "separate-pull-requests": true
+    "plugins": [
+    {
+      "type": "linked-versions",
+      "groupName": "toolbox-js-sdks",
+      "components": [
+        "core", "adk"
+      ]
+    }
+  ]
 }

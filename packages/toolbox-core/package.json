@@ -1,6 +1,6 @@
 {
     "name": "@toolbox-sdk/core",
-    "version": "0.1.5",
+    "version": "0.1.6-test",
     "type": "module",
     "description": "JavaScript Base SDK for interacting with the Toolbox service",
     "license": "Apache-2.0",

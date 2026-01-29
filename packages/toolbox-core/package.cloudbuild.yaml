@@ -30,6 +30,17 @@ steps:
       - '-c'
       - npm pack ./packages/toolbox-core
 
+  - id: Verify contents
+    name: 'node:${_VERSION}'
+    entrypoint: /bin/bash
+    waitFor: ['Create package']
+    args:
+      - '-c'
+      - |
+        tar -txf *.tgz
+        if [ ! -f package/build/esm/index.js ]; then echo "Missing esm index"; exit 1; fi
+        if [ ! -f package/build/cjs/index.js ]; then echo "Missing cjs index"; exit 1; fi
+
 options:
   logging: CLOUD_LOGGING_ONLY
 substitutions:

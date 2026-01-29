@@ -57,4 +57,4 @@ jobs:
           # Commit and push
           git add package-lock.json
           git commit -m "chore: update package-lock.json"
-          git push HEAD:${{ github.head_ref }}
+          git push origin HEAD:${{ github.head_ref }}

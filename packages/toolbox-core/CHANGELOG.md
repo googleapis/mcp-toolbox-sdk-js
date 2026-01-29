@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.2.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.1.5...core-v0.2.0) (2026-01-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* add MCP support ([#196](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/196))
+
+### Features
+
+* add MCP support ([#196](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/196)) ([35e7fef](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/35e7fef4c389c14adb117e60ea7541ed475646d9))
+* **mcp:** add MCP v20251125 ([#206](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/206)) ([ef630da](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/ef630da8d07dd260f24ea57a14b4c18e3b65b2d3))
+
+
+### Bug Fixes
+
+* **mcp:** merge multiple JSON objects in MCP tool output ([#205](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/205)) ([34cdd43](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/34cdd4348310ca2b93a194f9395592579fda6b2f))
+
+
+### Miscellaneous Chores
+
+* **deps:** update dependency eslint to v9 ([#132](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/132)) ([f363ab7](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/f363ab757914d75e47acd976f0e8d3d2db15f521))
+* **deps:** update mcp toolbox server version in integration tests to v0.22.0 ([#177](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/177)) ([b05d084](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/b05d084c285cdca4f252c71616304afba4765dcd))
+* **deps:** update mcp toolbox server version in integration tests to v0.23.0 ([#180](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/180)) ([3b16848](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/3b16848a1ad42e8ad7f13b73eed3006da4267f7e))
+* **deps:** update mcp toolbox server version in integration tests to v0.25.0 ([#195](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/195)) ([4f2fcf3](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/4f2fcf3f1c1f9760ebdc5c47760780b6c1427f97))
+* **deps:** update mcp toolbox server version in integration tests to v0.26.0 ([#209](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/209)) ([3f295e5](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/3f295e542f38d4952c4d21ad9ca408f7b46bc7c9))
+
 ## [0.1.5](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.1.2...core-v0.1.5) (2025-12-03)
 
 ### Miscellaneous Chores

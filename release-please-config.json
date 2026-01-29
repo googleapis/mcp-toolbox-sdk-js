@@ -16,6 +16,7 @@
         "extra-files": [
           "src/toolbox_core/version.ts"
         ]
+
       },
       "packages/toolbox-adk": {
         "component": "adk"

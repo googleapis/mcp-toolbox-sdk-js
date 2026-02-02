@@ -24,5 +24,14 @@
           "src/toolbox_adk/version.ts"
         ]
       }
+    },
+    "plugins": [
+    {
+      "type": "linked-versions",
+      "groupName": "toolbox-js-sdks",
+      "components": [
+        "core", "adk"
+      ]
     }
+  ]
 }

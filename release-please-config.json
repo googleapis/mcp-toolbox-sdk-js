@@ -1,5 +1,5 @@
 {
-    "release-type": "node"
+    "release-type": "node",
     "separate-pull-requests": true,
     "initial-version": "0.1.0",
     "bump-minor-pre-major": true,

@@ -49,8 +49,18 @@ class TestMcpTransport extends McpHttpTransportBase {
     baseUrl: string,
     session?: AxiosInstance,
     protocol: Protocol = Protocol.MCP,
+    clientName?: string,
+    clientVersion?: string,
   ) {
-    super(baseUrl, session, protocol);
+    super(baseUrl, session, protocol, clientName, clientVersion);
+  }
+
+  public getClientName(): string | undefined {
+    return this._clientName;
+  }
+
+  public getClientVersion(): string | undefined {
+    return this._clientVersion;
   }
 
   protected async initializeSession(): Promise<void> {
@@ -137,6 +147,18 @@ describe('McpHttpTransportBase', () => {
 
     it('should set protocol version', () => {
       new TestMcpTransport(testBaseUrl, undefined, Protocol.MCP_v20241105);
+    });
+
+    it('should set client name and version', () => {
+      const transport = new TestMcpTransport(
+        testBaseUrl,
+        undefined,
+        undefined,
+        'my-client',
+        '1.2.3',
+      );
+      expect(transport.getClientName()).toBe('my-client');
+      expect(transport.getClientVersion()).toBe('1.2.3');
     });
   });
 

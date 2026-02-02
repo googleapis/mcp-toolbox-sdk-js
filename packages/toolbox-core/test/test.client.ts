@@ -217,6 +217,24 @@ describe('ToolboxClient', () => {
         );
       }).toThrow('Unsupported protocol version: unknown-protocol');
     });
+
+    it('should pass client name and version to transport', () => {
+      client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP_v20250618,
+        'custom-client',
+        '1.2.3',
+      );
+      expect(McpHttpTransportV20250618).toHaveBeenCalledWith(
+        testBaseUrl,
+        undefined,
+        Protocol.MCP_v20250618,
+        'custom-client',
+        '1.2.3',
+      );
+    });
   });
 
   describe('loadTool', () => {

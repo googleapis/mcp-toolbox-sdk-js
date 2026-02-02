@@ -138,6 +138,70 @@ describe('McpHttpTransportV20251125', () => {
       );
     });
 
+    it('should use provided client name and version in handshake', async () => {
+      const customTransport = new McpHttpTransportV20251125(
+        testBaseUrl,
+        mockSession,
+        Protocol.MCP_v20251125,
+        'custom-client',
+        '9.9.9',
+      );
+
+      const initResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '1',
+          result: {
+            protocolVersion: '2025-11-25',
+            capabilities: {tools: {}},
+            serverInfo: {name: 'test-server', version: '1.0.0'},
+          },
+        },
+        status: 200,
+      };
+
+      const initializedNotificationResponse = {
+        data: {jsonrpc: '2.0'},
+        status: 200,
+      };
+
+      const listResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '2',
+          result: {tools: []},
+        },
+        status: 200,
+      };
+
+      mockSession.post
+        .mockResolvedValueOnce(initResponse)
+        .mockResolvedValueOnce(initializedNotificationResponse)
+        .mockResolvedValueOnce(listResponse);
+
+      await customTransport.toolsList();
+
+      expect(mockSession.post).toHaveBeenNthCalledWith(
+        1,
+        `${testBaseUrl}/mcp/`,
+        expect.objectContaining({
+          method: 'initialize',
+          params: expect.objectContaining({
+            protocolVersion: '2025-11-25',
+            clientInfo: {
+              name: 'custom-client',
+              version: '9.9.9',
+            },
+          }),
+        }),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'MCP-Protocol-Version': '2025-11-25',
+          }),
+        }),
+      );
+    });
+
     it('should throw error on protocol version mismatch', async () => {
       const initResponse = {
         data: {

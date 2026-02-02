@@ -47,6 +47,8 @@ export abstract class McpHttpTransportBase implements ITransport {
 
   protected _manageSession: boolean;
   protected _session: AxiosInstance;
+  protected _clientName?: string;
+  protected _clientVersion?: string;
 
   private _initPromise: Promise<void> | null = null;
 
@@ -54,9 +56,13 @@ export abstract class McpHttpTransportBase implements ITransport {
     baseUrl: string,
     session?: AxiosInstance,
     protocol: Protocol = Protocol.MCP,
+    clientName?: string,
+    clientVersion?: string,
   ) {
     this._mcpBaseUrl = `${baseUrl}/mcp/`;
     this._protocolVersion = protocol;
+    this._clientName = clientName;
+    this._clientVersion = clientVersion;
 
     this._manageSession = !session;
     this._session = session || axios.create();

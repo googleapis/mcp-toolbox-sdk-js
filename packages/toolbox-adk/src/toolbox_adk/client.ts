@@ -21,6 +21,7 @@ import {
 } from '@toolbox-sdk/core';
 import {ToolboxTool, CoreTool} from './tool.js';
 import type {AxiosInstance} from 'axios';
+import {VERSION} from './version.js';
 
 /**
  * An asynchronous client for interacting with a Toolbox service, specifically
@@ -52,6 +53,8 @@ export class ToolboxClient {
       session,
       clientHeaders,
       protocol,
+      'toolbox-adk-js',
+      VERSION,
     );
   }
 

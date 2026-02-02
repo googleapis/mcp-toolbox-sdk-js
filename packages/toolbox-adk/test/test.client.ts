@@ -35,6 +35,8 @@ type MockCoreClientConstructor = (
   session?: AxiosInstance | null,
   clientHeaders?: ClientHeadersConfig | null,
   protocol?: string | null,
+  clientName?: string,
+  clientVersion?: string,
 ) => MockCoreClient;
 
 const mockLoadTool =
@@ -100,6 +102,8 @@ describe('ToolboxClient', () => {
       mockSession,
       mockHeaders,
       'mcp-default',
+      'toolbox-adk-js',
+      '0.2.1',
     );
   });
 

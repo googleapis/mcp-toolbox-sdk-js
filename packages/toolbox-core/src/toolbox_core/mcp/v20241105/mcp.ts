@@ -114,8 +114,8 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
       protocolVersion: this._protocolVersion,
       capabilities: {},
       clientInfo: {
-        name: 'toolbox-js-sdk',
-        version: VERSION,
+        name: this._clientName || 'toolbox-core-js',
+        version: this._clientVersion || VERSION,
       },
     };
 

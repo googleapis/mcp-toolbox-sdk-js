@@ -52,12 +52,16 @@ class ToolboxClient {
    * requests. If not provided, a new one will be created.
    * @param {ClientHeadersConfig} [clientHeaders] - Optional initial headers to
    * be included in each request.
+   * @param {string} [clientName] - Optional name of the client package.
+   * @param {string} [clientVersion] - Optional version of the client package.
    */
   constructor(
     url: string,
     session?: AxiosInstance | null,
     clientHeaders?: ClientHeadersConfig | null,
     protocol: Protocol = Protocol.MCP,
+    clientName?: string,
+    clientVersion?: string,
   ) {
     this.#clientHeaders = clientHeaders || {};
     if (protocol === Protocol.TOOLBOX) {
@@ -75,6 +79,8 @@ class ToolboxClient {
             url,
             session || undefined,
             protocol,
+            clientName,
+            clientVersion,
           );
           break;
         case Protocol.MCP_v20250326:
@@ -82,6 +88,8 @@ class ToolboxClient {
             url,
             session || undefined,
             protocol,
+            clientName,
+            clientVersion,
           );
           break;
         case Protocol.MCP_v20250618:
@@ -89,6 +97,8 @@ class ToolboxClient {
             url,
             session || undefined,
             protocol,
+            clientName,
+            clientVersion,
           );
           break;
         case Protocol.MCP_v20251125:
@@ -96,6 +106,8 @@ class ToolboxClient {
             url,
             session || undefined,
             protocol,
+            clientName,
+            clientVersion,
           );
           break;
         default:

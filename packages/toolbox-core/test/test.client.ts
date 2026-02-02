@@ -114,6 +114,8 @@ describe('ToolboxClient', () => {
         testBaseUrl,
         undefined,
         Protocol.MCP_v20250618,
+        undefined,
+        undefined,
       );
     });
 
@@ -126,6 +128,8 @@ describe('ToolboxClient', () => {
         testBaseUrl,
         mockSession,
         Protocol.MCP_v20250618,
+        undefined,
+        undefined,
       );
     });
 
@@ -140,6 +144,8 @@ describe('ToolboxClient', () => {
         testBaseUrl,
         undefined,
         Protocol.MCP_v20250618,
+        undefined,
+        undefined,
       );
     });
 
@@ -154,6 +160,8 @@ describe('ToolboxClient', () => {
         testBaseUrl,
         undefined,
         Protocol.MCP_v20241105,
+        undefined,
+        undefined,
       );
     });
 
@@ -168,6 +176,8 @@ describe('ToolboxClient', () => {
         testBaseUrl,
         undefined,
         Protocol.MCP_v20250326,
+        undefined,
+        undefined,
       );
     });
 
@@ -182,6 +192,8 @@ describe('ToolboxClient', () => {
         testBaseUrl,
         undefined,
         Protocol.MCP_v20251125,
+        undefined,
+        undefined,
       );
     });
 

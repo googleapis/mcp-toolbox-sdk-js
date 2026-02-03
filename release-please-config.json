@@ -20,7 +20,10 @@
 
       },
       "packages/toolbox-adk": {
-        "component": "adk"
+        "component": "adk",
+        "extra-files": [
+          "src/toolbox_adk/version.ts"
+        ]
       }
     }
 }

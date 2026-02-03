@@ -1,5 +1,6 @@
 {
     "release-type": "node",
+    "separate-pull-requests": true,
     "initial-version": "0.1.0",
     "bump-minor-pre-major": true,
     "bump-patch-for-minor-pre-major": true,
@@ -24,14 +25,5 @@
           "src/toolbox_adk/version.ts"
         ]
       }
-    },
-    "plugins": [
-    {
-      "type": "linked-versions",
-      "groupName": "toolbox-js-sdks",
-      "components": [
-        "core", "adk"
-      ]
     }
-  ]
 }

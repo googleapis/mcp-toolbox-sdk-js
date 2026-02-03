@@ -37,6 +37,7 @@ describe('McpHttpTransportV20241105', () => {
   const testBaseUrl = 'http://test.loc';
   let mockSession: jest.Mocked<AxiosInstance>;
   let transport: McpHttpTransportV20241105;
+  let consoleWarnSpy: ReturnType<typeof jest.spyOn>;
 
   beforeEach(() => {
     mockSession = {
@@ -55,10 +56,12 @@ describe('McpHttpTransportV20241105', () => {
       mockSession,
       Protocol.MCP_v20241105,
     );
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+    consoleWarnSpy.mockRestore();
   });
 
   describe('initialization', () => {
@@ -787,12 +790,82 @@ describe('McpHttpTransportV20241105', () => {
           },
         },
         status: 200,
+        statusText: 'OK',
       };
 
       mockSession.post.mockResolvedValueOnce(invokeResponse);
 
       const result = await transport.toolInvoke('testTool', {}, {});
       expect(result).toBe('{"id": 1}part2');
+    });
+
+    it('should warn if sending headers over HTTP', async () => {
+      const invokeResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '3',
+          result: {content: []},
+        },
+        status: 200,
+      };
+      mockSession.post.mockResolvedValueOnce(invokeResponse);
+
+      await transport.toolInvoke(
+        'testTool',
+        {arg: 'val'},
+        {Authorization: 'Bearer token'},
+      );
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Sending headers over HTTP. Any ID tokens may be exposed. Use HTTPS for secure communication.',
+        ),
+      );
+    });
+
+    it('should not warn if using HTTPS', async () => {
+      const invokeResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '3',
+          result: {content: []},
+        },
+        status: 200,
+      };
+      // Create HTTPS transport
+      const httpsTransport = new McpHttpTransportV20241105(
+        'https://secure.test.loc',
+        mockSession,
+        Protocol.MCP_v20241105,
+      );
+
+      // Need to mock init sequence for the new transport instance
+      const initResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '1',
+          result: {
+            protocolVersion: '2024-11-05',
+            capabilities: {tools: {}},
+            serverInfo: {name: 'test-server', version: '1.0.0'},
+          },
+        },
+        status: 200,
+      };
+      const notifResponse = {data: {}, status: 200};
+
+      mockSession.post
+        .mockResolvedValueOnce(initResponse)
+        .mockResolvedValueOnce(notifResponse)
+        .mockResolvedValueOnce(invokeResponse);
+
+      await httpsTransport.toolInvoke(
+        'testTool',
+        {arg: 'val'},
+        {Authorization: 'Bearer token'},
+      );
+
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
     });
   });
 });

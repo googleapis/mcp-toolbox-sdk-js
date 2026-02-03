@@ -108,7 +108,7 @@ describe('ToolboxTool', () => {
         service1: () => 'token',
       });
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Sending ID token over HTTP. User data may be exposed. Use HTTPS for secure communication.',
+        'Sending headers over HTTP. Any ID tokens may be exposed. Use HTTPS for secure communication.',
       );
     });
 
@@ -126,7 +126,7 @@ describe('ToolboxTool', () => {
         {'x-api-key': 'key'},
       );
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Sending ID token over HTTP. User data may be exposed. Use HTTPS for secure communication.',
+        'Sending headers over HTTP. Any ID tokens may be exposed. Use HTTPS for secure communication.',
       );
     });
   });

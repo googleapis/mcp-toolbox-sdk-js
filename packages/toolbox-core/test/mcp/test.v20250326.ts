@@ -843,6 +843,21 @@ describe('McpHttpTransportV20250326', () => {
     });
 
     it('should warn if sending headers over HTTP', async () => {
+      const initResponse = {
+        headers: {'mcp-session-id': 'sess-1'},
+        data: {
+          jsonrpc: '2.0',
+          id: '1',
+          result: {
+            protocolVersion: '2025-03-26',
+            capabilities: {tools: {}},
+            serverInfo: {name: 'test-server', version: '1.0.0'},
+          },
+        },
+        status: 200,
+      };
+      const notifResponse = {data: {}, status: 200};
+
       const invokeResponse = {
         data: {
           jsonrpc: '2.0',
@@ -851,7 +866,14 @@ describe('McpHttpTransportV20250326', () => {
         },
         status: 200,
       };
-      mockSession.post.mockResolvedValueOnce(invokeResponse);
+
+      mockSession.post.mockImplementation(async (_url, data) => {
+        const method = (data as any).method;
+        if (method === 'initialize') return initResponse as any;
+        if (method === 'notifications/initialized') return notifResponse as any;
+        if (method === 'tools/call') return invokeResponse as any;
+        return {data: {}, status: 200} as any;
+      });
 
       await transport.toolInvoke(
         'testTool',
@@ -898,10 +920,13 @@ describe('McpHttpTransportV20250326', () => {
       };
       const notifResponse = {data: {}, status: 200};
 
-      mockSession.post
-        .mockResolvedValueOnce(initResponse)
-        .mockResolvedValueOnce(notifResponse)
-        .mockResolvedValueOnce(invokeResponse);
+      mockSession.post.mockImplementation(async (_url, data) => {
+        const method = (data as any).method;
+        if (method === 'initialize') return initResponse as any;
+        if (method === 'notifications/initialized') return notifResponse as any;
+        if (method === 'tools/call') return invokeResponse as any;
+        return {data: {}, status: 200} as any;
+      });
 
       await httpsTransport.toolInvoke(
         'testTool',

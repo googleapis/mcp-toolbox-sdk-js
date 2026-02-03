@@ -842,11 +842,15 @@ describe('McpHttpTransportV20251125', () => {
       };
 
       mockSession.post.mockImplementation(async (_url, data) => {
-        const method = (data as any).method;
-        if (method === 'initialize') return initResponse as any;
-        if (method === 'notifications/initialized') return notifResponse as any;
-        if (method === 'tools/call') return invokeResponse as any;
-        return {data: {}, status: 200} as any;
+        const method = (data as {method: string}).method;
+        let response: unknown;
+        if (method === 'initialize') response = initResponse;
+        else if (method === 'notifications/initialized')
+          response = notifResponse;
+        else if (method === 'tools/call') response = invokeResponse;
+        else response = {data: {}, status: 200};
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return response as any;
       });
 
       await transport.toolInvoke(
@@ -894,11 +898,15 @@ describe('McpHttpTransportV20251125', () => {
       const notifResponse = {data: {}, status: 200};
 
       mockSession.post.mockImplementation(async (_url, data) => {
-        const method = (data as any).method;
-        if (method === 'initialize') return initResponse as any;
-        if (method === 'notifications/initialized') return notifResponse as any;
-        if (method === 'tools/call') return invokeResponse as any;
-        return {data: {}, status: 200} as any;
+        const method = (data as {method: string}).method;
+        let response: unknown;
+        if (method === 'initialize') response = initResponse;
+        else if (method === 'notifications/initialized')
+          response = notifResponse;
+        else if (method === 'tools/call') response = invokeResponse;
+        else response = {data: {}, status: 200};
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return response as any;
       });
 
       await httpsTransport.toolInvoke(

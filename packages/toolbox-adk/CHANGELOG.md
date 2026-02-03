@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.2](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v0.2.1...adk-v0.2.2) (2026-02-03)
+
+
+### Features
+
+* Enable package-specific client identification for MCP ([#238](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/238)) ([43b759e](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/43b759e2d3acc35c90683fd27db4649b482ee80b))
+
+
+### Miscellaneous Chores
+
+* **deps:** update dependency @google/adk to ^0.3.0 ([#234](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/234)) ([f294e59](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/f294e59a8d02363cab95dc98feb3267a0b9e4260))
+
 ## [0.2.1](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v0.1.5...adk-v0.2.1) (2026-01-29)
 
 

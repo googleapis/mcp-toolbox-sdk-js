@@ -69,7 +69,7 @@ function ToolboxTool(
     !transport.baseUrl.startsWith('https://')
   ) {
     console.warn(
-      'Sending ID token over HTTP. User data may be exposed. Use HTTPS for secure communication.',
+      'Sending headers over HTTP. Any ID tokens may be exposed. Use HTTPS for secure communication.',
     );
   }
 

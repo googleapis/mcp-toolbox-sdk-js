@@ -235,6 +235,15 @@ export class McpHttpTransportV20250618 extends McpHttpTransportBase {
   ): Promise<string> {
     await this.ensureInitialized(headers);
 
+    if (
+      Object.keys(headers).length > 0 &&
+      !this._mcpBaseUrl.startsWith('https://')
+    ) {
+      console.warn(
+        'Sending headers over HTTP. Any ID tokens may be exposed. Use HTTPS for secure communication.',
+      );
+    }
+
     const params: types.CallToolRequestParams = {
       name: toolName,
       arguments: arguments_,

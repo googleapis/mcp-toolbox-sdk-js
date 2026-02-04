@@ -65,6 +65,9 @@ class ToolboxClient {
   ) {
     this.#clientHeaders = clientHeaders || {};
     if (protocol === Protocol.TOOLBOX) {
+      console.warn(
+        'The native Toolbox protocol is deprecated and will be removed on March 4, 2026. Please strictly use MCP versions (e.g. Protocol.MCP_v20251125).',
+      );
       this.#transport = new ToolboxTransport(url, session || undefined);
     } else if (getSupportedMcpVersions().includes(protocol)) {
       if (protocol !== Protocol.MCP_v20251125) {

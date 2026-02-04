@@ -17,7 +17,7 @@ import {z, ZodRawShape, ZodTypeAny, ZodObject} from 'zod';
 export enum Protocol {
   /**
    * @deprecated The native Toolbox protocol is deprecated and will be removed on March 4, 2026.
-   * Please strictly use MCP versions (e.g. Protocol.MCP_v20241105).
+   * Please use Protocol.MCP or specific MCP versions.
    */
   TOOLBOX = 'toolbox',
   MCP_v20241105 = '2024-11-05',

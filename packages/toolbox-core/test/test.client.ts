@@ -209,7 +209,7 @@ describe('ToolboxClient', () => {
       );
       expect(ToolboxTransport).toHaveBeenCalledWith(testBaseUrl, undefined);
       expect(consoleSpy).toHaveBeenCalledWith(
-        'The native Toolbox protocol is deprecated and will be removed on March 4, 2026. Please strictly use MCP versions (e.g. Protocol.MCP_v20251125).',
+        'The native Toolbox protocol is deprecated and will be removed on March 4, 2026. Please use Protocol.MCP or specific MCP versions.',
       );
       consoleSpy.mockRestore();
     });

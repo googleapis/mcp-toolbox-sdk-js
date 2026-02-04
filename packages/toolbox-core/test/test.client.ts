@@ -37,8 +37,6 @@ class MockTransport implements ITransport {
   }
 }
 
-
-
 // Mock the McpHttpTransportV20241105 module
 jest.mock('../src/toolbox_core/mcp/v20241105/mcp', () => {
   return {
@@ -188,8 +186,6 @@ describe('ToolboxClient', () => {
         undefined,
       );
     });
-
-
 
     it('should throw error for unsupported protocol', () => {
       expect(() => {

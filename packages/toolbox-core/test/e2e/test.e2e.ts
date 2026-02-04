@@ -87,7 +87,9 @@ describe('ToolboxClient E2E Tests', () => {
         expect(loadedTools.length).toBe(testCase.expectedLength);
 
         const loadedToolNames = new Set(
-          loadedTools.map((tool: ReturnType<typeof ToolboxTool>) => tool.getName()),
+          loadedTools.map((tool: ReturnType<typeof ToolboxTool>) =>
+            tool.getName(),
+          ),
         );
         expect(loadedToolNames).toEqual(new Set(testCase.expectedTools));
 
@@ -105,7 +107,8 @@ describe('ToolboxClient E2E Tests', () => {
       expect(Array.isArray(loadedTools)).toBe(true);
       expect(loadedTools.length).toBeGreaterThan(0);
       const getNRowsToolFromSet = loadedTools.find(
-        (tool: ReturnType<typeof ToolboxTool>) => tool.getName() === 'get-n-rows',
+        (tool: ReturnType<typeof ToolboxTool>) =>
+          tool.getName() === 'get-n-rows',
       );
 
       expect(getNRowsToolFromSet).toBeDefined();
@@ -114,7 +117,11 @@ describe('ToolboxClient E2E Tests', () => {
       expect(getNRowsToolFromSet?.getDescription()).toBeDefined();
       expect(getNRowsToolFromSet?.getParamSchema()).toBeDefined();
 
-      const loadedToolNames = new Set(loadedTools.map((tool: ReturnType<typeof ToolboxTool>) => tool.getName()));
+      const loadedToolNames = new Set(
+        loadedTools.map((tool: ReturnType<typeof ToolboxTool>) =>
+          tool.getName(),
+        ),
+      );
       const expectedDefaultTools = new Set([
         'get-row-by-content-auth',
         'get-row-by-email-auth',

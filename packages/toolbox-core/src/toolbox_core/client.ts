@@ -15,7 +15,6 @@
 import {ToolboxTool} from './tool.js';
 import {AxiosInstance} from 'axios';
 import {ITransport} from './transport.types.js';
-import {ToolboxTransport} from './toolboxTransport.js';
 import {
   createZodSchemaFromParams,
   ParameterSchema,
@@ -70,12 +69,7 @@ class ToolboxClient {
   ) {
     this.#clientHeaders = clientHeaders || {};
     warnIfHttpAndHeaders(url, this.#clientHeaders);
-    if (protocol === Protocol.TOOLBOX) {
-      console.warn(
-        'The native Toolbox protocol is deprecated and will be removed on March 4, 2026. Please use Protocol.MCP or specific MCP versions.',
-      );
-      this.#transport = new ToolboxTransport(url, session || undefined);
-    } else if (getSupportedMcpVersions().includes(protocol)) {
+    if (getSupportedMcpVersions().includes(protocol)) {
       if (protocol !== Protocol.MCP_v20251125) {
         console.warn(
           'A newer version of MCP: v2025-11-25 is available. Please use MCP_v20251125 to use the latest features.',

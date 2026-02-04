@@ -37,7 +37,7 @@ describe('ToolboxClient E2E Tests', () => {
       testBaseUrl,
       undefined,
       undefined,
-      Protocol.TOOLBOX,
+      Protocol.MCP,
     );
   });
 

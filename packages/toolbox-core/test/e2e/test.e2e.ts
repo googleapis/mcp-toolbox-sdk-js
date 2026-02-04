@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ToolboxClient} from '../../src/toolbox_core/client';
-import {ToolboxTool} from '../../src/toolbox_core/tool';
-import {Protocol} from '../../src/toolbox_core/protocol';
+import {ToolboxClient} from '../../src/toolbox_core/client.js';
+import {ToolboxTool} from '../../src/toolbox_core/tool.js';
+import {Protocol} from '../../src/toolbox_core/protocol.js';
 
 import {AxiosError} from 'axios';
-import {CustomGlobal} from './types';
-import {authTokenGetter} from './utils';
+import {CustomGlobal} from './types.js';
+import {authTokenGetter} from './utils.js';
 import {ZodOptional, ZodNullable, ZodTypeAny} from 'zod';
 
 describe('ToolboxClient E2E Tests', () => {
@@ -32,7 +32,7 @@ describe('ToolboxClient E2E Tests', () => {
       testBaseUrl,
       undefined,
       undefined,
-      Protocol.TOOLBOX,
+      Protocol.MCP,
     );
   });
 
@@ -87,7 +87,7 @@ describe('ToolboxClient E2E Tests', () => {
         expect(loadedTools.length).toBe(testCase.expectedLength);
 
         const loadedToolNames = new Set(
-          loadedTools.map(tool => tool.getName()),
+          loadedTools.map((tool: ReturnType<typeof ToolboxTool>) => tool.getName()),
         );
         expect(loadedToolNames).toEqual(new Set(testCase.expectedTools));
 
@@ -105,7 +105,7 @@ describe('ToolboxClient E2E Tests', () => {
       expect(Array.isArray(loadedTools)).toBe(true);
       expect(loadedTools.length).toBeGreaterThan(0);
       const getNRowsToolFromSet = loadedTools.find(
-        tool => tool.getName() === 'get-n-rows',
+        (tool: ReturnType<typeof ToolboxTool>) => tool.getName() === 'get-n-rows',
       );
 
       expect(getNRowsToolFromSet).toBeDefined();
@@ -114,7 +114,7 @@ describe('ToolboxClient E2E Tests', () => {
       expect(getNRowsToolFromSet?.getDescription()).toBeDefined();
       expect(getNRowsToolFromSet?.getParamSchema()).toBeDefined();
 
-      const loadedToolNames = new Set(loadedTools.map(tool => tool.getName()));
+      const loadedToolNames = new Set(loadedTools.map((tool: ReturnType<typeof ToolboxTool>) => tool.getName()));
       const expectedDefaultTools = new Set([
         'get-row-by-content-auth',
         'get-row-by-email-auth',

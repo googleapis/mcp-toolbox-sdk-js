@@ -17,7 +17,6 @@ import {ITransport} from '../src/toolbox_core/transport.types.js';
 import {ZodManifest, Protocol} from '../src/toolbox_core/protocol.js';
 import type {ToolboxClient as ToolboxClientType} from '../src/toolbox_core/client.js';
 import {ToolboxClient} from '../src/toolbox_core/client.js';
-import {ToolboxTransport} from '../src/toolbox_core/toolboxTransport.js';
 import {McpHttpTransportV20241105} from '../src/toolbox_core/mcp/v20241105/mcp.js';
 import {McpHttpTransportV20250326} from '../src/toolbox_core/mcp/v20250326/mcp.js';
 import {McpHttpTransportV20250618} from '../src/toolbox_core/mcp/v20250618/mcp.js';
@@ -37,13 +36,6 @@ class MockTransport implements ITransport {
     this.toolInvoke = jest.fn();
   }
 }
-
-// Mock the ToolboxTransport module
-jest.mock('../src/toolbox_core/toolboxTransport.js', () => {
-  return {
-    ToolboxTransport: jest.fn(),
-  };
-});
 
 // Mock the McpHttpTransportV20241105 module
 jest.mock('../src/toolbox_core/mcp/v20241105/mcp', () => {
@@ -85,9 +77,7 @@ describe('ToolboxClient', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockTransport = new MockTransport(testBaseUrl);
-    (ToolboxTransport as unknown as jest.Mock).mockImplementation(
-      () => mockTransport,
-    );
+
     // Explicitly reference the imported symbol which should be the mock
     (McpHttpTransportV20241105 as unknown as jest.Mock).mockImplementation(
       () => mockTransport,
@@ -195,16 +185,6 @@ describe('ToolboxClient', () => {
         undefined,
         undefined,
       );
-    });
-
-    it('should initialize with ToolboxTransport when specified', () => {
-      client = new ToolboxClient(
-        testBaseUrl,
-        undefined,
-        undefined,
-        Protocol.TOOLBOX,
-      );
-      expect(ToolboxTransport).toHaveBeenCalledWith(testBaseUrl, undefined);
     });
 
     it('should throw error for unsupported protocol', () => {

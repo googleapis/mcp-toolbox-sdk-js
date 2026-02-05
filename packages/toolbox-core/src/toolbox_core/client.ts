@@ -64,6 +64,14 @@ class ToolboxClient {
     clientVersion?: string,
   ) {
     this.#clientHeaders = clientHeaders || {};
+    if (
+      Object.keys(this.#clientHeaders).length > 0 &&
+      !url.toLowerCase().startsWith('https://')
+    ) {
+      console.warn(
+        'Sending headers over HTTP. Any ID tokens may be exposed. Use HTTPS for secure communication.',
+      );
+    }
     if (protocol === Protocol.TOOLBOX) {
       this.#transport = new ToolboxTransport(url, session || undefined);
     } else if (getSupportedMcpVersions().includes(protocol)) {
@@ -208,6 +216,15 @@ class ToolboxClient {
     authTokenGetters: AuthTokenGetters | null = {},
     boundParams: BoundParams | null = {},
   ): Promise<ReturnType<typeof ToolboxTool>> {
+    if (
+      authTokenGetters &&
+      Object.keys(authTokenGetters).length > 0 &&
+      !this.#transport.baseUrl.toLowerCase().startsWith('https://')
+    ) {
+      console.warn(
+        'Sending headers over HTTP. Any ID tokens may be exposed. Use HTTPS for secure communication.',
+      );
+    }
     const headers = await this.#resolveClientHeaders();
     const manifest = await this.#transport.toolGet(name, headers);
 
@@ -276,6 +293,15 @@ class ToolboxClient {
     boundParams: BoundParams | null = {},
     strict = false,
   ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
+    if (
+      authTokenGetters &&
+      Object.keys(authTokenGetters).length > 0 &&
+      !this.#transport.baseUrl.toLowerCase().startsWith('https://')
+    ) {
+      console.warn(
+        'Sending headers over HTTP. Any ID tokens may be exposed. Use HTTPS for secure communication.',
+      );
+    }
     const toolsetName = name || '';
     const headers = await this.#resolveClientHeaders();
 

@@ -76,12 +76,12 @@ export class ToolboxTransport implements ITransport {
     // access. Always use HTTPS to ensure secure communication and protect
     // user privacy.
     if (
-      !this.baseUrl.startsWith('https://') &&
+      this.baseUrl.startsWith('http://') &&
       headers &&
       Object.keys(headers).length > 0
     ) {
       console.warn(
-        'Sending headers over HTTP. Any ID tokens may be exposed. Use HTTPS for secure communication.',
+        'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
       );
     }
     const url = `${this.#baseUrl}/api/tool/${toolName}/invoke`;

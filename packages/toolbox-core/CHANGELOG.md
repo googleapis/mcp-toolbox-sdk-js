@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.2](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.2.1...core-v0.2.2) (2026-02-05)
+
+
+### Features
+
+* Enable package-specific client identification for MCP ([#238](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/238)) ([43b759e](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/43b759e2d3acc35c90683fd27db4649b482ee80b))
+
+
+### Miscellaneous Chores
+
+* Deprecate native Toolbox protocol ([#256](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/256)) ([77e8527](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/77e8527dba2b36edd7f73ccb167d3363fa1e903d))
+* standardize HTTP security warnings ([#253](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/253)) ([81df01d](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/81df01d08b0240994fbf67cf75b5a67b6d6522af))
+
 ## [0.2.1](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.1.5...core-v0.2.1) (2026-01-29)
 
 

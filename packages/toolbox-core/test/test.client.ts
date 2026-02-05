@@ -198,6 +198,9 @@ describe('ToolboxClient', () => {
     });
 
     it('should initialize with ToolboxTransport when specified', () => {
+      const consoleSpy = jest
+        .spyOn(console, 'warn')
+        .mockImplementation(() => {});
       client = new ToolboxClient(
         testBaseUrl,
         undefined,
@@ -205,6 +208,10 @@ describe('ToolboxClient', () => {
         Protocol.TOOLBOX,
       );
       expect(ToolboxTransport).toHaveBeenCalledWith(testBaseUrl, undefined);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'The native Toolbox protocol is deprecated and will be removed on March 4, 2026. Please use Protocol.MCP or specific MCP versions.',
+      );
+      consoleSpy.mockRestore();
     });
 
     it('should throw error for unsupported protocol', () => {

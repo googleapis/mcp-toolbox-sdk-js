@@ -66,10 +66,10 @@ function ToolboxTool(
   if (
     (Object.keys(authTokenGetters).length > 0 ||
       Object.keys(clientHeaders).length > 0) &&
-    !transport.baseUrl.startsWith('https://')
+    transport.baseUrl.startsWith('http://')
   ) {
     console.warn(
-      'Sending headers over HTTP. Any ID tokens may be exposed. Use HTTPS for secure communication.',
+      'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
     );
   }
 

@@ -531,14 +531,14 @@ describe('ToolboxClient', () => {
     it('should warn when initializing with HTTP and client headers', () => {
       new ToolboxClient(httpUrl, undefined, {'X-Test': 'val'});
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Sending headers over HTTP'),
+        expect.stringContaining('This connection is using HTTP'),
       );
     });
 
     it('should NOT warn when initializing with HTTPS and client headers', () => {
       new ToolboxClient(testBaseUrl, undefined, {'X-Test': 'val'});
       expect(consoleSpy).not.toHaveBeenCalledWith(
-        expect.stringContaining('Sending headers over HTTP'),
+        expect.stringContaining('This connection is using HTTP'),
       );
     });
 
@@ -561,7 +561,7 @@ describe('ToolboxClient', () => {
       client = new ToolboxClient(httpUrl);
       await client.loadTool('testTool', {auth: () => 'token'});
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Sending headers over HTTP'),
+        expect.stringContaining('This connection is using HTTP'),
       );
     });
 
@@ -585,7 +585,7 @@ describe('ToolboxClient', () => {
       client = new ToolboxClient(testBaseUrl);
       await client.loadTool('testTool', {auth: () => 'token'});
       expect(consoleSpy).not.toHaveBeenCalledWith(
-        expect.stringContaining('Sending headers over HTTP'),
+        expect.stringContaining('This connection is using HTTP'),
       );
     });
 
@@ -608,7 +608,7 @@ describe('ToolboxClient', () => {
       client = new ToolboxClient(httpUrl);
       await client.loadToolset('set', {auth: () => 'token'});
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Sending headers over HTTP'),
+        expect.stringContaining('This connection is using HTTP'),
       );
     });
   });

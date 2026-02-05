@@ -66,10 +66,10 @@ class ToolboxClient {
     this.#clientHeaders = clientHeaders || {};
     if (
       Object.keys(this.#clientHeaders).length > 0 &&
-      !url.toLowerCase().startsWith('https://')
+      url.toLowerCase().startsWith('http://')
     ) {
       console.warn(
-        'Sending headers over HTTP. Any ID tokens may be exposed. Use HTTPS for secure communication.',
+        'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
       );
     }
     if (protocol === Protocol.TOOLBOX) {
@@ -219,10 +219,10 @@ class ToolboxClient {
     if (
       authTokenGetters &&
       Object.keys(authTokenGetters).length > 0 &&
-      !this.#transport.baseUrl.toLowerCase().startsWith('https://')
+      this.#transport.baseUrl.toLowerCase().startsWith('http://')
     ) {
       console.warn(
-        'Sending headers over HTTP. Any ID tokens may be exposed. Use HTTPS for secure communication.',
+        'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
       );
     }
     const headers = await this.#resolveClientHeaders();
@@ -296,10 +296,10 @@ class ToolboxClient {
     if (
       authTokenGetters &&
       Object.keys(authTokenGetters).length > 0 &&
-      !this.#transport.baseUrl.toLowerCase().startsWith('https://')
+      this.#transport.baseUrl.toLowerCase().startsWith('http://')
     ) {
       console.warn(
-        'Sending headers over HTTP. Any ID tokens may be exposed. Use HTTPS for secure communication.',
+        'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
       );
     }
     const toolsetName = name || '';

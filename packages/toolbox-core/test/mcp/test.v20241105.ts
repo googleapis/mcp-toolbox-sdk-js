@@ -843,7 +843,7 @@ describe('McpHttpTransportV20241105', () => {
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         expect.stringContaining(
-          'Sending headers over HTTP. Any ID tokens may be exposed. Use HTTPS for secure communication.',
+          'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
         ),
       );
     });

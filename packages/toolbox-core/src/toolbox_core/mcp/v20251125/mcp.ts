@@ -237,10 +237,10 @@ export class McpHttpTransportV20251125 extends McpHttpTransportBase {
 
     if (
       Object.keys(headers).length > 0 &&
-      !this._mcpBaseUrl.startsWith('https://')
+      this._mcpBaseUrl.startsWith('http://')
     ) {
       console.warn(
-        'Sending headers over HTTP. Any ID tokens may be exposed. Use HTTPS for secure communication.',
+        'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
       );
     }
 

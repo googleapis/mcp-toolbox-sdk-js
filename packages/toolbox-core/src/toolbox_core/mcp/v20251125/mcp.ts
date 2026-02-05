@@ -18,6 +18,7 @@ import * as types from './types.js';
 
 import {ZodManifest} from '../../protocol.js';
 import {logApiError} from '../../errorUtils.js';
+import {warnIfHttpAndHeaders} from '../../utils.js';
 
 import {v4 as uuidv4} from 'uuid';
 import {VERSION} from '../../version.js';
@@ -235,13 +236,8 @@ export class McpHttpTransportV20251125 extends McpHttpTransportBase {
   ): Promise<string> {
     await this.ensureInitialized(headers);
 
-    if (
-      Object.keys(headers).length > 0 &&
-      this._mcpBaseUrl.startsWith('http://')
-    ) {
-      console.warn(
-        'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
-      );
+    if (Object.keys(headers).length > 0) {
+      warnIfHttpAndHeaders(this._mcpBaseUrl, headers);
     }
 
     const params: types.CallToolRequestParams = {

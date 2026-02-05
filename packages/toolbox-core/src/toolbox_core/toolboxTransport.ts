@@ -18,6 +18,7 @@ import axios, {AxiosInstance, AxiosResponse} from 'axios';
 import {ITransport} from './transport.types.js';
 import {ZodManifest, ZodManifestSchema} from './protocol.js';
 import {logApiError} from './errorUtils.js';
+import {warnIfHttpAndHeaders} from './utils.js';
 
 /**
  * Transport for the native Toolbox protocol.
@@ -75,14 +76,8 @@ export class ToolboxTransport implements ITransport {
     // these over HTTP exposes the data to interception and unauthorized
     // access. Always use HTTPS to ensure secure communication and protect
     // user privacy.
-    if (
-      this.baseUrl.startsWith('http://') &&
-      headers &&
-      Object.keys(headers).length > 0
-    ) {
-      console.warn(
-        'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
-      );
+    if (headers && Object.keys(headers).length > 0) {
+      warnIfHttpAndHeaders(this.baseUrl, headers);
     }
     const url = `${this.#baseUrl}/api/tool/${toolName}/invoke`;
     try {

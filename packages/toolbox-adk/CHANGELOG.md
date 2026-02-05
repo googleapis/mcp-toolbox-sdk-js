@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.2](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v0.2.1...adk-v0.2.2) (2026-02-05)
+
+
+### Features
+
+* Enable package-specific client identification for MCP ([#238](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/238)) ([43b759e](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/43b759e2d3acc35c90683fd27db4649b482ee80b))
+
+
+### Miscellaneous Chores
+
+* Deprecate native Toolbox protocol ([#256](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/256)) ([77e8527](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/77e8527dba2b36edd7f73ccb167d3363fa1e903d))
+* **deps:** update dependency @google/adk to ^0.3.0 ([#234](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/234)) ([f294e59](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/f294e59a8d02363cab95dc98feb3267a0b9e4260))
+* **deps:** update dependency @modelcontextprotocol/sdk to v1.26.0 [security] ([#258](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/258)) ([c3f1aeb](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/c3f1aeb8e2cdfb8d500dc558e7fc851f71da4829))
+
 ## [0.2.1](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v0.1.5...adk-v0.2.1) (2026-01-29)
 
 

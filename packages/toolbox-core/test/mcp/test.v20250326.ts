@@ -37,6 +37,7 @@ describe('McpHttpTransportV20250326', () => {
   const testBaseUrl = 'http://test.loc';
   let mockSession: jest.Mocked<AxiosInstance>;
   let transport: McpHttpTransportV20250326;
+  let consoleWarnSpy: ReturnType<typeof jest.spyOn>;
 
   beforeEach(() => {
     mockSession = {
@@ -55,10 +56,12 @@ describe('McpHttpTransportV20250326', () => {
       mockSession,
       Protocol.MCP_v20250326,
     );
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+    consoleWarnSpy.mockRestore();
   });
 
   describe('initialization', () => {
@@ -837,6 +840,109 @@ describe('McpHttpTransportV20250326', () => {
 
       const result = await transport.toolInvoke('testTool', {}, {});
       expect(result).toBe('{"id": 1}part2');
+    });
+
+    it('should warn if sending headers over HTTP', async () => {
+      const initResponse = {
+        headers: {'mcp-session-id': 'sess-1'},
+        data: {
+          jsonrpc: '2.0',
+          id: '1',
+          result: {
+            protocolVersion: '2025-03-26',
+            capabilities: {tools: {}},
+            serverInfo: {name: 'test-server', version: '1.0.0'},
+          },
+        },
+        status: 200,
+      };
+      const notifResponse = {data: {}, status: 200};
+
+      const invokeResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '3',
+          result: {content: []},
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockImplementation(async (_url, data) => {
+        const method = (data as {method: string}).method;
+        let response: unknown;
+        if (method === 'initialize') response = initResponse;
+        else if (method === 'notifications/initialized')
+          response = notifResponse;
+        else if (method === 'tools/call') response = invokeResponse;
+        else response = {data: {}, status: 200};
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return response as any;
+      });
+
+      await transport.toolInvoke(
+        'testTool',
+        {arg: 'val'},
+        {Authorization: 'Bearer token'},
+      );
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
+        ),
+      );
+    });
+
+    it('should not warn if using HTTPS', async () => {
+      const invokeResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '3',
+          result: {content: []},
+        },
+        status: 200,
+      };
+      // Create HTTPS transport
+      const httpsTransport = new McpHttpTransportV20250326(
+        'https://secure.test.loc',
+        mockSession,
+        Protocol.MCP_v20250326,
+      );
+
+      // Need to mock init sequence for the new transport instance
+      const initResponse = {
+        headers: {'mcp-session-id': 'sess-1'},
+        data: {
+          jsonrpc: '2.0',
+          id: '1',
+          result: {
+            protocolVersion: '2025-03-26',
+            capabilities: {tools: {}},
+            serverInfo: {name: 'test-server', version: '1.0.0'},
+          },
+        },
+        status: 200,
+      };
+      const notifResponse = {data: {}, status: 200};
+
+      mockSession.post.mockImplementation(async (_url, data) => {
+        const method = (data as {method: string}).method;
+        let response: unknown;
+        if (method === 'initialize') response = initResponse;
+        else if (method === 'notifications/initialized')
+          response = notifResponse;
+        else if (method === 'tools/call') response = invokeResponse;
+        else response = {data: {}, status: 200};
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return response as any;
+      });
+
+      await httpsTransport.toolInvoke(
+        'testTool',
+        {arg: 'val'},
+        {Authorization: 'Bearer token'},
+      );
+
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
     });
   });
 });

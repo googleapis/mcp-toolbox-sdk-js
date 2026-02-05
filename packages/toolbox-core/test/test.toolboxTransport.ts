@@ -209,7 +209,9 @@ describe('ToolboxTransport', () => {
       await transport.toolInvoke(toolName, args, headers).catch(() => {});
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Sending data token over HTTP'),
+        expect.stringContaining(
+          'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
+        ),
       );
     });
 

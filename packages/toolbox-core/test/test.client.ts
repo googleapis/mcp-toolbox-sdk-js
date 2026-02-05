@@ -516,4 +516,107 @@ describe('ToolboxClient', () => {
       );
     });
   });
+
+  describe('Insecure Protocol Warnings', () => {
+    let consoleSpy: jest.SpiedFunction<typeof console.warn>;
+    const httpUrl = 'http://api.example.com';
+
+    beforeEach(() => {
+      consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      // We need to ensure the transport has the HTTP URL for these tests
+      const httpTransport = new MockTransport(httpUrl);
+      // We mock the implementation for the default MCP version used by ToolboxClient
+      (McpHttpTransportV20250618 as unknown as jest.Mock).mockImplementation(
+        () => httpTransport,
+      );
+    });
+
+    afterEach(() => {
+      consoleSpy.mockRestore();
+    });
+
+    it('should warn when initializing with HTTP and client headers', () => {
+      new ToolboxClient(httpUrl, undefined, {'X-Test': 'val'});
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('This connection is using HTTP'),
+      );
+    });
+
+    it('should NOT warn when initializing with HTTPS and client headers', () => {
+      new ToolboxClient(testBaseUrl, undefined, {'X-Test': 'val'});
+      expect(consoleSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining('This connection is using HTTP'),
+      );
+    });
+
+    it('should warn in loadTool with HTTP and auth tokens', async () => {
+      const httpTransport = new MockTransport(httpUrl);
+      httpTransport.toolGet.mockResolvedValue({
+        serverVersion: '1.0.0',
+        tools: {
+          testTool: {
+            description: 'desc',
+            parameters: [],
+            authRequired: ['auth'],
+          },
+        },
+      });
+      (McpHttpTransportV20250618 as unknown as jest.Mock).mockImplementation(
+        () => httpTransport,
+      );
+
+      client = new ToolboxClient(httpUrl);
+      await client.loadTool('testTool', {auth: () => 'token'});
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('This connection is using HTTP'),
+      );
+    });
+
+    it('should NOT warn in loadTool with HTTPS and auth tokens', async () => {
+      // Re-setup mock with HTTPS url
+      const httpsTransport = new MockTransport(testBaseUrl);
+      httpsTransport.toolGet.mockResolvedValue({
+        serverVersion: '1.0.0',
+        tools: {
+          testTool: {
+            description: 'desc',
+            parameters: [],
+            authRequired: ['auth'],
+          },
+        },
+      });
+      (McpHttpTransportV20250618 as unknown as jest.Mock).mockImplementation(
+        () => httpsTransport,
+      );
+
+      client = new ToolboxClient(testBaseUrl);
+      await client.loadTool('testTool', {auth: () => 'token'});
+      expect(consoleSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining('This connection is using HTTP'),
+      );
+    });
+
+    it('should warn in loadToolset with HTTP and auth tokens', async () => {
+      const httpTransport = new MockTransport(httpUrl);
+      httpTransport.toolsList.mockResolvedValue({
+        serverVersion: '1.0.0',
+        tools: {
+          toolA: {
+            description: 'desc',
+            parameters: [],
+            authRequired: ['auth'],
+          },
+        },
+      });
+      (McpHttpTransportV20250618 as unknown as jest.Mock).mockImplementation(
+        () => httpTransport,
+      );
+
+      client = new ToolboxClient(httpUrl);
+      await client.loadToolset('set', {auth: () => 'token'});
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('This connection is using HTTP'),
+      );
+    });
+  });
 });

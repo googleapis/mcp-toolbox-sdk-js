@@ -1,0 +1,2 @@
+version: 2
+updates: [] # This empty array disables Dependabot version updates

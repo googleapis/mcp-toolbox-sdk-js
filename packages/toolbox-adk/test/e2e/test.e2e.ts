@@ -152,9 +152,10 @@ describe('ToolboxClient E2E Tests', () => {
     it('should throw an error when trying to load a non-existent toolset', async () => {
       await expect(
         commonToolboxClient.loadToolset('non-existent-toolset'),
-      ).rejects.toThrow('Request failed with status code 404');
+      ).rejects.toThrow('MCP request failed with code -32600: toolset does not exist');
     });
   });
+
   describe('bindParams', () => {
     it('should successfully bind a parameter with bindParam and invoke', async () => {
       const newTool = getNRowsTool.bindParam('num_rows', '3');

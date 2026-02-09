@@ -18,6 +18,7 @@ import * as types from './types.js';
 
 import {ZodManifest} from '../../protocol.js';
 import {logApiError} from '../../errorUtils.js';
+import {warnIfHttpAndHeaders} from '../../utils.js';
 
 import {v4 as uuidv4} from 'uuid';
 import {VERSION} from '../../version.js';
@@ -258,6 +259,10 @@ export class McpHttpTransportV20250326 extends McpHttpTransportBase {
     headers: Record<string, string>,
   ): Promise<string> {
     await this.ensureInitialized(headers);
+
+    if (Object.keys(headers).length > 0) {
+      warnIfHttpAndHeaders(this._mcpBaseUrl, headers);
+    }
 
     const params: types.CallToolRequestParams = {
       name: toolName,

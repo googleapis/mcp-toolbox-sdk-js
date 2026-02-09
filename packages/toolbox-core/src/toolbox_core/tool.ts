@@ -20,6 +20,7 @@ import {
   BoundValue,
   identifyAuthRequirements,
   resolveValue,
+  warnIfHttpAndHeaders,
 } from './utils.js';
 import {ClientHeadersConfig} from './client.js';
 
@@ -64,13 +65,13 @@ function ToolboxTool(
   clientHeaders: ClientHeadersConfig = {},
 ) {
   if (
-    (Object.keys(authTokenGetters).length > 0 ||
-      Object.keys(clientHeaders).length > 0) &&
-    !transport.baseUrl.startsWith('https://')
+    Object.keys(authTokenGetters).length > 0 ||
+    Object.keys(clientHeaders).length > 0
   ) {
-    console.warn(
-      'Sending ID token over HTTP. User data may be exposed. Use HTTPS for secure communication.',
-    );
+    warnIfHttpAndHeaders(transport.baseUrl, {
+      ...authTokenGetters,
+      ...clientHeaders,
+    });
   }
 
   const boundKeys = Object.keys(boundParams);

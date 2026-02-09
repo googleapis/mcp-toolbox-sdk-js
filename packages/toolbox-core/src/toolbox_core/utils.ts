@@ -67,3 +67,25 @@ export function identifyAuthRequirements(
 
   return [requiredAuthnParams, remainingAuthzTokens, usedServices];
 }
+
+/**
+ * Checks if the connection is insecure (HTTP) and potentially exposes credentials (headers present).
+ * Logs a warning if both conditions are met.
+ *
+ * @param url The URL to check.
+ * @param headers The headers object to check for presence of credentials/tokens.
+ */
+export function warnIfHttpAndHeaders(
+  url: string,
+  headers?: Record<string, unknown> | null,
+): void {
+  if (
+    url.toLowerCase().startsWith('http://') &&
+    headers &&
+    Object.keys(headers).length > 0
+  ) {
+    console.warn(
+      'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
+    );
+  }
+}

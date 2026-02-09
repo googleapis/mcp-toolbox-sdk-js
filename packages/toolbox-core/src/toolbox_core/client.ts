@@ -27,7 +27,12 @@ import {McpHttpTransportV20241105} from './mcp/v20241105/mcp.js';
 import {McpHttpTransportV20250618} from './mcp/v20250618/mcp.js';
 import {McpHttpTransportV20250326} from './mcp/v20250326/mcp.js';
 import {McpHttpTransportV20251125} from './mcp/v20251125/mcp.js';
-import {BoundParams, identifyAuthRequirements, resolveValue} from './utils.js';
+import {
+  BoundParams,
+  identifyAuthRequirements,
+  resolveValue,
+  warnIfHttpAndHeaders,
+} from './utils.js';
 import {AuthTokenGetters, RequiredAuthnParams} from './tool.js';
 
 type Manifest = import('zod').infer<typeof ZodManifestSchema>;
@@ -64,7 +69,13 @@ class ToolboxClient {
     clientVersion?: string,
   ) {
     this.#clientHeaders = clientHeaders || {};
+    if (Object.keys(this.#clientHeaders).length > 0) {
+      warnIfHttpAndHeaders(url, this.#clientHeaders);
+    }
     if (protocol === Protocol.TOOLBOX) {
+      console.warn(
+        'The native Toolbox protocol is deprecated and will be removed on March 4, 2026. Please use Protocol.MCP or specific MCP versions.',
+      );
       this.#transport = new ToolboxTransport(url, session || undefined);
     } else if (getSupportedMcpVersions().includes(protocol)) {
       if (protocol !== Protocol.MCP_v20251125) {
@@ -208,6 +219,9 @@ class ToolboxClient {
     authTokenGetters: AuthTokenGetters | null = {},
     boundParams: BoundParams | null = {},
   ): Promise<ReturnType<typeof ToolboxTool>> {
+    if (authTokenGetters && Object.keys(authTokenGetters).length > 0) {
+      warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
+    }
     const headers = await this.#resolveClientHeaders();
     const manifest = await this.#transport.toolGet(name, headers);
 
@@ -276,6 +290,9 @@ class ToolboxClient {
     boundParams: BoundParams | null = {},
     strict = false,
   ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
+    if (authTokenGetters && Object.keys(authTokenGetters).length > 0) {
+      warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
+    }
     const toolsetName = name || '';
     const headers = await this.#resolveClientHeaders();
 

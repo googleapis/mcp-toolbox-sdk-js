@@ -152,7 +152,9 @@ describe('ToolboxClient E2E Tests', () => {
     it('should throw an error when trying to load a non-existent toolset', async () => {
       await expect(
         commonToolboxClient.loadToolset('non-existent-toolset'),
-      ).rejects.toThrow('MCP request failed with code -32600: toolset does not exist');
+      ).rejects.toThrow(
+        'MCP request failed with code -32600: toolset does not exist',
+      );
     });
   });
 

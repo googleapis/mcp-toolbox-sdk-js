@@ -4,7 +4,7 @@ import gts from 'gts';
 export default [
   ...gts,
   {
-    ignores: ['build/', 'package/']
+    ignores: ['build/']
   },
   {
     files: [

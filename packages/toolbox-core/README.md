@@ -170,10 +170,10 @@ or a specific one:
 
 ```javascript
 // Load all tools
-const tools = await toolbox.loadToolset()
+const tools = await client.loadToolset()
 
 // Load a specific toolset
-const tools = await toolbox.loadToolset("my-toolset")
+const tools = await client.loadToolset("my-toolset")
 ```
 
 ### Load a single tool
@@ -181,7 +181,7 @@ const tools = await toolbox.loadToolset("my-toolset")
 Loads a specific tool by its unique name. This provides fine-grained control.
 
 ```javascript
-const tool = await toolbox.loadTool("my-tool")
+const tool = await client.loadTool("my-tool")
 ```
 
 ## Invoking Tools
@@ -191,7 +191,7 @@ Once loaded, tools behave like awaitable JS functions. You invoke them using
 configuration within the Toolbox service.
 
 ```javascript
-const tool = await toolbox.loadTool("my-tool")
+const tool = await client.loadTool("my-tool")
 const result = await tool({a: 5, b: 2})
 ```
 
@@ -376,11 +376,11 @@ tools loaded in that specific call, without modifying the original tool objects
 if they were loaded previously.
 
 ```javascript
-const authTool = await toolbox.loadTool("toolName", {"myAuth": getAuthToken})
+const authTool = await client.loadTool("toolName", {"myAuth": getAuthToken})
 
 // OR
 
-const authTools = await toolbox.loadToolset({"myAuth": getAuthToken})
+const authTools = await client.loadToolset({"myAuth": getAuthToken})
 ```
 
 > [!NOTE]

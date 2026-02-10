@@ -25,5 +25,11 @@
           "src/toolbox_adk/version.ts"
         ]
       }
+    },
+    "plugins": [
+    {
+      "type": "node-workspace",
+      "updatePeerDependencies": true
     }
+  ]
 }

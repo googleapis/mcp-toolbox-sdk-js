@@ -76,9 +76,7 @@ export class ToolboxTransport implements ITransport {
     // these over HTTP exposes the data to interception and unauthorized
     // access. Always use HTTPS to ensure secure communication and protect
     // user privacy.
-    if (headers && Object.keys(headers).length > 0) {
-      warnIfHttpAndHeaders(this.baseUrl, headers);
-    }
+    warnIfHttpAndHeaders(this.baseUrl, headers);
     const url = `${this.#baseUrl}/api/tool/${toolName}/invoke`;
     try {
       const response: AxiosResponse = await this.#session.post(

@@ -102,33 +102,7 @@ describe('ToolboxTool', () => {
       expect(tool.getParamSchema()).toBe(basicParamSchema);
     });
 
-    it('should warn when using an HTTP URL with authTokenGetters', () => {
-      const httpTransport = new MockTransport('http://api.insecure.com');
-      ToolboxTool(httpTransport, toolName, toolDescription, basicParamSchema, {
-        service1: () => 'token',
-      });
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
-      );
-    });
 
-    it('should warn when using an HTTP URL with clientHeaders', () => {
-      const httpTransport = new MockTransport('http://api.insecure.com');
-      ToolboxTool(
-        httpTransport,
-        toolName,
-        toolDescription,
-        basicParamSchema,
-        {},
-        {},
-        [],
-        {},
-        {'x-api-key': 'key'},
-      );
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
-      );
-    });
   });
 
   describe('Callable Function - Argument Validation', () => {

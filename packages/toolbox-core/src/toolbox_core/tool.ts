@@ -20,7 +20,6 @@ import {
   BoundValue,
   identifyAuthRequirements,
   resolveValue,
-  warnIfHttpAndHeaders,
 } from './utils.js';
 import {ClientHeadersConfig} from './client.js';
 
@@ -64,15 +63,7 @@ function ToolboxTool(
   boundParams: BoundParams = {},
   clientHeaders: ClientHeadersConfig = {},
 ) {
-  if (
-    Object.keys(authTokenGetters).length > 0 ||
-    Object.keys(clientHeaders).length > 0
-  ) {
-    warnIfHttpAndHeaders(transport.baseUrl, {
-      ...authTokenGetters,
-      ...clientHeaders,
-    });
-  }
+
 
   const boundKeys = Object.keys(boundParams);
   const userParamSchema = paramSchema.omit(

@@ -530,7 +530,7 @@ const multiplyNumbers = tool({
     name: multiplyTool.getName(),
     description: multiplyTool.getDescription(),
     parameters: multiplyTool.getParamSchema(),
-    execute: mutliplyTool
+    execute: multiplyTool
 });
 
 await multiplyNumbers.call({ a: 2, b: 3 });

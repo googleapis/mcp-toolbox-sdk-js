@@ -64,7 +64,6 @@ function ToolboxTool(
   clientHeaders: ClientHeadersConfig = {},
 ) {
 
-
   const boundKeys = Object.keys(boundParams);
   const userParamSchema = paramSchema.omit(
     Object.fromEntries(boundKeys.map(k => [k, true])),

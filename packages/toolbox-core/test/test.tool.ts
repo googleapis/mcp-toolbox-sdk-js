@@ -102,7 +102,6 @@ describe('ToolboxTool', () => {
       expect(tool.getParamSchema()).toBe(basicParamSchema);
     });
 
-
   });
 
   describe('Callable Function - Argument Validation', () => {

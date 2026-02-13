@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-import axios, {AxiosInstance, AxiosResponse} from 'axios';
-import {ITransport} from './transport.types.js';
-import {ZodManifest, ZodManifestSchema} from './protocol.js';
-import {logApiError} from './errorUtils.js';
-import {warnIfHttpAndHeaders} from './utils.js';
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import { ITransport } from './transport.types.js';
+import { ZodManifest, ZodManifestSchema } from './protocol.js';
+import { logApiError } from './errorUtils.js';
 
 /**
  * Transport for the native Toolbox protocol.
@@ -30,7 +29,7 @@ export class ToolboxTransport implements ITransport {
   constructor(baseUrl: string, session?: AxiosInstance) {
     this.#baseUrl = baseUrl;
     // If no axios session is provided, make our own
-    this.#session = session || axios.create({baseURL: this.baseUrl});
+    this.#session = session || axios.create({ baseURL: this.baseUrl });
   }
 
   get baseUrl(): string {
@@ -43,7 +42,7 @@ export class ToolboxTransport implements ITransport {
   ): Promise<ZodManifest> {
     /** Helper method to perform GET requests and parse the ManifestSchema. */
     try {
-      const response: AxiosResponse = await this.#session.get(url, {headers});
+      const response: AxiosResponse = await this.#session.get(url, { headers });
       return ZodManifestSchema.parse(response.data);
     } catch (error) {
       logApiError(`Error fetching data from ${url}:`, error);
@@ -72,11 +71,6 @@ export class ToolboxTransport implements ITransport {
     arguments_: Record<string, unknown>,
     headers: Record<string, string>,
   ): Promise<string> {
-    // ID tokens contain sensitive user information (claims). Transmitting
-    // these over HTTP exposes the data to interception and unauthorized
-    // access. Always use HTTPS to ensure secure communication and protect
-    // user privacy.
-    warnIfHttpAndHeaders(this.baseUrl, headers);
     const url = `${this.#baseUrl}/api/tool/${toolName}/invoke`;
     try {
       const response: AxiosResponse = await this.#session.post(

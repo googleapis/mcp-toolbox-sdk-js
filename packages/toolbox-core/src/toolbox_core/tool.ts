@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ZodObject, ZodError, ZodRawShape} from 'zod';
+import { ZodObject, ZodError, ZodRawShape } from 'zod';
 
-import {ITransport} from './transport.types.js';
+import { ITransport } from './transport.types.js';
 import {
   BoundParams,
   BoundValue,
   identifyAuthRequirements,
   resolveValue,
+  warnIfHttpAndHeaders,
 } from './utils.js';
-import {ClientHeadersConfig} from './client.js';
+import { ClientHeadersConfig } from './client.js';
 
 export type AuthTokenGetter = () => string | Promise<string>;
 export type AuthTokenGetters = Record<string, AuthTokenGetter>;
@@ -113,7 +114,7 @@ function ToolboxTool(
     );
     const resolvedBoundParams = Object.fromEntries(resolvedEntries);
 
-    const payload = {...validatedUserArgs, ...resolvedBoundParams};
+    const payload = { ...validatedUserArgs, ...resolvedBoundParams };
 
     // Filter out null values from the payload
     const filteredPayload = Object.entries(payload).reduce(
@@ -145,6 +146,8 @@ function ToolboxTool(
       }
       headers[getAuthHeaderName(authService)] = token;
     }
+
+    warnIfHttpAndHeaders(transport.baseUrl, headers);
 
     return await transport.toolInvoke(name, filteredPayload, headers);
   };
@@ -192,7 +195,7 @@ function ToolboxTool(
       );
     }
 
-    const combinedGetters = {...this.authTokenGetters, ...newAuthTokenGetters};
+    const combinedGetters = { ...this.authTokenGetters, ...newAuthTokenGetters };
 
     const [newReqAuthnParams, newReqAuthzTokens, usedServices] =
       identifyAuthRequirements(
@@ -225,7 +228,7 @@ function ToolboxTool(
     authSource: string,
     getIdToken: AuthTokenGetter,
   ) {
-    return this.addAuthTokenGetters({[authSource]: getIdToken});
+    return this.addAuthTokenGetters({ [authSource]: getIdToken });
   };
 
   callable.bindParams = function (paramsToBind: BoundParams) {
@@ -243,7 +246,7 @@ function ToolboxTool(
       }
     }
 
-    const newBoundParams = {...this.boundParams, ...paramsToBind};
+    const newBoundParams = { ...this.boundParams, ...paramsToBind };
     return ToolboxTool(
       transport,
       this.toolName,
@@ -258,9 +261,9 @@ function ToolboxTool(
   };
 
   callable.bindParam = function (paramName: string, paramValue: BoundValue) {
-    return this.bindParams({[paramName]: paramValue});
+    return this.bindParams({ [paramName]: paramValue });
   };
   return callable;
 }
 
-export {ToolboxTool};
+export { ToolboxTool };

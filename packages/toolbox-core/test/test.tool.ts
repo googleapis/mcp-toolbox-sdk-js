@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ToolboxTool} from '../src/toolbox_core/tool.js';
-import {z, ZodObject, ZodRawShape} from 'zod';
-import {ITransport} from '../src/toolbox_core/transport.types.js';
+import { ToolboxTool } from '../src/toolbox_core/tool.js';
+import { z, ZodObject, ZodRawShape } from 'zod';
+import { ITransport } from '../src/toolbox_core/transport.types.js';
 import * as utils from '../src/toolbox_core/utils.js';
-import {ClientHeadersConfig} from '../src/toolbox_core/client.js';
+import { ClientHeadersConfig } from '../src/toolbox_core/client.js';
 
 // --- Mock Transport Implementation ---
 class MockTransport implements ITransport {
@@ -61,7 +61,7 @@ describe('ToolboxTool', () => {
       limit: z.number().optional(),
     });
 
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
   });
 
   afterEach(() => {
@@ -116,7 +116,7 @@ describe('ToolboxTool', () => {
         basicParamSchema,
       );
       const parseSpy = jest.spyOn(basicParamSchema, 'parse');
-      const callArgs = {query: 'test query'};
+      const callArgs = { query: 'test query' };
       mockTransport.toolInvoke.mockResolvedValueOnce('success');
 
       await currentTool(callArgs);
@@ -133,7 +133,7 @@ describe('ToolboxTool', () => {
         toolDescription,
         basicParamSchema,
       );
-      const invalidArgs = {query: ''}; // Fails because of empty string
+      const invalidArgs = { query: '' }; // Fails because of empty string
 
       await expect(currentTool(invalidArgs)).rejects.toThrow(
         `Argument validation failed for tool "${toolName}":\n - query: Query cannot be empty`,
@@ -152,7 +152,7 @@ describe('ToolboxTool', () => {
         toolDescription,
         complexSchema,
       );
-      const invalidArgs = {name: '', age: -5};
+      const invalidArgs = { name: '', age: -5 };
 
       await expect(currentTool(invalidArgs)).rejects.toThrow(
         new RegExp(
@@ -176,7 +176,7 @@ describe('ToolboxTool', () => {
         toolDescription,
         failingSchema,
       );
-      const callArgs = {query: 'some query'};
+      const callArgs = { query: 'some query' };
 
       await expect(currentTool(callArgs)).rejects.toThrow(
         `Argument validation failed: ${String(customError)}`,
@@ -222,8 +222,8 @@ describe('ToolboxTool', () => {
   });
 
   describe('Callable Function - API Call Execution', () => {
-    const validArgs = {query: 'search term', limit: 10};
-    const mockApiResponseData = {result: 'Data from API'};
+    const validArgs = { query: 'search term', limit: 10 };
+    const mockApiResponseData = { result: 'Data from API' };
 
     beforeEach(() => {
       tool = ToolboxTool(
@@ -248,6 +248,42 @@ describe('ToolboxTool', () => {
         {},
       );
       expect(result).toEqual(mockApiResponseData['result']);
+    });
+
+    it('should warn when using an HTTP URL with clientHeaders', async () => {
+      const httpTransport = new MockTransport('http://api.insecure.com');
+      const currentTool = ToolboxTool(
+        httpTransport,
+        toolName,
+        toolDescription,
+        basicParamSchema,
+        {}, // authTokenGetters
+        {}, // requiredAuthnParams
+        [], // requiredAuthzTokens
+        {}, // boundParams
+        { 'x-api-key': 'key' }, // clientHeaders
+      );
+      httpTransport.toolInvoke.mockResolvedValueOnce('success');
+      await currentTool({ query: 'test' });
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
+      );
+    });
+
+    it('should warn when using an HTTP URL with authTokenGetters', async () => {
+      const httpTransport = new MockTransport('http://api.insecure.com');
+      const currentTool = ToolboxTool(
+        httpTransport,
+        toolName,
+        toolDescription,
+        basicParamSchema,
+        { service1: () => 'token' }, // authTokenGetters
+      );
+      httpTransport.toolInvoke.mockResolvedValueOnce('success');
+      await currentTool({ query: 'test' });
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
+      );
     });
 
     it('should re-throw the error if toolInvoke fails', async () => {
@@ -288,7 +324,7 @@ describe('ToolboxTool', () => {
 
       expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
         toolName,
-        {required_param: 'value'},
+        { required_param: 'value' },
         {},
       );
     });
@@ -305,32 +341,32 @@ describe('ToolboxTool', () => {
     });
 
     it('should create a new tool with bound parameters using bindParams', () => {
-      const boundTool = tool.bindParams({limit: 10});
+      const boundTool = tool.bindParams({ limit: 10 });
       expect(boundTool).not.toBe(tool);
-      expect(boundTool.boundParams).toEqual({limit: 10});
+      expect(boundTool.boundParams).toEqual({ limit: 10 });
       expect(tool.boundParams).toEqual({});
     });
 
     it('should create a new tool with a single bound parameter using bindParam and use it in the call', async () => {
       const boundTool = tool.bindParam('limit', 20);
-      expect(boundTool.boundParams).toEqual({limit: 20});
+      expect(boundTool.boundParams).toEqual({ limit: 20 });
 
       // Also test execution
       mockTransport.toolInvoke.mockResolvedValueOnce('success');
 
-      await boundTool({query: 'single bind test'});
+      await boundTool({ query: 'single bind test' });
       expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
         toolName,
-        {query: 'single bind test', limit: 20},
+        { query: 'single bind test', limit: 20 },
         {},
       );
     });
 
     it('should merge bound parameters with call arguments in the final payload', async () => {
-      const boundTool = tool.bindParams({limit: 5});
+      const boundTool = tool.bindParams({ limit: 5 });
       mockTransport.toolInvoke.mockResolvedValueOnce('success');
 
-      await boundTool({query: 'specific query'});
+      await boundTool({ query: 'specific query' });
       expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
         toolName,
         {
@@ -342,10 +378,10 @@ describe('ToolboxTool', () => {
     });
 
     it('should not require bound parameters to be provided at call time', async () => {
-      const boundTool = tool.bindParams({query: 'default query'});
+      const boundTool = tool.bindParams({ query: 'default query' });
       mockTransport.toolInvoke.mockResolvedValueOnce('success');
 
-      await boundTool({limit: 15});
+      await boundTool({ limit: 15 });
       expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
         toolName,
         {
@@ -357,31 +393,31 @@ describe('ToolboxTool', () => {
     });
 
     it('should validate only the user-provided arguments, not the bound ones', async () => {
-      const boundTool = tool.bindParams({query: 'a valid query'});
+      const boundTool = tool.bindParams({ query: 'a valid query' });
       mockTransport.toolInvoke.mockResolvedValueOnce('success');
       // This call is valid because 'query' is bound, and no invalid args are passed
       await expect(boundTool()).resolves.toBe('success');
     });
 
     it('should throw an error when trying to re-bind an already bound parameter', () => {
-      const boundTool = tool.bindParams({limit: 10});
+      const boundTool = tool.bindParams({ limit: 10 });
       const expectedError = `Cannot re-bind parameter: parameter 'limit' is already bound in tool '${toolName}'.`;
-      expect(() => boundTool.bindParams({limit: 20})).toThrow(expectedError);
+      expect(() => boundTool.bindParams({ limit: 20 })).toThrow(expectedError);
     });
 
     it('should throw an error when trying to bind a parameter that does not exist', () => {
       const expectedError = `Unable to bind parameter: no parameter named 'nonExistent' in tool '${toolName}'.`;
-      expect(() => tool.bindParams({nonExistent: 'value'})).toThrow(
+      expect(() => tool.bindParams({ nonExistent: 'value' })).toThrow(
         expectedError,
       );
     });
 
     it('should resolve function values in bound parameters before making the API call', async () => {
       const dynamicQuery = async () => 'resolved-query';
-      const boundTool = tool.bindParams({query: dynamicQuery});
+      const boundTool = tool.bindParams({ query: dynamicQuery });
       mockTransport.toolInvoke.mockResolvedValueOnce('success');
 
-      await boundTool({limit: 5});
+      await boundTool({ limit: 5 });
       expect(utils.resolveValue).toHaveBeenCalledWith(dynamicQuery);
       expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
         toolName,
@@ -395,7 +431,7 @@ describe('ToolboxTool', () => {
   });
 
   describe('Authentication Functionality', () => {
-    const initialRequiredAuthn = {paramA: ['service1', 'service2']};
+    const initialRequiredAuthn = { paramA: ['service1', 'service2'] };
     const initialRequiredAuthz = ['service3'];
 
     beforeEach(() => {
@@ -413,14 +449,14 @@ describe('ToolboxTool', () => {
     });
 
     it('should throw an error if called with unmet authentication requirements', async () => {
-      await expect(tool({query: 'test'})).rejects.toThrow(
+      await expect(tool({ query: 'test' })).rejects.toThrow(
         'One or more of the following authn services are required to invoke this tool: service1,service2,service3',
       );
     });
 
     it('should add a single auth token getter and create a new tool', () => {
       (utils.identifyAuthRequirements as jest.Mock).mockReturnValue([
-        {paramA: ['service2']},
+        { paramA: ['service2'] },
         ['service3'],
         new Set(['service1']),
       ]);
@@ -428,7 +464,7 @@ describe('ToolboxTool', () => {
 
       expect(newTool).not.toBe(tool);
       expect(Object.keys(newTool.authTokenGetters)).toContain('service1');
-      expect(newTool.requiredAuthnParams).toEqual({paramA: ['service2']});
+      expect(newTool.requiredAuthnParams).toEqual({ paramA: ['service2'] });
       expect(newTool.requiredAuthzTokens).toEqual(['service3']);
     });
 
@@ -470,10 +506,10 @@ describe('ToolboxTool', () => {
         service3: async () => 'token-three',
       });
       mockTransport.toolInvoke.mockResolvedValue('success');
-      await authedTool({query: 'a query'});
+      await authedTool({ query: 'a query' });
       expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
         toolName,
-        {query: 'a query'},
+        { query: 'a query' },
         {
           service1_token: 'token-one',
           service3_token: 'token-three',
@@ -496,7 +532,7 @@ describe('ToolboxTool', () => {
       authedTool.requiredAuthnParams = {};
       authedTool.requiredAuthzTokens = [];
 
-      await expect(authedTool({query: 'a query'})).rejects.toThrow(
+      await expect(authedTool({ query: 'a query' })).rejects.toThrow(
         "Auth token getter for 'service1' did not return a string.",
       );
     });
@@ -539,7 +575,7 @@ describe('ToolboxTool', () => {
         {},
         [],
         {},
-        {service1_token: 'api-key'}, // This will conflict
+        { service1_token: 'api-key' }, // This will conflict
       );
 
       expect(() =>
@@ -572,12 +608,12 @@ describe('ToolboxTool', () => {
 
       mockTransport.toolInvoke.mockResolvedValueOnce('success');
 
-      await toolWithConflict({query: 'test'});
+      await toolWithConflict({ query: 'test' });
 
       // Assert that the final headers sent to the API used the value from the auth token
       expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
         toolName,
-        {query: 'test'},
+        { query: 'test' },
         {
           service1_token: 'value-from-auth',
           'x-another-header': 'client-value',
@@ -603,7 +639,7 @@ describe('ToolboxTool', () => {
         clientHeaders,
       );
 
-      await expect(toolWithBadHeader({query: 'test'})).rejects.toThrow(
+      await expect(toolWithBadHeader({ query: 'test' })).rejects.toThrow(
         "Client header 'X-Invalid-Header' did not resolve to a string.",
       );
     });

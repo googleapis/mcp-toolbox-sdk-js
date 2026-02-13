@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ToolboxTool} from './tool.js';
-import {AxiosInstance} from 'axios';
-import {ITransport} from './transport.types.js';
-import {ToolboxTransport} from './toolboxTransport.js';
+import { ToolboxTool } from './tool.js';
+import { AxiosInstance } from 'axios';
+import { ITransport } from './transport.types.js';
+import { ToolboxTransport } from './toolboxTransport.js';
 import {
   createZodSchemaFromParams,
   ParameterSchema,
@@ -23,17 +23,17 @@ import {
   Protocol,
   getSupportedMcpVersions,
 } from './protocol.js';
-import {McpHttpTransportV20241105} from './mcp/v20241105/mcp.js';
-import {McpHttpTransportV20250618} from './mcp/v20250618/mcp.js';
-import {McpHttpTransportV20250326} from './mcp/v20250326/mcp.js';
-import {McpHttpTransportV20251125} from './mcp/v20251125/mcp.js';
+import { McpHttpTransportV20241105 } from './mcp/v20241105/mcp.js';
+import { McpHttpTransportV20250618 } from './mcp/v20250618/mcp.js';
+import { McpHttpTransportV20250326 } from './mcp/v20250326/mcp.js';
+import { McpHttpTransportV20251125 } from './mcp/v20251125/mcp.js';
 import {
   BoundParams,
   identifyAuthRequirements,
   resolveValue,
   warnIfHttpAndHeaders,
 } from './utils.js';
-import {AuthTokenGetters, RequiredAuthnParams} from './tool.js';
+import { AuthTokenGetters, RequiredAuthnParams } from './tool.js';
 
 type Manifest = import('zod').infer<typeof ZodManifestSchema>;
 type ToolSchemaFromManifest = Manifest['tools'][string];
@@ -69,9 +69,7 @@ class ToolboxClient {
     clientVersion?: string,
   ) {
     this.#clientHeaders = clientHeaders || {};
-    if (Object.keys(this.#clientHeaders).length > 0) {
-      warnIfHttpAndHeaders(url, this.#clientHeaders);
-    }
+    warnIfHttpAndHeaders(url, this.#clientHeaders);
     if (protocol === Protocol.TOOLBOX) {
       console.warn(
         'The native Toolbox protocol is deprecated and will be removed on March 4, 2026. Please use Protocol.MCP or specific MCP versions.',
@@ -197,7 +195,7 @@ class ToolboxClient {
 
     const usedBoundKeys = new Set(Object.keys(currBoundParams));
 
-    return {tool, usedAuthKeys, usedBoundKeys};
+    return { tool, usedAuthKeys, usedBoundKeys };
   }
 
   /**
@@ -219,9 +217,7 @@ class ToolboxClient {
     authTokenGetters: AuthTokenGetters | null = {},
     boundParams: BoundParams | null = {},
   ): Promise<ReturnType<typeof ToolboxTool>> {
-    if (authTokenGetters && Object.keys(authTokenGetters).length > 0) {
-      warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
-    }
+    warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
     const headers = await this.#resolveClientHeaders();
     const manifest = await this.#transport.toolGet(name, headers);
 
@@ -230,7 +226,7 @@ class ToolboxClient {
       Object.prototype.hasOwnProperty.call(manifest.tools, name)
     ) {
       const specificToolSchema = manifest.tools[name];
-      const {tool, usedAuthKeys, usedBoundKeys} = this.#createToolInstance(
+      const { tool, usedAuthKeys, usedBoundKeys } = this.#createToolInstance(
         name,
         specificToolSchema,
         authTokenGetters || undefined,
@@ -290,9 +286,7 @@ class ToolboxClient {
     boundParams: BoundParams | null = {},
     strict = false,
   ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
-    if (authTokenGetters && Object.keys(authTokenGetters).length > 0) {
-      warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
-    }
+    warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
     const toolsetName = name || '';
     const headers = await this.#resolveClientHeaders();
 
@@ -309,7 +303,7 @@ class ToolboxClient {
     );
 
     for (const [toolName, toolSchema] of Object.entries(manifest.tools)) {
-      const {tool, usedAuthKeys, usedBoundKeys} = this.#createToolInstance(
+      const { tool, usedAuthKeys, usedBoundKeys } = this.#createToolInstance(
         toolName,
         toolSchema,
         authTokenGetters || {},
@@ -373,4 +367,4 @@ class ToolboxClient {
   }
 }
 
-export {ToolboxClient};
+export { ToolboxClient };

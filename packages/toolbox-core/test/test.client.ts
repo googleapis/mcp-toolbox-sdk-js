@@ -522,7 +522,7 @@ describe('ToolboxClient', () => {
     const httpUrl = 'http://api.example.com';
 
     beforeEach(() => {
-      consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
       // We need to ensure the transport has the HTTP URL for these tests
       const httpTransport = new MockTransport(httpUrl);
       // We mock the implementation for the default MCP version used by ToolboxClient
@@ -536,14 +536,14 @@ describe('ToolboxClient', () => {
     });
 
     it('should warn when initializing with HTTP and client headers', () => {
-      new ToolboxClient(httpUrl, undefined, {'X-Test': 'val'});
+      new ToolboxClient(httpUrl, undefined, { 'X-Test': 'val' });
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('This connection is using HTTP'),
       );
     });
 
     it('should NOT warn when initializing with HTTPS and client headers', () => {
-      new ToolboxClient(testBaseUrl, undefined, {'X-Test': 'val'});
+      new ToolboxClient(testBaseUrl, undefined, { 'X-Test': 'val' });
       expect(consoleSpy).not.toHaveBeenCalledWith(
         expect.stringContaining('This connection is using HTTP'),
       );
@@ -566,7 +566,7 @@ describe('ToolboxClient', () => {
       );
 
       client = new ToolboxClient(httpUrl);
-      await client.loadTool('testTool', {auth: () => 'token'});
+      await client.loadTool('testTool', { auth: () => 'token' });
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('This connection is using HTTP'),
       );
@@ -590,7 +590,7 @@ describe('ToolboxClient', () => {
       );
 
       client = new ToolboxClient(testBaseUrl);
-      await client.loadTool('testTool', {auth: () => 'token'});
+      await client.loadTool('testTool', { auth: () => 'token' });
       expect(consoleSpy).not.toHaveBeenCalledWith(
         expect.stringContaining('This connection is using HTTP'),
       );
@@ -613,7 +613,7 @@ describe('ToolboxClient', () => {
       );
 
       client = new ToolboxClient(httpUrl);
-      await client.loadToolset('set', {auth: () => 'token'});
+      await client.loadToolset('set', { auth: () => 'token' });
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('This connection is using HTTP'),
       );

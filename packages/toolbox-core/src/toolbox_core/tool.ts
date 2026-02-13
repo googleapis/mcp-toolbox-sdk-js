@@ -64,16 +64,6 @@ function ToolboxTool(
   boundParams: BoundParams = {},
   clientHeaders: ClientHeadersConfig = {},
 ) {
-  if (
-    Object.keys(authTokenGetters).length > 0 ||
-    Object.keys(clientHeaders).length > 0
-  ) {
-    warnIfHttpAndHeaders(transport.baseUrl, {
-      ...authTokenGetters,
-      ...clientHeaders,
-    });
-  }
-
   const boundKeys = Object.keys(boundParams);
   const userParamSchema = paramSchema.omit(
     Object.fromEntries(boundKeys.map(k => [k, true])),
@@ -155,6 +145,8 @@ function ToolboxTool(
       }
       headers[getAuthHeaderName(authService)] = token;
     }
+
+    warnIfHttpAndHeaders(transport.baseUrl, headers);
 
     return await transport.toolInvoke(name, filteredPayload, headers);
   };

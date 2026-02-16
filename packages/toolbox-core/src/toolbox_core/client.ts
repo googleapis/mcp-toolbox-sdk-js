@@ -69,9 +69,7 @@ class ToolboxClient {
     clientVersion?: string,
   ) {
     this.#clientHeaders = clientHeaders || {};
-    if (Object.keys(this.#clientHeaders).length > 0) {
-      warnIfHttpAndHeaders(url, this.#clientHeaders);
-    }
+    warnIfHttpAndHeaders(url, this.#clientHeaders);
     if (protocol === Protocol.TOOLBOX) {
       console.warn(
         'The native Toolbox protocol is deprecated and will be removed on March 4, 2026. Please use Protocol.MCP or specific MCP versions.',
@@ -219,9 +217,7 @@ class ToolboxClient {
     authTokenGetters: AuthTokenGetters | null = {},
     boundParams: BoundParams | null = {},
   ): Promise<ReturnType<typeof ToolboxTool>> {
-    if (authTokenGetters && Object.keys(authTokenGetters).length > 0) {
-      warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
-    }
+    warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
     const headers = await this.#resolveClientHeaders();
     const manifest = await this.#transport.toolGet(name, headers);
 
@@ -290,9 +286,7 @@ class ToolboxClient {
     boundParams: BoundParams | null = {},
     strict = false,
   ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
-    if (authTokenGetters && Object.keys(authTokenGetters).length > 0) {
-      warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
-    }
+    warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
     const toolsetName = name || '';
     const headers = await this.#resolveClientHeaders();
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.2](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.2.1...core-v0.2.2) (2026-02-16)
+## [0.2.2](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.2.1...core-v0.2.2) (2026-02-18)
 
 
 ### Features

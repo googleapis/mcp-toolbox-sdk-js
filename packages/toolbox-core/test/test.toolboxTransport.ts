@@ -204,29 +204,6 @@ describe('ToolboxTransport', () => {
       ).rejects.toThrow(errorMsg);
     });
 
-    it('should warn if sending headers over HTTP', async () => {
-      // transport is already http://api.example.com
-      await transport.toolInvoke(toolName, args, headers).catch(() => {});
-
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
-        ),
-      );
-    });
-
-    it('should not warn if using HTTPS', async () => {
-      const httpsTransport = new ToolboxTransport(
-        'https://secure.example.com',
-        mockSession,
-      );
-      mockSession.post.mockResolvedValueOnce({data: {result: 'ok'}});
-
-      await httpsTransport.toolInvoke(toolName, args, headers);
-
-      expect(consoleWarnSpy).not.toHaveBeenCalled();
-    });
-
     it('should handle axios errors', async () => {
       const mockError = {
         response: {

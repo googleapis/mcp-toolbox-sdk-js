@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.2.2](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.2.1...core-v0.2.2) (2026-02-18)
+
+
+### Features
+
+* Enable package-specific client identification for MCP ([#238](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/238)) ([43b759e](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/43b759e2d3acc35c90683fd27db4649b482ee80b))
+
+
+### Miscellaneous Chores
+
+* Deprecate native Toolbox protocol ([#256](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/256)) ([77e8527](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/77e8527dba2b36edd7f73ccb167d3363fa1e903d))
+* **deps:** bump axios from 1.13.2 to 1.13.5 ([#266](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/266)) ([d10e520](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/d10e5207d56ff111ca727a7bd1b070f4e9945556))
+* **deps:** update mcp toolbox server for integration tests to 0.27.0 ([#267](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/267)) ([d5eba0f](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/d5eba0fcce2fe682abc320b045c27e0ac023076c))
+* make the HTTP warnings logic consistent ([#265](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/265)) ([81b0f16](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/81b0f16cd92de595519fba789c45a3c0023f8167))
+* standardize HTTP security warnings ([#253](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/253)) ([81df01d](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/81df01d08b0240994fbf67cf75b5a67b6d6522af))
+
+
+### Documentation
+
+* **core:** change var name ([#262](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/262)) ([ee3fc67](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/ee3fc67d5d9ab806054ac7171842e2ea32789a3c))
+* **core:** fix typo ([#264](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/264)) ([3afad9d](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/3afad9d3cbd865ad1125b04228b583ba3afd29ed))
+
 ## [0.2.1](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.1.5...core-v0.2.1) (2026-01-29)
 
 

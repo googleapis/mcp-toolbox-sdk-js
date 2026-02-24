@@ -73,9 +73,9 @@ class ToolboxClient {
       throw new Error(`Unsupported protocol version: ${protocol}`);
     }
 
-    if (protocol !== Protocol.MCP_v20251125) {
+    if (protocol !== Protocol.MCP_LATEST) {
       console.warn(
-        'A newer version of MCP: v2025-11-25 is available. Please use MCP_v20251125 to use the latest features.',
+        `A newer version of MCP: ${Protocol.MCP_LATEST} is available. Please use Protocol.MCP_LATEST to use the latest features.`,
       );
     }
 

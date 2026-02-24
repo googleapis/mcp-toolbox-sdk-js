@@ -133,9 +133,7 @@ The SDK supports multiple transport protocols to communicate with the Toolbox se
 
 ### Available Protocols
 
-> [!WARNING]
-> The native Toolbox protocol (`Protocol.TOOLBOX`) is deprecated and will be removed on March 4, 2026. Please use `Protocol.MCP` or specific MCP versions.
-
+We currently support different versions of the MCP protocol.
 - `Protocol.MCP`: The default protocol version (currently aliases to `MCP_v20250618`).
 - `Protocol.MCP_v20241105`: Use this for compatibility with older MCP servers (November 2024 version).
 - `Protocol.MCP_v20250326`: March 2025 version.

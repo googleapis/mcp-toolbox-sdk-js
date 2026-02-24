@@ -22,7 +22,7 @@ export enum Protocol {
   MCP = MCP_v20250618, // Default MCP
 }
 
-export const MCP_LATEST_VERSION = Protocol.MCP_v20251125;
+export const MCP_LATEST = Protocol.MCP_v20251125;
 
 export function getSupportedMcpVersions(): Protocol[] {
   return [

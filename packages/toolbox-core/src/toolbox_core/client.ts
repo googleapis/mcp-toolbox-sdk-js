@@ -21,7 +21,7 @@ import {
   ZodManifestSchema,
   Protocol,
   getSupportedMcpVersions,
-  MCP_LATEST_VERSION,
+  MCP_LATEST,
 } from './protocol.js';
 import {McpHttpTransportV20241105} from './mcp/v20241105/mcp.js';
 import {McpHttpTransportV20250618} from './mcp/v20250618/mcp.js';
@@ -74,9 +74,9 @@ class ToolboxClient {
       throw new Error(`Unsupported protocol version: ${protocol}`);
     }
 
-    if (protocol !== MCP_LATEST_VERSION) {
+    if (protocol !== MCP_LATEST) {
       console.warn(
-        `A newer version of MCP: ${MCP_LATEST_VERSION} is available. Please use the latest version ${MCP_LATEST_VERSION} to use the latest features.`,
+        `A newer version of MCP: ${MCP_LATEST} is available. Please use the latest version ${MCP_LATEST} to use the latest features.`,
       );
     }
 

@@ -33,6 +33,9 @@ describe('ToolboxClient E2E Tests', () => {
   const mockToolContext = {} as ToolContext;
 
   beforeAll(async () => {
+    const consoleWarnSpy = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {});
     commonToolboxClient = new ToolboxClient(
       testBaseUrl,
       undefined,
@@ -42,8 +45,17 @@ describe('ToolboxClient E2E Tests', () => {
   });
 
   beforeEach(async () => {
+    const consoleWarnSpy = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {});
     getNRowsTool = await commonToolboxClient.loadTool('get-n-rows');
     expect(getNRowsTool.name).toBe('get-n-rows');
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
+      ),
+    );
+    consoleWarnSpy.mockRestore();
   });
 
   describe('invokeTool', () => {
@@ -150,6 +162,9 @@ describe('ToolboxClient E2E Tests', () => {
     });
 
     it('should throw an error when trying to load a non-existent toolset', async () => {
+      const consoleErrorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       await expect(
         commonToolboxClient.loadToolset('non-existent-toolset'),
       ).rejects.toThrow(
@@ -279,6 +294,9 @@ describe('ToolboxClient E2E Tests', () => {
     });
 
     it('should fail when running a tool with incorrect auth', async () => {
+      const consoleErrorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       const tool = await commonToolboxClient.loadTool('get-row-by-id-auth');
       const authTool = tool.addAuthTokenGetters({
         'my-test-auth': authToken2Getter,
@@ -299,6 +317,7 @@ describe('ToolboxClient E2E Tests', () => {
           }),
         );
       }
+      consoleErrorSpy.mockRestore();
     });
 
     it('should succeed when running a tool with correct auth', async () => {
@@ -352,6 +371,9 @@ describe('ToolboxClient E2E Tests', () => {
 
     it('should fail when a tool with a param requiring auth is run with insufficient auth claims', async () => {
       expect.assertions(3);
+      const consoleErrorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       const tool = await commonToolboxClient.loadTool(
         'get-row-by-content-auth',
@@ -374,6 +396,7 @@ describe('ToolboxClient E2E Tests', () => {
           }),
         );
       }
+      consoleErrorSpy.mockRestore();
     });
   });
 });

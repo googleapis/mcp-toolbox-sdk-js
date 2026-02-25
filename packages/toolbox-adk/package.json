@@ -53,7 +53,7 @@
     "dependencies": {
         "@google/adk": "^0.3.0",
         "@google/genai": "^1.14.0",
-        "@modelcontextprotocol/sdk": "1.26.0",
+        "@modelcontextprotocol/sdk": "1.27.1",
         "@toolbox-sdk/core": "^0.2.1",
         "axios": "^1.13.5",
         "openapi-types": "^12.1.3",

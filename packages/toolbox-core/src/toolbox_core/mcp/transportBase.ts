@@ -29,6 +29,7 @@ interface JsonSchema {
   additionalProperties?: boolean | JsonSchema;
   description?: string;
   required?: string[];
+  default?: unknown;
 }
 
 interface ToolDefinition {
@@ -127,6 +128,7 @@ export abstract class McpHttpTransportBase implements ITransport {
         description: schema.description || '',
         required: required.has(name),
         authSources,
+        default: schema.default,
         ...typeSchema,
       } as ParameterSchema);
     }

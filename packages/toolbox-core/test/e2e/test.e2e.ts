@@ -19,7 +19,7 @@ import {getSupportedMcpVersions} from '../../src/toolbox_core/protocol.js';
 import {AxiosError} from 'axios';
 import {CustomGlobal} from './types.js';
 import {authTokenGetter} from './utils.js';
-import {ZodOptional, ZodNullable, ZodTypeAny} from 'zod';
+import {ZodTypeAny, ZodString, ZodNumber} from 'zod';
 
 describe.each(getSupportedMcpVersions())(
   'ToolboxClient E2E MCP Tests (%s)',
@@ -359,18 +359,44 @@ describe.each(getSupportedMcpVersions())(
         // Optional param 'data'
         expect(shape.data.isOptional()).toBe(true);
         expect(shape.data.isNullable()).toBe(true);
-        expect(
-          (shape.data as ZodOptional<ZodNullable<ZodTypeAny>>).unwrap().unwrap()
-            ._def.typeName,
-        ).toBe('ZodString');
+        {
+          let inner: ZodTypeAny = shape.data as unknown as ZodTypeAny;
+          if ('unwrap' in (inner as object)) {
+            inner = (inner as ZodTypeAny & {unwrap: () => ZodTypeAny}).unwrap();
+          }
+          type ZodDefaultLike = {
+            _def: {typeName: string; innerType: ZodTypeAny};
+          };
+          const maybeDefault = inner as unknown as ZodDefaultLike;
+          if (maybeDefault?._def?.typeName === 'ZodDefault') {
+            inner = maybeDefault._def.innerType;
+          }
+          if ('unwrap' in (inner as object)) {
+            inner = (inner as ZodTypeAny & {unwrap: () => ZodTypeAny}).unwrap();
+          }
+          expect(inner).toBeInstanceOf(ZodString);
+        }
 
         // Optional param 'id'
         expect(shape.id.isOptional()).toBe(true);
         expect(shape.id.isNullable()).toBe(true);
-        expect(
-          (shape.id as ZodOptional<ZodNullable<ZodTypeAny>>).unwrap().unwrap()
-            ._def.typeName,
-        ).toBe('ZodNumber');
+        {
+          let inner: ZodTypeAny = shape.id as unknown as ZodTypeAny;
+          if ('unwrap' in (inner as object)) {
+            inner = (inner as ZodTypeAny & {unwrap: () => ZodTypeAny}).unwrap();
+          }
+          type ZodDefaultLike = {
+            _def: {typeName: string; innerType: ZodTypeAny};
+          };
+          const maybeDefault = inner as unknown as ZodDefaultLike;
+          if (maybeDefault?._def?.typeName === 'ZodDefault') {
+            inner = maybeDefault._def.innerType;
+          }
+          if ('unwrap' in (inner as object)) {
+            inner = (inner as ZodTypeAny & {unwrap: () => ZodTypeAny}).unwrap();
+          }
+          expect(inner).toBeInstanceOf(ZodNumber);
+        }
       });
 
       it('should run tool with optional params omitted', async () => {

@@ -71,6 +71,7 @@ interface BaseParameter {
   description: string;
   authSources?: string[];
   required?: boolean;
+  default?: unknown;
 }
 
 export type ParameterSchema = BaseParameter & TypeSchema;
@@ -106,6 +107,7 @@ const ZodBaseParameter = z.object({
   description: z.string(),
   authSources: z.array(z.string()).optional(),
   required: z.boolean().optional(),
+  default: z.any().optional(),
 });
 
 export const ZodParameterSchema: z.ZodType<ParameterSchema> =
@@ -160,11 +162,14 @@ function buildZodShapeFromTypeSchema(typeSchema: TypeSchema): ZodTypeAny {
 }
 
 function buildZodShapeFromParam(param: ParameterSchema): ZodTypeAny {
-  const schema = buildZodShapeFromTypeSchema(param);
+  let schema = buildZodShapeFromTypeSchema(param);
   if (param.required === false) {
-    return schema.nullish();
+    schema = schema.nullish();
   }
-  return schema;
+  if (param.default !== undefined) {
+    schema = (schema as ZodTypeAny).default(param.default as never);
+  }
+  return schema as ZodTypeAny;
 }
 
 export function createZodSchemaFromParams(

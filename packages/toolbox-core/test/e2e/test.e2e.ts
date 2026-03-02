@@ -19,7 +19,7 @@ import {getSupportedMcpVersions} from '../../src/toolbox_core/protocol.js';
 import {AxiosError} from 'axios';
 import {CustomGlobal} from './types.js';
 import {authTokenGetter} from './utils.js';
-import {ZodOptional, ZodNullable, ZodTypeAny} from 'zod';
+import {ZodTypeAny} from 'zod';
 
 describe.each(getSupportedMcpVersions())(
   'ToolboxClient E2E MCP Tests (%s)',
@@ -359,18 +359,32 @@ describe.each(getSupportedMcpVersions())(
         // Optional param 'data'
         expect(shape.data.isOptional()).toBe(true);
         expect(shape.data.isNullable()).toBe(true);
-        expect(
-          (shape.data as ZodOptional<ZodNullable<ZodTypeAny>>).unwrap().unwrap()
-            ._def.typeName,
-        ).toBe('ZodString');
+        {
+          let inner: ZodTypeAny = shape.data as unknown as ZodTypeAny;
+          while (
+            inner?._def?.typeName === 'ZodOptional' ||
+            inner?._def?.typeName === 'ZodNullable' ||
+            inner?._def?.typeName === 'ZodDefault'
+          ) {
+            inner = inner._def.innerType;
+          }
+          expect(inner._def.typeName).toBe('ZodString');
+        }
 
         // Optional param 'id'
         expect(shape.id.isOptional()).toBe(true);
         expect(shape.id.isNullable()).toBe(true);
-        expect(
-          (shape.id as ZodOptional<ZodNullable<ZodTypeAny>>).unwrap().unwrap()
-            ._def.typeName,
-        ).toBe('ZodNumber');
+        {
+          let inner: ZodTypeAny = shape.id as unknown as ZodTypeAny;
+          while (
+            inner?._def?.typeName === 'ZodOptional' ||
+            inner?._def?.typeName === 'ZodNullable' ||
+            inner?._def?.typeName === 'ZodDefault'
+          ) {
+            inner = inner._def.innerType;
+          }
+          expect(inner._def.typeName).toBe('ZodNumber');
+        }
       });
 
       it('should run tool with optional params omitted', async () => {

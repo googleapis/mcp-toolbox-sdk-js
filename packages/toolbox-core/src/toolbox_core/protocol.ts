@@ -167,7 +167,7 @@ function buildZodShapeFromParam(param: ParameterSchema): ZodTypeAny {
     schema = schema.nullish();
   }
   if (param.default !== undefined) {
-    schema = (schema as ZodTypeAny).default(param.default as never);
+    schema = schema.default(param.default);
   }
   return schema as ZodTypeAny;
 }

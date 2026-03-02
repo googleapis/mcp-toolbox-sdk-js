@@ -531,6 +531,34 @@ describe('createZodObjectSchemaFromParameters', () => {
     );
   });
 
+  describe('default parameters', () => {
+    it('should preserve a default value in parameter schema validation', () => {
+      expectParseSuccess(ZodParameterSchema, {
+        name: 'limit',
+        description: 'query limit',
+        type: 'integer',
+        required: false,
+        default: 10,
+      });
+    });
+
+    it('should apply default value when parameter is omitted', () => {
+      const params: ParameterSchema[] = [
+        {
+          name: 'limit',
+          description: 'query limit',
+          type: 'integer',
+          required: false,
+          default: 10,
+        },
+      ];
+      const schema = createZodSchemaFromParams(params);
+
+      const result = schema.parse({});
+      expect(result).toEqual({limit: 10});
+    });
+  });
+
   describe('optional parameters', () => {
     const params: ParameterSchema[] = [
       {name: 'requiredParam', description: 'required', type: 'string' as const},

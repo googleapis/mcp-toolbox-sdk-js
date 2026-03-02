@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import {AxiosError} from 'axios';
 import {McpHttpTransportBase} from '../transportBase.js';
 import * as types from './types.js';
 
@@ -59,6 +60,17 @@ export class McpHttpTransportV20251125 extends McpHttpTransportBase {
         headers: reqHeaders,
       });
 
+      if (
+        response.status !== 200 &&
+        response.status !== 204 &&
+        response.status !== 202
+      ) {
+        const errorText = JSON.stringify(response.data);
+        throw new Error(
+          `API request failed with status ${response.status} (${response.statusText}). Server response: ${errorText}`,
+        );
+      }
+
       if (response.status === 204 || response.status === 202) {
         return null;
       }
@@ -76,19 +88,13 @@ export class McpHttpTransportV20251125 extends McpHttpTransportBase {
           code = String(err.code);
         }
 
-        const err = new Error(message) as Error & {
-          isAxiosError?: boolean;
-          code?: string;
-          config?: unknown;
-          request?: unknown;
-          response?: unknown;
-        };
-        err.isAxiosError = true;
-        err.code = code;
-        err.config = response.config;
-        err.request = response.request;
-        err.response = response;
-        throw err;
+        throw new AxiosError(
+          message,
+          code,
+          response.config,
+          response.request,
+          response,
+        );
       }
 
       // Parse Result

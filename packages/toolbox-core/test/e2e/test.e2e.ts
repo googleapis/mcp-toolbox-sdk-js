@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ToolboxClient } from '../../src/toolbox_core/client.js';
-import { ToolboxTool } from '../../src/toolbox_core/tool.js';
-import { getSupportedMcpVersions } from '../../src/toolbox_core/protocol.js';
+import {ToolboxClient} from '../../src/toolbox_core/client';
+import {ToolboxTool} from '../../src/toolbox_core/tool';
+import {getSupportedMcpVersions} from '../../src/toolbox_core/protocol';
 
-import { AxiosError } from 'axios';
-import { CustomGlobal } from './types.js';
-import { authTokenGetter } from './utils.js';
-import { ZodTypeAny, ZodString, ZodNumber } from 'zod';
+import axios, {AxiosError} from 'axios';
+import {CustomGlobal} from './types';
+import {authTokenGetter} from './utils';
+import {ZodTypeAny, ZodString, ZodNumber} from 'zod';
 
 describe.each(getSupportedMcpVersions())(
   'ToolboxClient E2E MCP Tests (%s)',
   protocolVersion => {
     let commonToolboxClient: ToolboxClient;
     let getNRowsTool: ReturnType<typeof ToolboxTool>;
-    const testBaseUrl = 'http://localhost:5000';
+    const testBaseUrl = 'http://localhost:5001';
     const projectId = (globalThis as CustomGlobal).__GOOGLE_CLOUD_PROJECT__;
 
     beforeAll(async () => {
@@ -45,7 +45,7 @@ describe.each(getSupportedMcpVersions())(
 
     describe('invokeTool', () => {
       it('should invoke the getNRowsTool', async () => {
-        const response = await getNRowsTool({ num_rows: '2' });
+        const response = await getNRowsTool({num_rows: '2'});
         expect(typeof response).toBe('string');
         expect(response).toContain('row1');
         expect(response).toContain('row2');
@@ -59,7 +59,7 @@ describe.each(getSupportedMcpVersions())(
       });
 
       it('should invoke the getNRowsTool with wrong param type', async () => {
-        await expect(getNRowsTool({ num_rows: 2 })).rejects.toThrow(
+        await expect(getNRowsTool({num_rows: 2})).rejects.toThrow(
           /Argument validation failed for tool "get-n-rows":\s*- num_rows: Expected string, received number/,
         );
       });
@@ -120,13 +120,14 @@ describe.each(getSupportedMcpVersions())(
           loadedTools.map(tool => tool.getName()),
         );
         const expectedDefaultTools = new Set([
+          'get-n-rows',
           'get-row-by-content-auth',
           'get-row-by-email-auth',
-          'get-row-by-id-auth',
           'get-row-by-id',
-          'get-n-rows',
-          'search-rows',
+          'get-row-by-id-auth',
+          'get-row-by-illegal-auth',
           'process-data',
+          'search-rows',
         ]);
         expect(loadedToolNames).toEqual(expectedDefaultTools);
 
@@ -157,7 +158,7 @@ describe.each(getSupportedMcpVersions())(
       });
 
       it('should successfully bind parameters with bindParams and invoke', async () => {
-        const newTool = getNRowsTool.bindParams({ num_rows: '3' });
+        const newTool = getNRowsTool.bindParams({num_rows: '3'});
         const response = await newTool(); // Invoke with no args
         expect(response).toContain('row1');
         expect(response).toContain('row2');
@@ -166,7 +167,7 @@ describe.each(getSupportedMcpVersions())(
       });
 
       it('should successfully bind a synchronous function value', async () => {
-        const newTool = getNRowsTool.bindParams({ num_rows: () => '1' });
+        const newTool = getNRowsTool.bindParams({num_rows: () => '1'});
         const response = await newTool();
         expect(response).toContain('row1');
         expect(response).not.toContain('row2');
@@ -178,7 +179,7 @@ describe.each(getSupportedMcpVersions())(
           return '1';
         };
 
-        const newTool = getNRowsTool.bindParams({ num_rows: asyncNumProvider });
+        const newTool = getNRowsTool.bindParams({num_rows: asyncNumProvider});
         const response = await newTool();
         expect(response).toContain('row1');
         expect(response).not.toContain('row2');
@@ -241,27 +242,49 @@ describe.each(getSupportedMcpVersions())(
 
       it('should fail when running a tool requiring auth without providing auth', async () => {
         const tool = await commonToolboxClient.loadTool('get-row-by-id-auth');
-        await expect(tool({ id: '2' })).rejects.toThrow(
+        await expect(tool({id: '2'})).rejects.toThrow(
           'One or more of the following authn services are required to invoke this tool: my-test-auth',
         );
       });
 
-      it('should fail when running a tool with incorrect auth', async () => {
-        const tool = await commonToolboxClient.loadTool('get-row-by-id-auth');
+      it('should fail when running a tool with illegal auth claims', async () => {
+        const tool = await commonToolboxClient.loadTool(
+          'get-row-by-illegal-auth',
+        );
         const authTool = tool.addAuthTokenGetters({
           'my-test-auth': authToken2Getter,
         });
         try {
-          await authTool({ id: '2' });
+          await authTool({id: '2'});
         } catch (error) {
-          expect(error).toBeInstanceOf(AxiosError);
+          expect(axios.isAxiosError(error)).toBe(true);
           const axiosError = error as AxiosError;
           expect(axiosError.response?.data).toEqual(
             expect.objectContaining({
               error: expect.objectContaining({
-                message: expect.stringMatching(
-                  /unauthorized|missing or invalid authentication header|unauthorized Tool call/,
-                ),
+                message: expect.stringMatching(/invalid authentication claims/),
+              }),
+            }),
+          );
+        }
+      });
+
+      it('should fail when running a tool with incorrect auth', async () => {
+        const tool = await commonToolboxClient.loadTool(
+          'get-row-by-illegal-auth',
+        );
+        const authTool = tool.addAuthTokenGetters({
+          'my-test-auth': authToken2Getter,
+        });
+        try {
+          await authTool({id: '2'});
+        } catch (error) {
+          expect(axios.isAxiosError(error)).toBe(true);
+          const axiosError = error as AxiosError;
+          expect(axiosError.response?.data).toEqual(
+            expect.objectContaining({
+              error: expect.objectContaining({
+                message: expect.stringMatching(/invalid authentication claims/),
               }),
             }),
           );
@@ -273,7 +296,7 @@ describe.each(getSupportedMcpVersions())(
         const authTool = tool.addAuthTokenGetters({
           'my-test-auth': authToken1Getter,
         });
-        const response = await authTool({ id: '2' });
+        const response = await authTool({id: '2'});
         expect(response).toContain('row2');
       });
 
@@ -285,7 +308,7 @@ describe.each(getSupportedMcpVersions())(
         const authTool = tool.addAuthTokenGetters({
           'my-test-auth': getAsyncToken,
         });
-        const response = await authTool({ id: '2' });
+        const response = await authTool({id: '2'});
         expect(response).toContain('row2');
       });
 
@@ -322,7 +345,7 @@ describe.each(getSupportedMcpVersions())(
           await tool();
           throw new Error('Expected tool invocation to fail');
         } catch (error) {
-          expect(error).toBeInstanceOf(AxiosError);
+          expect(axios.isAxiosError(error)).toBe(true);
           const axiosError = error as AxiosError;
           expect(axiosError.response?.data).toEqual(
             expect.objectContaining({
@@ -346,7 +369,7 @@ describe.each(getSupportedMcpVersions())(
 
       it('should correctly identify required and optional parameters in the schema', () => {
         const paramSchema = searchRowsTool.getParamSchema();
-        const { shape } = paramSchema;
+        const {shape} = paramSchema;
 
         // Required param 'email'
         expect(shape.email.isOptional()).toBe(false);
@@ -461,14 +484,14 @@ describe.each(getSupportedMcpVersions())(
       });
 
       it('should fail when a required param is missing', async () => {
-        await expect(searchRowsTool({ id: 5, data: 'row5' })).rejects.toThrow(
+        await expect(searchRowsTool({id: 5, data: 'row5'})).rejects.toThrow(
           /Argument validation failed for tool "search-rows":\s*- email: Required/,
         );
       });
 
       it('should fail when a required param is null', async () => {
         await expect(
-          searchRowsTool({ email: null, id: 5, data: 'row5' }),
+          searchRowsTool({email: null, id: 5, data: 'row5'}),
         ).rejects.toThrow(
           /Argument validation failed for tool "search-rows":\s*- email: Expected string, received null/,
         );
@@ -546,13 +569,13 @@ describe.each(getSupportedMcpVersions())(
       it('should correctly identify map/object parameters in the schema', () => {
         const paramSchema = processDataTool.getParamSchema();
         const baseArgs = {
-          execution_context: { env: 'prod' },
-          user_scores: { user1: 100 },
+          execution_context: {env: 'prod'},
+          user_scores: {user1: 100},
         };
 
         // Test required untyped map (dict[str, Any])
         expect(paramSchema.safeParse(baseArgs).success).toBe(true);
-        const argsWithoutExec = { ...baseArgs };
+        const argsWithoutExec = {...baseArgs};
         delete (argsWithoutExec as Partial<typeof argsWithoutExec>)
           .execution_context;
         expect(paramSchema.safeParse(argsWithoutExec).success).toBe(false);
@@ -561,7 +584,7 @@ describe.each(getSupportedMcpVersions())(
         expect(
           paramSchema.safeParse({
             ...baseArgs,
-            user_scores: { user1: 'not-a-number' },
+            user_scores: {user1: 'not-a-number'},
           }).success,
         ).toBe(false);
 
@@ -569,20 +592,20 @@ describe.each(getSupportedMcpVersions())(
         expect(
           paramSchema.safeParse({
             ...baseArgs,
-            feature_flags: { new_feature: true },
+            feature_flags: {new_feature: true},
           }).success,
         ).toBe(true);
         expect(
-          paramSchema.safeParse({ ...baseArgs, feature_flags: null }).success,
+          paramSchema.safeParse({...baseArgs, feature_flags: null}).success,
         ).toBe(true);
         expect(paramSchema.safeParse(baseArgs).success).toBe(true); // Omitted
       });
 
       it('should run tool with valid map parameters', async () => {
         const response = await processDataTool({
-          execution_context: { env: 'prod', id: 1234, user: 1234.5 },
-          user_scores: { user1: 100, user2: 200 },
-          feature_flags: { new_feature: true },
+          execution_context: {env: 'prod', id: 1234, user: 1234.5},
+          user_scores: {user1: 100, user2: 200},
+          feature_flags: {new_feature: true},
         });
         expect(typeof response).toBe('string');
         expect(response).toContain(
@@ -594,8 +617,8 @@ describe.each(getSupportedMcpVersions())(
 
       it('should run tool with optional map param omitted', async () => {
         const response = await processDataTool({
-          execution_context: { env: 'dev' },
-          user_scores: { user3: 300 },
+          execution_context: {env: 'dev'},
+          user_scores: {user3: 300},
         });
         expect(typeof response).toBe('string');
         expect(response).toContain('"execution_context":{"env":"dev"}');
@@ -606,8 +629,8 @@ describe.each(getSupportedMcpVersions())(
       it('should fail when a map parameter has the wrong value type', async () => {
         await expect(
           processDataTool({
-            execution_context: { env: 'staging' },
-            user_scores: { user4: 'not-an-integer' },
+            execution_context: {env: 'staging'},
+            user_scores: {user4: 'not-an-integer'},
           }),
         ).rejects.toThrow(
           /user_scores\.user4: Expected number, received string/,

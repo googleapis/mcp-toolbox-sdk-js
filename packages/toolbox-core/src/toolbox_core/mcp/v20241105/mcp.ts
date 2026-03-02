@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {AxiosError} from 'axios';
 import {McpHttpTransportBase} from '../transportBase.js';
 import * as types from './types.js';
 
@@ -54,17 +53,6 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
     try {
       const response = await this._session.post(url, payload, {headers});
 
-      if (
-        response.status !== 200 &&
-        response.status !== 204 &&
-        response.status !== 202
-      ) {
-        const errorText = JSON.stringify(response.data);
-        throw new Error(
-          `API request failed with status ${response.status} (${response.statusText}). Server response: ${errorText}`,
-        );
-      }
-
       if (response.status === 204 || response.status === 202) {
         return null;
       }
@@ -73,22 +61,27 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
 
       if (jsonResp.error) {
         const errResult = types.JSONRPCErrorSchema.safeParse(jsonResp);
-        let message = `MCP request failed: ${JSON.stringify(jsonResp.error)}`;
-        let code = 'MCP_ERROR';
-
+        let message = 'MCP request failed with error';
+        let code = '-1';
         if (errResult.success) {
           const err = errResult.data.error;
           message = `MCP request failed with code ${err.code}: ${err.message}`;
           code = String(err.code);
         }
 
-        throw new AxiosError(
-          message,
-          code,
-          response.config,
-          response.request,
-          response,
-        );
+        const err = new Error(message) as Error & {
+          isAxiosError?: boolean;
+          code?: string;
+          config?: unknown;
+          request?: unknown;
+          response?: unknown;
+        };
+        err.isAxiosError = true;
+        err.code = code;
+        err.config = response.config;
+        err.request = response.request;
+        err.response = response;
+        throw err;
       }
 
       // Parse Result

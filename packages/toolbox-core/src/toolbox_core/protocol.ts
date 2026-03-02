@@ -15,17 +15,14 @@
 import {z, ZodRawShape, ZodTypeAny, ZodObject} from 'zod';
 
 export enum Protocol {
-  /**
-   * @deprecated The native Toolbox protocol is deprecated and will be removed on March 4, 2026.
-   * Please use Protocol.MCP or specific MCP versions.
-   */
-  TOOLBOX = 'toolbox',
   MCP_v20241105 = '2024-11-05',
   MCP_v20250326 = '2025-03-26',
   MCP_v20250618 = '2025-06-18',
   MCP_v20251125 = '2025-11-25',
   MCP = MCP_v20250618, // Default MCP
 }
+
+export const MCP_LATEST = Protocol.MCP_v20251125;
 
 export function getSupportedMcpVersions(): Protocol[] {
   return [
@@ -74,6 +71,7 @@ interface BaseParameter {
   description: string;
   authSources?: string[];
   required?: boolean;
+  default?: unknown;
 }
 
 export type ParameterSchema = BaseParameter & TypeSchema;
@@ -109,6 +107,7 @@ const ZodBaseParameter = z.object({
   description: z.string(),
   authSources: z.array(z.string()).optional(),
   required: z.boolean().optional(),
+  default: z.any().optional(),
 });
 
 export const ZodParameterSchema: z.ZodType<ParameterSchema> =
@@ -163,11 +162,14 @@ function buildZodShapeFromTypeSchema(typeSchema: TypeSchema): ZodTypeAny {
 }
 
 function buildZodShapeFromParam(param: ParameterSchema): ZodTypeAny {
-  const schema = buildZodShapeFromTypeSchema(param);
+  let schema = buildZodShapeFromTypeSchema(param);
   if (param.required === false) {
-    return schema.nullish();
+    schema = schema.nullish();
   }
-  return schema;
+  if (param.default !== undefined) {
+    schema = schema.default(param.default);
+  }
+  return schema as ZodTypeAny;
 }
 
 export function createZodSchemaFromParams(

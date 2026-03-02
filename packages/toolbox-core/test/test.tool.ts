@@ -101,34 +101,6 @@ describe('ToolboxTool', () => {
     it('getParamSchema() should return the parameter schema', () => {
       expect(tool.getParamSchema()).toBe(basicParamSchema);
     });
-
-    it('should warn when using an HTTP URL with authTokenGetters', () => {
-      const httpTransport = new MockTransport('http://api.insecure.com');
-      ToolboxTool(httpTransport, toolName, toolDescription, basicParamSchema, {
-        service1: () => 'token',
-      });
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
-      );
-    });
-
-    it('should warn when using an HTTP URL with clientHeaders', () => {
-      const httpTransport = new MockTransport('http://api.insecure.com');
-      ToolboxTool(
-        httpTransport,
-        toolName,
-        toolDescription,
-        basicParamSchema,
-        {},
-        {},
-        [],
-        {},
-        {'x-api-key': 'key'},
-      );
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
-      );
-    });
   });
 
   describe('Callable Function - Argument Validation', () => {
@@ -275,6 +247,42 @@ describe('ToolboxTool', () => {
         {},
       );
       expect(result).toEqual(mockApiResponseData['result']);
+    });
+
+    it('should warn when using an HTTP URL with clientHeaders', async () => {
+      const httpTransport = new MockTransport('http://api.insecure.com');
+      const currentTool = ToolboxTool(
+        httpTransport,
+        toolName,
+        toolDescription,
+        basicParamSchema,
+        {}, // authTokenGetters
+        {}, // requiredAuthnParams
+        [], // requiredAuthzTokens
+        {}, // boundParams
+        {'x-api-key': 'key'}, // clientHeaders
+      );
+      httpTransport.toolInvoke.mockResolvedValueOnce('success');
+      await currentTool({query: 'test'});
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
+      );
+    });
+
+    it('should warn when using an HTTP URL with authTokenGetters', async () => {
+      const httpTransport = new MockTransport('http://api.insecure.com');
+      const currentTool = ToolboxTool(
+        httpTransport,
+        toolName,
+        toolDescription,
+        basicParamSchema,
+        {service1: () => 'token'}, // authTokenGetters
+      );
+      httpTransport.toolInvoke.mockResolvedValueOnce('success');
+      await currentTool({query: 'test'});
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
+      );
     });
 
     it('should re-throw the error if toolInvoke fails', async () => {

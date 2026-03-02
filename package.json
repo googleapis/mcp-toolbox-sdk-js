@@ -4,7 +4,7 @@
   "workspaces": [
     "packages/*"
   ],
-  "packageManager": "npm@11.8.0",
+  "packageManager": "npm@11.11.0",
   "scripts": {
     "build": "turbo run build",
     "lint": "turbo run lint",
@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@google-cloud/secret-manager": "^6.1.1",
-    "@google-cloud/storage": "^7.17.2",
+    "@google-cloud/storage": "^7.19.0",
     "@jest/globals": "^30.2.0",
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^30.0.0",

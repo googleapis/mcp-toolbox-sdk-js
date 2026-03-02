@@ -15,13 +15,13 @@
 import {ToolboxTool} from './tool.js';
 import {AxiosInstance} from 'axios';
 import {ITransport} from './transport.types.js';
-import {ToolboxTransport} from './toolboxTransport.js';
 import {
   createZodSchemaFromParams,
   ParameterSchema,
   ZodManifestSchema,
   Protocol,
   getSupportedMcpVersions,
+  MCP_LATEST,
 } from './protocol.js';
 import {McpHttpTransportV20241105} from './mcp/v20241105/mcp.js';
 import {McpHttpTransportV20250618} from './mcp/v20250618/mcp.js';
@@ -69,63 +69,56 @@ class ToolboxClient {
     clientVersion?: string,
   ) {
     this.#clientHeaders = clientHeaders || {};
-    if (Object.keys(this.#clientHeaders).length > 0) {
-      warnIfHttpAndHeaders(url, this.#clientHeaders);
-    }
-    if (protocol === Protocol.TOOLBOX) {
-      console.warn(
-        'The native Toolbox protocol is deprecated and will be removed on March 4, 2026. Please use Protocol.MCP or specific MCP versions.',
-      );
-      this.#transport = new ToolboxTransport(url, session || undefined);
-    } else if (getSupportedMcpVersions().includes(protocol)) {
-      if (protocol !== Protocol.MCP_v20251125) {
-        console.warn(
-          'A newer version of MCP: v2025-11-25 is available. Please use MCP_v20251125 to use the latest features.',
-        );
-      }
-
-      switch (protocol) {
-        case Protocol.MCP_v20241105:
-          this.#transport = new McpHttpTransportV20241105(
-            url,
-            session || undefined,
-            protocol,
-            clientName,
-            clientVersion,
-          );
-          break;
-        case Protocol.MCP_v20250326:
-          this.#transport = new McpHttpTransportV20250326(
-            url,
-            session || undefined,
-            protocol,
-            clientName,
-            clientVersion,
-          );
-          break;
-        case Protocol.MCP_v20250618:
-          this.#transport = new McpHttpTransportV20250618(
-            url,
-            session || undefined,
-            protocol,
-            clientName,
-            clientVersion,
-          );
-          break;
-        case Protocol.MCP_v20251125:
-          this.#transport = new McpHttpTransportV20251125(
-            url,
-            session || undefined,
-            protocol,
-            clientName,
-            clientVersion,
-          );
-          break;
-        default:
-          throw new Error(`Unsupported MCP protocol version: ${protocol}`);
-      }
-    } else {
+    warnIfHttpAndHeaders(url, this.#clientHeaders);
+    if (!getSupportedMcpVersions().includes(protocol)) {
       throw new Error(`Unsupported protocol version: ${protocol}`);
+    }
+
+    if (protocol !== MCP_LATEST) {
+      console.warn(
+        `A newer version of MCP: ${MCP_LATEST} is available. Please use the latest version ${MCP_LATEST} to use the latest features.`,
+      );
+    }
+
+    switch (protocol) {
+      case Protocol.MCP_v20241105:
+        this.#transport = new McpHttpTransportV20241105(
+          url,
+          session || undefined,
+          protocol,
+          clientName,
+          clientVersion,
+        );
+        break;
+      case Protocol.MCP_v20250326:
+        this.#transport = new McpHttpTransportV20250326(
+          url,
+          session || undefined,
+          protocol,
+          clientName,
+          clientVersion,
+        );
+        break;
+      case Protocol.MCP_v20250618:
+        this.#transport = new McpHttpTransportV20250618(
+          url,
+          session || undefined,
+          protocol,
+          clientName,
+          clientVersion,
+        );
+        break;
+      case Protocol.MCP_v20251125:
+        this.#transport = new McpHttpTransportV20251125(
+          url,
+          session || undefined,
+          protocol,
+          clientName,
+          clientVersion,
+        );
+        break;
+      default:
+        throw new Error(`Unsupported MCP protocol version: ${protocol}`);
     }
   }
 
@@ -219,9 +212,7 @@ class ToolboxClient {
     authTokenGetters: AuthTokenGetters | null = {},
     boundParams: BoundParams | null = {},
   ): Promise<ReturnType<typeof ToolboxTool>> {
-    if (authTokenGetters && Object.keys(authTokenGetters).length > 0) {
-      warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
-    }
+    warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
     const headers = await this.#resolveClientHeaders();
     const manifest = await this.#transport.toolGet(name, headers);
 
@@ -290,9 +281,7 @@ class ToolboxClient {
     boundParams: BoundParams | null = {},
     strict = false,
   ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
-    if (authTokenGetters && Object.keys(authTokenGetters).length > 0) {
-      warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
-    }
+    warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
     const toolsetName = name || '';
     const headers = await this.#resolveClientHeaders();
 

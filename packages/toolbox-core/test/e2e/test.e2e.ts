@@ -150,7 +150,7 @@ describe.each(getSupportedMcpVersions())(
       it('should throw an error when attempting to provide user arguments for bound params', async () => {
         const newTool = getNRowsTool.bindParam('num_rows', '3');
         await expect(newTool({num_rows: '4'})).rejects.toThrow(
-          "unexpected parameter 'num_rows' provided"
+          "unexpected parameter 'num_rows' provided",
         );
       });
 

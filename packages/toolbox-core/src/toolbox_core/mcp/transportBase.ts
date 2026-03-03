@@ -142,34 +142,50 @@ export abstract class McpHttpTransportBase implements ITransport {
 
   private _convertTypeSchema(schemaData: unknown): TypeSchema {
     const schema = schemaData as JsonSchema;
-    if (schema.type === 'array') {
+    const paramType = schema.type || 'string';
+
+    if (paramType === 'array') {
+      let itemsSchema: TypeSchema | undefined;
+
+      // MCP strictly requires standard JSON Schema formatting:
+      // https://modelcontextprotocol.io/specification/2025-11-25/server/tools#tool
+      // This dictates using `items` for array types (https://json-schema.org/understanding-json-schema/reference/array#items)
+      // and `additionalProperties` for maps (https://json-schema.org/understanding-json-schema/reference/object#additionalproperties).
+      if (schema.items !== undefined && schema.items !== null) {
+        // For third-party compatibility, skip strict typing if 'items' is a list (Draft 7 tuple validation).
+        // Missing 'items' keys default natively to generic lists (list[Any]).
+        if (typeof schema.items === 'object' && !Array.isArray(schema.items)) {
+          itemsSchema = this._convertTypeSchema(schema.items);
+        }
+      }
+
       return {
         type: 'array',
-        items: this._convertTypeSchema(schema.items || {type: 'string'}),
+        ...(itemsSchema ? {items: itemsSchema} : {}),
       };
-    } else if (schema.type === 'object') {
-      let additionalProperties: boolean | PrimitiveTypeSchema | undefined;
+    } else if (paramType === 'object') {
+      let additionalProperties: boolean | TypeSchema | undefined;
+
       if (
-        schema.additionalProperties &&
-        typeof schema.additionalProperties === 'object'
+        schema.additionalProperties !== undefined &&
+        schema.additionalProperties !== null &&
+        typeof schema.additionalProperties === 'object' &&
+        !Array.isArray(schema.additionalProperties)
       ) {
-        additionalProperties = {
-          type: schema.additionalProperties.type as
-            | 'string'
-            | 'integer'
-            | 'float'
-            | 'boolean',
-        } as PrimitiveTypeSchema;
+        additionalProperties = this._convertTypeSchema(
+          schema.additionalProperties,
+        );
       } else {
         additionalProperties = schema.additionalProperties !== false;
       }
+
       return {
         type: 'object',
         additionalProperties,
       };
     } else {
       return {
-        type: schema.type as
+        type: paramType as
           | 'string'
           | 'integer'
           | 'float'

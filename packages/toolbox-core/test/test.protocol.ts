@@ -19,7 +19,7 @@ import {
   ZodManifestSchema,
   ParameterSchema,
   createZodSchemaFromParams,
-} from '../src/toolbox_core/protocol';
+} from '../src/toolbox_core/protocol.js';
 
 // HELPER FUNCTIONS
 
@@ -199,13 +199,9 @@ describe('ZodParameterSchema', () => {
     });
   });
 
-  it('should invalidate an array parameter with missing items definition', () => {
+  it('should validate an array parameter with missing items definition (defaults to any)', () => {
     const data = {name: 'testArray', description: 'An array', type: 'array'};
-    expectParseFailure(ZodParameterSchema, data, errors => {
-      expect(errors).toEqual(
-        expect.arrayContaining([expect.stringMatching(/items: Required/i)]),
-      );
-    });
+    expectParseSuccess(ZodParameterSchema, data);
   });
 
   it('should invalidate if type is missing', () => {

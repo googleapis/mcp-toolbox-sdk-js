@@ -19,7 +19,7 @@ import {
   ZodManifestSchema,
   ParameterSchema,
   createZodSchemaFromParams,
-} from '../src/toolbox_core/protocol.js';
+} from '../src/toolbox_core/protocol';
 
 // HELPER FUNCTIONS
 

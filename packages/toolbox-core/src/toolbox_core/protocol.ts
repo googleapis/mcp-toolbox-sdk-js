@@ -94,7 +94,9 @@ const ZodTypeSchema: z.ZodType<TypeSchema> = z.lazy(() =>
     z.object({type: z.literal('array'), items: ZodTypeSchema.optional()}),
     z.object({
       type: z.literal('object'),
-      additionalProperties: z.union([z.boolean(), ZodPrimitiveTypeSchema]).optional(),
+      additionalProperties: z
+        .union([z.boolean(), ZodPrimitiveTypeSchema])
+        .optional(),
     }),
   ]),
 );

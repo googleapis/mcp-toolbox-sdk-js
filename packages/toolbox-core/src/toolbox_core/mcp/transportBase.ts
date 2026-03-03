@@ -165,7 +165,7 @@ export abstract class McpHttpTransportBase implements ITransport {
       };
     } else if (paramType === 'object') {
       let additionalProperties: boolean | PrimitiveTypeSchema | undefined;
-      
+
       if (
         schema.additionalProperties !== undefined &&
         schema.additionalProperties !== null &&
@@ -182,7 +182,7 @@ export abstract class McpHttpTransportBase implements ITransport {
       } else {
         additionalProperties = schema.additionalProperties !== false;
       }
-      
+
       return {
         type: 'object',
         additionalProperties,

@@ -59,7 +59,7 @@ interface ArrayType {
 }
 interface ObjectType {
   type: 'object';
-  additionalProperties?: boolean | TypeSchema;
+  additionalProperties?: boolean | PrimitiveTypeSchema;
 }
 
 // Union of all pure type definitions.
@@ -76,6 +76,14 @@ interface BaseParameter {
 
 export type ParameterSchema = BaseParameter & TypeSchema;
 
+const ZodPrimitiveTypeSchema: z.ZodType<PrimitiveTypeSchema> =
+  z.discriminatedUnion('type', [
+    z.object({type: z.literal('string')}),
+    z.object({type: z.literal('integer')}),
+    z.object({type: z.literal('float')}),
+    z.object({type: z.literal('boolean')}),
+  ]);
+
 // Zod schema for the pure type definitions. This must be lazy for recursion.
 const ZodTypeSchema: z.ZodType<TypeSchema> = z.lazy(() =>
   z.discriminatedUnion('type', [
@@ -86,7 +94,7 @@ const ZodTypeSchema: z.ZodType<TypeSchema> = z.lazy(() =>
     z.object({type: z.literal('array'), items: ZodTypeSchema.optional()}),
     z.object({
       type: z.literal('object'),
-      additionalProperties: z.union([z.boolean(), ZodTypeSchema]).optional(),
+      additionalProperties: z.union([z.boolean(), ZodPrimitiveTypeSchema]).optional(),
     }),
   ]),
 );

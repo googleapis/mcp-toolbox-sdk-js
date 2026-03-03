@@ -164,21 +164,25 @@ export abstract class McpHttpTransportBase implements ITransport {
         ...(itemsSchema ? {items: itemsSchema} : {}),
       };
     } else if (paramType === 'object') {
-      let additionalProperties: boolean | TypeSchema | undefined;
-
+      let additionalProperties: boolean | PrimitiveTypeSchema | undefined;
+      
       if (
         schema.additionalProperties !== undefined &&
         schema.additionalProperties !== null &&
         typeof schema.additionalProperties === 'object' &&
         !Array.isArray(schema.additionalProperties)
       ) {
-        additionalProperties = this._convertTypeSchema(
-          schema.additionalProperties,
-        );
+        additionalProperties = {
+          type: schema.additionalProperties.type as
+            | 'string'
+            | 'integer'
+            | 'float'
+            | 'boolean',
+        } as PrimitiveTypeSchema;
       } else {
         additionalProperties = schema.additionalProperties !== false;
       }
-
+      
       return {
         type: 'object',
         additionalProperties,

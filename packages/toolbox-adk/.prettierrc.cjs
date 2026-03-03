@@ -16,7 +16,6 @@
 // ** https://github.com/googleapis/gapic-generator-typescript **
 // ** All changes to this file may be overwritten. **
 
-
 module.exports = {
-    ...require('gts/.prettierrc.json')
-}
+  ...require('gts/.prettierrc.json'),
+};

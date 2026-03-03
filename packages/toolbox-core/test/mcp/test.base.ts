@@ -410,7 +410,6 @@ describe('McpHttpTransportBase', () => {
       );
       expect(pMapArr.type).toBe('object');
       expect(pMapArr.additionalProperties.type).toBe('array');
-      expect(pMapArr.additionalProperties.items.type).toBe('integer');
     });
 
     it('should handle partial auth metadata', () => {

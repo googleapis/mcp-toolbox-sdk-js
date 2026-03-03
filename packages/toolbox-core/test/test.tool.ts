@@ -427,6 +427,13 @@ describe('ToolboxTool', () => {
         {},
       );
     });
+
+    it('should throw an error with unexpected parameter message if user provides a parameter that is already bound', async () => {
+      const boundTool = tool.bindParams({limit: 5});
+      await expect(
+        boundTool({query: 'some string', limit: 10}) // user tries to pass down limit
+      ).rejects.toThrow("unexpected parameter 'limit' provided");
+    });
   });
 
   describe('Authentication Functionality', () => {

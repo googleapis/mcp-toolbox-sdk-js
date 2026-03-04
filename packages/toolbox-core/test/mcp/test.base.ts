@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {McpHttpTransportBase} from '../../src/toolbox_core/mcp/transportBase.js';
 import {Protocol, ZodManifest} from '../../src/toolbox_core/protocol.js';
 import axios, {AxiosInstance} from 'axios';
@@ -329,7 +330,7 @@ describe('McpHttpTransportBase', () => {
       expect(result.authRequired).toBeUndefined();
     });
 
-    it('should handle array without items (default to string)', () => {
+    it('should handle array without items (default to any)', () => {
       const toolData = {
         name: 'arrayDefault',
         inputSchema: {
@@ -343,9 +344,72 @@ describe('McpHttpTransportBase', () => {
       expect(result.parameters[0]).toEqual(
         expect.objectContaining({
           type: 'array',
-          items: {type: 'string'},
         }),
       );
+      expect((result.parameters[0] as any).items).toBeUndefined();
+    });
+
+    it('should convert schema with recursive types (nested arrays, arrays of maps)', () => {
+      const toolData = {
+        name: 'recursive_tool',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            // List[List[str]]
+            nested_array: {
+              type: 'array',
+              items: {
+                type: 'array',
+                items: {type: 'string'},
+              },
+            },
+            // List[Dict[str, int]]
+            array_of_maps: {
+              type: 'array',
+              items: {
+                type: 'object',
+                additionalProperties: {type: 'integer'},
+              },
+            },
+            // Dict[str, List[int]]
+            map_of_arrays: {
+              type: 'object',
+              additionalProperties: {
+                type: 'array',
+                items: {type: 'integer'},
+              },
+            },
+          },
+        },
+      };
+
+      const result = transport.testConvertToolSchema(toolData);
+
+      // 1. Nested Array
+      const pNested: any = result.parameters.find(
+        p => p.name === 'nested_array',
+      );
+      expect(pNested.type).toBe('array');
+      expect(pNested.items).toBeDefined();
+      expect(pNested.items.type).toBe('array');
+      expect(pNested.items.items).toBeDefined();
+      expect(pNested.items.items.type).toBe('string');
+
+      // 2. Array of Maps
+      const pArrMap: any = result.parameters.find(
+        p => p.name === 'array_of_maps',
+      );
+      expect(pArrMap.type).toBe('array');
+      expect(pArrMap.items).toBeDefined();
+      expect(pArrMap.items.type).toBe('object');
+      expect(pArrMap.items.additionalProperties.type).toBe('integer');
+
+      // 3. Map of Arrays
+      const pMapArr: any = result.parameters.find(
+        p => p.name === 'map_of_arrays',
+      );
+      expect(pMapArr.type).toBe('object');
+      expect(pMapArr.additionalProperties.type).toBe('array');
     });
 
     it('should handle partial auth metadata', () => {

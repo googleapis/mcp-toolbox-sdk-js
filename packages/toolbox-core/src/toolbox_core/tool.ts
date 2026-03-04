@@ -88,6 +88,15 @@ function ToolboxTool(
       );
     }
 
+    const providedBoundKeys = Object.keys(callArguments).filter(k =>
+      boundKeys.includes(k),
+    );
+    if (providedBoundKeys.length > 0) {
+      throw new Error(
+        `unexpected parameter '${providedBoundKeys[0]}' provided`,
+      );
+    }
+
     let validatedUserArgs: Record<string, unknown>;
     try {
       validatedUserArgs = userParamSchema.parse(callArguments);

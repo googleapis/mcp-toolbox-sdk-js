@@ -22,6 +22,7 @@ import type {
 import type {CoreTool} from '../src/toolbox_adk/tool.js';
 import type {ToolboxClient as ToolboxClientType} from '../src/toolbox_adk/client.js';
 import type {AxiosInstance} from 'axios';
+import {VERSION} from '../src/toolbox_adk/version.js';
 
 // Define the return type (the "instance") of the mock constructor
 type MockCoreClient = {
@@ -103,7 +104,7 @@ describe('ToolboxClient', () => {
       mockHeaders,
       'mcp-default',
       'toolbox-adk-js',
-      '0.2.1',
+      VERSION,
     );
   });
 

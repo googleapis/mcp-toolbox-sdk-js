@@ -55,7 +55,7 @@ export type PrimitiveTypeSchema =
 
 interface ArrayType {
   type: 'array';
-  items: TypeSchema; // Recursive
+  items?: TypeSchema; // Recursive
 }
 interface ObjectType {
   type: 'object';
@@ -91,7 +91,7 @@ const ZodTypeSchema: z.ZodType<TypeSchema> = z.lazy(() =>
     z.object({type: z.literal('integer')}),
     z.object({type: z.literal('float')}),
     z.object({type: z.literal('boolean')}),
-    z.object({type: z.literal('array'), items: ZodTypeSchema}),
+    z.object({type: z.literal('array'), items: ZodTypeSchema.optional()}),
     z.object({
       type: z.literal('object'),
       additionalProperties: z
@@ -140,6 +140,9 @@ function buildZodShapeFromTypeSchema(typeSchema: TypeSchema): ZodTypeAny {
     case 'boolean':
       return z.boolean();
     case 'array':
+      if (!typeSchema.items) {
+        return z.array(z.any());
+      }
       return z.array(buildZodShapeFromTypeSchema(typeSchema.items));
     case 'object':
       if (typeof typeSchema.additionalProperties === 'object') {

@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.3.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.2.1...core-v0.3.0) (2026-03-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* Remove legacy Toolbox protocol support ([#255](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/255))
+
+### Features
+
+* Enable package-specific client identification for MCP ([#238](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/238)) ([43b759e](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/43b759e2d3acc35c90683fd27db4649b482ee80b))
+
+
+### Bug Fixes
+
+* preserve default values for tool parameters ([#268](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/268)) ([f51849a](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/f51849a80cf8884860a3dc969beffa1cff5de769))
+* Recursive schema parsing for array items with MCP transport ([#286](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/286)) ([15fded5](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/15fded59f1e912d6a43b785af79e13ce75f1f73b))
+* prevent user arguments from overriding bound parameters ([#287](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/287)) ([1cd049c](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/1cd049c34c4f12d431941e1b2335059fa076083f))
+
+
+### Miscellaneous Chores
+
+* Deprecate native Toolbox protocol ([#256](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/256)) ([77e8527](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/77e8527dba2b36edd7f73ccb167d3363fa1e903d))
+* make the HTTP warnings logic consistent ([#265](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/265)) ([81b0f16](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/81b0f16cd92de595519fba789c45a3c0023f8167))
+* standardize HTTP security warnings ([#253](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/253)) ([81df01d](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/81df01d08b0240994fbf67cf75b5a67b6d6522af))
+
+
 ## [0.2.1](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.1.5...core-v0.2.1) (2026-01-29)
 
 

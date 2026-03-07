@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.3.0...core-v0.3.1) (2026-03-07)
+
+
+### Miscellaneous Chores
+
+* **deps:** update dependency @types/uuid to v11 ([#203](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/203)) ([ecda227](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/ecda227cd2a35dd2e40cfd643036772859c08ffb))
+* **deps:** update mcp toolbox server version in integration tests to v0.28.0 ([#285](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/285)) ([4d473d8](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/4d473d8d7e65c63aa3076970752578b387722887))
+
 ## [0.3.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.2.1...core-v0.3.0) (2026-03-04)
 
 

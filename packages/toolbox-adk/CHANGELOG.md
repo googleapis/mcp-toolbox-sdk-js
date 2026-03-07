@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.1](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v0.3.0...adk-v0.3.1) (2026-03-07)
+
+
+### Miscellaneous Chores
+
+* **deps:** update mcp toolbox server version in integration tests to v0.28.0 ([#285](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/285)) ([4d473d8](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/4d473d8d7e65c63aa3076970752578b387722887))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @toolbox-sdk/core bumped from ^0.3.0 to ^0.3.1
+
 ## [0.3.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v0.2.1...adk-v0.3.0) (2026-03-04)
 
 

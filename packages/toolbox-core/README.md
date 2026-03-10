@@ -4,7 +4,7 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-The @toolbox-sdk/core package provides a Javascript interface to the MCP Toolbox service, enabling you to load and invoke tools from your own applications. It is framework-agnostic and designed to seamlessly integrate with popular orchestration frameworks like Langchain, LlamaIndex and Genkit.
+The @toolbox-sdk/core package provides a Javascript interface to the [MCP Toolbox]((https://github.com/googleapis/genai-toolbox)) service, enabling you to load and invoke tools from your own applications. It is framework-agnostic and designed to seamlessly integrate with popular orchestration frameworks like Langchain, LlamaIndex and Genkit.
 
 For detailed guides, authentication examples, and advanced configuration, visit the [JS SDK Core Guide](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/core/).
 

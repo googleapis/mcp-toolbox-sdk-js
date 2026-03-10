@@ -4,7 +4,7 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-The @toolbox-sdk/adk package provides a Javascript interface to the MCP Toolbox service, specifically designed for seamless integration with Google ADK TS. It allows you to load tools defined in the Toolbox service and use them directly within your ADK agents and workflows.
+The @toolbox-sdk/adk package provides a Javascript interface to the [MCP Toolbox]((https://github.com/googleapis/genai-toolbox)) service, specifically designed for seamless integration with Google ADK TS. It allows you to load tools defined in the Toolbox service and use them directly within your ADK agents and workflows.
 
 For detailed guides, authentication examples, and advanced configuration, visit the [JS SDK ADK Guide](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/adk/).
 

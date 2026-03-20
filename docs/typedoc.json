@@ -1,0 +1,12 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "out": "build/docs/temp",
+  "name": "MCP Toolbox JS SDK",
+  "includeVersion": true,
+  "hideGenerator": true,
+  "excludeInternal": true,
+  "searchInComments": true,
+  "cleanOutputDir": true,
+  "githubPages": true,
+  "plugin": ["typedoc-plugin-markdown"]
+}

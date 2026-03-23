@@ -9,7 +9,7 @@ Logo](https://raw.githubusercontent.com/googleapis/genai-toolbox/main/logo.png)
 [![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=flat&logo=discord&logoColor=white)](https://discord.gg/Dmm69peqjh)
 [![Medium](https://img.shields.io/badge/Medium-12100E?style=flat&logo=medium&logoColor=white)](https://medium.com/@mcp_toolbox)
 
-This repository contains JavaScript SDKs for [MCP Toolbox](https://github.com/googleapis/genai-toolbox). These SDKs allow you to load and use tools defined in your Toolbox server as standard JS functions or objects within your GenAI applications.
+This repository contains JavaScript SDKs for [MCP Toolbox](https://github.com/googleapis/genai-toolbox). These SDKs allow you to load and use tools defined in your MCP Toolbox server as standard JS functions or objects within your Agentic applications.
 
 For comprehensive guides, tutorials, and advanced configuration, visit the [Main Documentation Site](https://googleapis.github.io/genai-toolbox/).
 

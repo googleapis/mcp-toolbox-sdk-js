@@ -67,7 +67,7 @@ quickstart();
 
 ## Usage
 
-The core package provides a framework-agnostic way to interact with your Toolbox server. For detailed guides and advanced configuration, please visit the following sections on our [Documentation Site](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/adk/):
+The core package provides a framework-agnostic way to interact with your  MCP Toolbox server. For detailed guides and advanced configuration, please visit the following sections on our [Documentation Site](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/adk/):
 
 - [Transport Protocols](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/adk/#transport-protocols)
 - [Loading Tools](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/adk/#loading-tools)

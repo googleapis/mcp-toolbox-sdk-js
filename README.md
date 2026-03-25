@@ -9,90 +9,42 @@ Logo](https://raw.githubusercontent.com/googleapis/genai-toolbox/main/logo.png)
 [![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=flat&logo=discord&logoColor=white)](https://discord.gg/Dmm69peqjh)
 [![Medium](https://img.shields.io/badge/Medium-12100E?style=flat&logo=medium&logoColor=white)](https://medium.com/@mcp_toolbox)
 
-This repository contains JS SDKs designed to seamlessly integrate the
-functionalities of the [MCP
-Toolbox](https://github.com/googleapis/genai-toolbox) into your Gen AI
-applications. These SDKs allow you to load tools defined in Toolbox and use them
-as standard JS functions or objects within popular orchestration frameworks
-or your custom code.
+This repository contains JavaScript SDKs for [MCP Toolbox](https://github.com/googleapis/genai-toolbox). These SDKs allow you to load and use tools defined in your MCP Toolbox server as standard JS functions or objects within your Agentic applications.
 
-This simplifies the process of incorporating external functionalities (like
-Databases or APIs) managed by Toolbox into your GenAI applications.
+For comprehensive guides, tutorials, and advanced configuration, visit the [Main Documentation Site](https://googleapis.github.io/genai-toolbox/).
 
 <!-- TOC -->
 
-- [Overview](#overview)
-- [Which Package Should I Use?](#which-package-should-i-use)
 - [Available Packages](#available-packages)
-- [Getting Started](#getting-started)
+- [Quick Start](#quick-start)
 - [Contributing](#contributing)
 - [License](#license)
 - [Support](#support)
 
 <!-- /TOC -->
 
-## Overview
-
-The MCP Toolbox service provides a centralized way to manage and expose tools
-(like API connectors, database query tools, etc.) for use by GenAI applications.
-
-These JS SDKs act as clients for that service. They handle the communication needed to:
-
-* Fetch tool definitions from your running Toolbox instance.
-* Provide convenient JS objects or functions representing those tools.
-* Invoke the tools (calling the underlying APIs/services configured in Toolbox).
-* Handle authentication and parameter binding as needed.
-
-By using these SDKs, you can easily leverage your Toolbox-managed tools directly
-within your JS applications or AI orchestration frameworks.
-
-## Which Package Should I Use?
-
-Choosing the right package depends on how you are building your application:
-
-- [`@toolbox-sdk/core`](https://github.com/googleapis/mcp-toolbox-sdk-js/tree/main/packages/toolbox-core):
-  This is a framework agnostic way to connect the tools to popular frameworks
-  like Langchain, LlamaIndex and Genkit.
-- [`@toolbox-sdk/adk`](https://github.com/googleapis/mcp-toolbox-sdk-js/tree/main/packages/toolbox-adk):
-  This package provides a seamless way to connect to [Google ADK TS](https://github.com/google/adk-js).
-
 ## Available Packages
 
-This repository hosts the following TS packages. See the package-specific
-README for detailed installation and usage instructions:
+This repository hosts the following TS packages. Visit the [Main Documentation Site](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/) for detailed installation and usage instructions:
 
-| Package | Target Use Case | Integration | Path | Details (README) | Npm Version |
-| :------ | :---------- | :---------- | :---------------------- | :---------- | :--------- 
-| `toolbox-core` | Framework-agnostic / Custom applications | Use directly / Custom | `packages/toolbox-core/` | 📄 [View README](https://github.com/googleapis/mcp-toolbox-sdk-js/blob/main/packages/toolbox-core/README.md) | ![npm](https://img.shields.io/npm/v/@toolbox-sdk/core) |
-| `toolbox-adk` | ADK applications | ADK | `packages/toolbox-adk/` | 📄 [View README](https://github.com/googleapis/mcp-toolbox-sdk-js/blob/main/packages/toolbox-adk/README.md) | ![npm](https://img.shields.io/npm/v/@toolbox-sdk/adk) |
+| Package | Target Use Case | Path | Documentation |
+| :------ | :---------- | :--- | :---------- |
+| `@toolbox-sdk/core` | Framework-agnostic / Custom apps | `packages/toolbox-core/` | [JS Core Guide](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/core/) |
+| `@toolbox-sdk/adk` | ADK applications | `packages/toolbox-adk/` | [JS ADK Guide](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/adk/) |
 
-## Getting Started
+## Quick Start
 
-To get started using Toolbox tools with an application, follow these general steps:
-
-1. **Set up and Run the Toolbox Service:**
-
-    Before using the SDKs, you need the main MCP Toolbox service running. Follow
-    the instructions here: [**Toolbox Getting Started
-    Guide**](https://github.com/googleapis/genai-toolbox?tab=readme-ov-file#getting-started)
-
-2. **Install the Appropriate SDK:**
-
-    Choose the package based on your needs (see "[Which Package Should I Use?](#which-package-should-i-use)" above) and install it:
-
+1.  **Set up the Toolbox Service**: Ensure you have a running MCP Toolbox server. Follow the [Toolbox Server Getting Started Guide](https://github.com/googleapis/genai-toolbox?tab=readme-ov-file#getting-started).
+2.  **Install the Appropriate SDK**:
     ```bash
     # For the core, framework-agnostic SDK
     npm install @toolbox-sdk/core
     ```
-
-3. **Use the SDK:**
-
-    Consult the README for your chosen package (linked in the "[Available
-    Packages](#available-packages)" section above) for detailed instructions on
-    how to connect the client, load tool definitions, invoke tools, configure
-    authentication/binding, and integrate them into your application or
-    framework.
-
+    ```bash
+    # For the ADK SDK
+    npm install @toolbox-sdk/adk
+    ```
+3.  **Explore Tutorials**: Check out the [JS Quickstart Tutorial](https://googleapis.github.io/genai-toolbox/getting-started/local_quickstart_js/) for a full walkthrough.
 ## Contributing
 
 Contributions are welcome! Please refer to the

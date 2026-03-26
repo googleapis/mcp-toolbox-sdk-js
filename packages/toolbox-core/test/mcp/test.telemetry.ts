@@ -149,6 +149,23 @@ describe('createSessionDurationHistogram', () => {
     expect(mockMeter.createHistogram).toHaveBeenCalledTimes(1);
   });
 
+  it('passes explicitBucketBoundaries advice to meter.createHistogram', () => {
+    const mockHistogram = {record: jest.fn()};
+    const createHistogram = jest.fn().mockReturnValue(mockHistogram);
+    const mockMeter = {createHistogram};
+
+    createSessionDurationHistogram(mockMeter as unknown as Meter);
+
+    expect(createHistogram).toHaveBeenCalledWith(
+      'mcp.client.session.duration',
+      expect.objectContaining({
+        advice: expect.objectContaining({
+          explicitBucketBoundaries: expect.any(Array),
+        }),
+      }),
+    );
+  });
+
   it('returns null when histogram creation throws', () => {
     const mockMeter = {
       createHistogram: jest.fn<() => never>().mockImplementation(() => {

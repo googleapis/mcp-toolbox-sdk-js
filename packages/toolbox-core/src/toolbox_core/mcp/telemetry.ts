@@ -17,7 +17,7 @@
  *
  * This module implements telemetry following the MCP Semantic Conventions:
  * https://opentelemetry.io/docs/specs/semconv/gen-ai/mcp
- * 
+ *
  * Note: OpenTelemetry is an optional peer dependency. Install with:
  *   npm install @opentelemetry/api
  */
@@ -159,7 +159,7 @@ export function createTraceparentFromSpan(span: Span): {
   traceparent: string;
   tracestate: string;
 } {
-  if(!otelApi) return {traceparent: '', tracestate: ''};
+  if (!otelApi) return {traceparent: '', tracestate: ''};
   try {
     const spanCtx = span.spanContext();
     if (!otelApi.trace.isSpanContextValid(spanCtx)) {

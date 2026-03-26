@@ -371,6 +371,14 @@ class ToolboxClient {
 
     return tools;
   }
+
+  /**
+   * Closes the client and flushes any pending telemetry (e.g. session duration metric).
+   * Should be called when the client is no longer needed.
+   */
+  async close(): Promise<void> {
+    await this.#transport.close();
+  }
 }
 
 export {ToolboxClient};

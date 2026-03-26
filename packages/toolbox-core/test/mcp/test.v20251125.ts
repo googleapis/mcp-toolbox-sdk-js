@@ -1027,4 +1027,83 @@ describe.each([
       await expect(transport.toolInvoke('myTool', {}, {})).resolves.toBe('ok');
     });
   });
+
+  describe('close', () => {
+    it('records session duration after a successful session', async () => {
+      if (!telemetryEnabled) return;
+
+      const recordSessionDurationSpy = jest.spyOn(
+        telemetry,
+        'recordSessionDuration',
+      );
+
+      mockSession.post
+        .mockResolvedValueOnce({
+          data: {
+            jsonrpc: '2.0',
+            id: '1',
+            result: {
+              protocolVersion: '2025-11-25',
+              capabilities: {tools: {}},
+              serverInfo: {name: 'test-server', version: '1.0.0'},
+            },
+          },
+          status: 200,
+        })
+        .mockResolvedValueOnce({data: {jsonrpc: '2.0'}, status: 200})
+        .mockResolvedValueOnce({
+          data: {jsonrpc: '2.0', id: '2', result: {tools: []}},
+          status: 200,
+        });
+
+      await transport.toolsList();
+      await transport.close();
+
+      expect(recordSessionDurationSpy).toHaveBeenCalledTimes(1);
+      const [histogram, duration] = recordSessionDurationSpy.mock.calls[0] as [
+        telemetry.Histogram,
+        number,
+        ...unknown[],
+      ];
+      expect(histogram).not.toBeNull();
+      expect(duration).toBeGreaterThan(0);
+    });
+
+    it('does not record session duration when telemetry is disabled', async () => {
+      if (telemetryEnabled) return;
+
+      const recordSessionDurationSpy = jest.spyOn(
+        telemetry,
+        'recordSessionDuration',
+      );
+
+      mockSession.post
+        .mockResolvedValueOnce({
+          data: {
+            jsonrpc: '2.0',
+            id: '1',
+            result: {
+              protocolVersion: '2025-11-25',
+              capabilities: {tools: {}},
+              serverInfo: {name: 'test-server', version: '1.0.0'},
+            },
+          },
+          status: 200,
+        })
+        .mockResolvedValueOnce({data: {jsonrpc: '2.0'}, status: 200})
+        .mockResolvedValueOnce({
+          data: {jsonrpc: '2.0', id: '2', result: {tools: []}},
+          status: 200,
+        });
+
+      await transport.toolsList();
+      await transport.close();
+
+      expect(recordSessionDurationSpy).not.toHaveBeenCalled();
+    });
+
+    it('is safe to call close() without any prior operations', async () => {
+      await expect(transport.close()).resolves.not.toThrow();
+    });
+  });
 });

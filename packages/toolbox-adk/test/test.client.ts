@@ -28,6 +28,7 @@ import {VERSION} from '../src/toolbox_adk/version.js';
 type MockCoreClient = {
   loadTool: typeof mockLoadTool;
   loadToolset: typeof mockLoadToolset;
+  close: typeof mockClose;
 };
 
 // Define the signature of the mock constructor itself
@@ -40,6 +41,8 @@ type MockCoreClientConstructor = (
   clientVersion?: string,
   telemetryEnabled?: boolean,
 ) => MockCoreClient;
+
+const mockClose = jest.fn<() => Promise<void>>();
 
 const mockLoadTool =
   jest.fn<
@@ -65,6 +68,7 @@ const MockCoreToolboxClient = jest
   .mockImplementation(() => ({
     loadTool: mockLoadTool,
     loadToolset: mockLoadToolset,
+    close: mockClose,
   }));
 
 const MockToolboxTool = jest.fn();
@@ -89,6 +93,7 @@ describe('ToolboxClient', () => {
   beforeEach(() => {
     mockLoadTool.mockReset();
     mockLoadToolset.mockReset();
+    mockClose.mockReset();
     MockCoreToolboxClient.mockClear();
     MockToolboxTool.mockClear();
   });
@@ -196,4 +201,13 @@ describe('ToolboxClient', () => {
       expect(callArgs[6]).toBe(telemetryEnabled);
     },
   );
+
+  it('should delegate close() to coreClient.close()', async () => {
+    mockClose.mockResolvedValue(undefined);
+    const client = new ToolboxClient('http://test.url');
+
+    await client.close();
+
+    expect(mockClose).toHaveBeenCalledTimes(1);
+  });
 });

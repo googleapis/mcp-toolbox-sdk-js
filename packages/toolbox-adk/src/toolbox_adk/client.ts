@@ -109,4 +109,12 @@ export class ToolboxClient {
     );
     return coreTools.map(coreTool => new ToolboxTool(coreTool));
   }
+
+  /**
+   * Closes the client and flushes any pending telemetry (e.g. session duration metric).
+   * Should be called when the client is no longer needed.
+   */
+  async close(): Promise<void> {
+    await this.coreClient.close();
+  }
 }

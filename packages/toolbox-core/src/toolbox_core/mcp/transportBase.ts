@@ -21,6 +21,8 @@ import {
   ZodManifest,
   Protocol,
 } from '../protocol.js';
+import {VERSION} from '../version.js';
+import * as telemetry from './telemetry.js';
 
 interface JsonSchema {
   type?: string;
@@ -51,6 +53,13 @@ export abstract class McpHttpTransportBase implements ITransport {
   protected _clientName?: string;
   protected _clientVersion?: string;
 
+  protected _telemetryEnabled = false;
+  protected _tracer: telemetry.Tracer | null = null;
+  protected _operationDurationHistogram: telemetry.Histogram | null = null;
+  protected _sessionDurationHistogram: telemetry.Histogram | null = null;
+  protected _sessionStartTime: number | null = null;
+
+  private _telemetryInitPromise: Promise<void> | null = null;
   private _initPromise: Promise<void> | null = null;
 
   constructor(
@@ -59,19 +68,44 @@ export abstract class McpHttpTransportBase implements ITransport {
     protocol: Protocol = Protocol.MCP,
     clientName?: string,
     clientVersion?: string,
+    telemetryEnabled = false,
   ) {
     this._mcpBaseUrl = `${baseUrl}/mcp/`;
     this._protocolVersion = protocol;
     this._clientName = clientName;
     this._clientVersion = clientVersion;
+    this._telemetryEnabled = telemetryEnabled;
 
     this._manageSession = !session;
     this._session = session || axios.create();
   }
 
+  private async _initTelemetry(): Promise<void> {
+    try {
+      const state = await telemetry.initTelemetry('toolbox.mcp.sdk', VERSION);
+      this._telemetryEnabled = state.enabled;
+      this._tracer = state.tracer;
+      this._operationDurationHistogram = state.operationDurationHistogram;
+      this._sessionDurationHistogram = state.sessionDurationHistogram;
+      if (!state.enabled) {
+        this._telemetryEnabled = false;
+        console.warn(
+          '[toolbox-core] Telemetry was requested but could not be initialized. ' +
+            'Ensure @opentelemetry/api is installed: npm install @opentelemetry/api',
+        );
+      }
+    } catch {
+      this._telemetryEnabled = false;
+    }
+  }
+
   protected async ensureInitialized(
     headers?: Record<string, string>,
   ): Promise<void> {
+    if (this._telemetryEnabled && !this._telemetryInitPromise) {
+      this._telemetryInitPromise = this._initTelemetry();
+    }
+    await this._telemetryInitPromise;
     if (!this._initPromise) {
       this._initPromise = this.initializeSession(headers);
     }
@@ -226,6 +260,22 @@ export abstract class McpHttpTransportBase implements ITransport {
     }
 
     return textContentItems.join('') || 'null';
+  }
+
+  private _recordSessionDuration(): void {
+    if (this._sessionStartTime === null) return;
+    telemetry.recordSessionDuration(
+      this._sessionDurationHistogram,
+      performance.now() / 1000 - this._sessionStartTime,
+      this._protocolVersion,
+      this._mcpBaseUrl,
+      'tcp',
+    );
+    this._sessionStartTime = null;
+  }
+
+  async close(): Promise<void> {
+    this._recordSessionDuration();
   }
 
   protected abstract initializeSession(

@@ -32,12 +32,14 @@ class MockTransport implements ITransport {
   toolGet: jest.MockedFunction<ITransport['toolGet']>;
   toolsList: jest.MockedFunction<ITransport['toolsList']>;
   toolInvoke: jest.MockedFunction<ITransport['toolInvoke']>;
+  close: jest.MockedFunction<ITransport['close']>;
 
   constructor(baseUrl: string = 'https://api.example.com') {
     this.baseUrl = baseUrl;
     this.toolGet = jest.fn();
     this.toolsList = jest.fn();
     this.toolInvoke = jest.fn();
+    this.close = jest.fn() as jest.MockedFunction<ITransport['close']>;
   }
 }
 
@@ -110,6 +112,7 @@ describe('ToolboxClient', () => {
         Protocol.MCP_v20250618,
         undefined,
         undefined,
+        false,
       );
     });
 
@@ -124,6 +127,7 @@ describe('ToolboxClient', () => {
         Protocol.MCP_v20250618,
         undefined,
         undefined,
+        false,
       );
     });
 
@@ -143,6 +147,7 @@ describe('ToolboxClient', () => {
         Protocol.MCP_v20250618,
         undefined,
         undefined,
+        false,
       );
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining(
@@ -165,6 +170,7 @@ describe('ToolboxClient', () => {
         Protocol.MCP_v20241105,
         undefined,
         undefined,
+        false,
       );
     });
 
@@ -181,6 +187,7 @@ describe('ToolboxClient', () => {
         Protocol.MCP_v20250326,
         undefined,
         undefined,
+        false,
       );
     });
 
@@ -197,6 +204,7 @@ describe('ToolboxClient', () => {
         Protocol.MCP_v20251125,
         undefined,
         undefined,
+        false,
       );
     });
 
@@ -226,6 +234,7 @@ describe('ToolboxClient', () => {
         Protocol.MCP_v20250618,
         'custom-client',
         '1.2.3',
+        false,
       );
     });
   });

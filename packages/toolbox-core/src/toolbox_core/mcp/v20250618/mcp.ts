@@ -15,6 +15,7 @@
 import {AxiosError} from 'axios';
 import {McpHttpTransportBase} from '../transportBase.js';
 import * as types from './types.js';
+import * as telemetry from '../telemetry.js';
 
 import {ZodManifest} from '../../protocol.js';
 import {logApiError} from '../../errorUtils.js';
@@ -117,6 +118,31 @@ export class McpHttpTransportV20250618 extends McpHttpTransportBase {
   protected async initializeSession(
     headers?: Record<string, string>,
   ): Promise<void> {
+    let span: telemetry.Span | null = null;
+    let traceparent = '';
+    let tracestate = '';
+    let operationStart = 0;
+    let meta: types.MCPMeta | undefined;
+
+    if (this._telemetryEnabled) {
+      this._sessionStartTime = performance.now() / 1000;
+      operationStart = performance.now() / 1000;
+      ({span, traceparent, tracestate} = telemetry.startSpan(
+        this._tracer,
+        'initialize',
+        this._protocolVersion,
+        this._mcpBaseUrl,
+        undefined,
+        'tcp',
+      ));
+      if (span !== null && (traceparent || tracestate)) {
+        meta = {
+          traceparent: traceparent || undefined,
+          tracestate: tracestate || undefined,
+        };
+      }
+    }
+
     const params: types.InitializeRequestParams = {
       protocolVersion: this._protocolVersion,
       capabilities: {},
@@ -124,45 +150,66 @@ export class McpHttpTransportV20250618 extends McpHttpTransportBase {
         name: this._clientName || 'toolbox-core-js',
         version: this._clientVersion || VERSION,
       },
+      _meta: meta,
     };
 
-    const result = await this.#sendRequest(
-      this._mcpBaseUrl,
-      types.InitializeRequest,
-      params,
-      headers,
-    );
-
-    if (!result) {
-      const error = new Error('Initialization failed: No response');
-      logApiError('MCP Initialization Error', error);
-      throw error;
-    }
-
-    this._serverVersion = result.serverInfo.version;
-
-    if (result.protocolVersion !== this._protocolVersion) {
-      const error = new Error(
-        `MCP version mismatch: client does not support server version ${result.protocolVersion}`,
+    let caughtError: Error | undefined;
+    try {
+      const result = await this.#sendRequest(
+        this._mcpBaseUrl,
+        types.InitializeRequest,
+        params,
+        headers,
       );
-      logApiError('MCP Initialization Error', error);
-      throw error;
-    }
 
-    if (!result.capabilities.tools) {
-      const error = new Error(
-        "Server does not support the 'tools' capability.",
+      if (!result) {
+        const error = new Error('Initialization failed: No response');
+        logApiError('MCP Initialization Error', error);
+        throw error;
+      }
+
+      this._serverVersion = result.serverInfo.version;
+
+      if (result.protocolVersion !== this._protocolVersion) {
+        const error = new Error(
+          `MCP version mismatch: client does not support server version ${result.protocolVersion}`,
+        );
+        logApiError('MCP Initialization Error', error);
+        throw error;
+      }
+
+      if (!result.capabilities.tools) {
+        const error = new Error(
+          "Server does not support the 'tools' capability.",
+        );
+        logApiError('MCP Initialization Error', error);
+        throw error;
+      }
+
+      await this.#sendRequest(
+        this._mcpBaseUrl,
+        types.InitializedNotification,
+        {},
+        headers,
       );
-      logApiError('MCP Initialization Error', error);
-      throw error;
+    } catch (e) {
+      caughtError = e as Error;
+      throw e;
+    } finally {
+      if (this._telemetryEnabled) {
+        telemetry.recordOperationDuration(
+          this._operationDurationHistogram,
+          performance.now() / 1000 - operationStart,
+          'initialize',
+          this._protocolVersion,
+          this._mcpBaseUrl,
+          undefined,
+          'tcp',
+          caughtError,
+        );
+        telemetry.endSpan(span, caughtError);
+      }
     }
-
-    await this.#sendRequest(
-      this._mcpBaseUrl,
-      types.InitializedNotification,
-      {},
-      headers,
-    );
   }
 
   async toolsList(
@@ -172,42 +219,90 @@ export class McpHttpTransportV20250618 extends McpHttpTransportBase {
     await this.ensureInitialized(headers);
     const url = `${this._mcpBaseUrl}${toolsetName || ''}`;
 
-    const result = await this.#sendRequest(
-      url,
-      types.ListToolsRequest,
-      {},
-      headers,
-    );
+    let span: telemetry.Span | null = null;
+    let traceparent = '';
+    let tracestate = '';
+    let operationStart = 0;
+    let listParams: types.ListToolsRequestParams = {};
 
-    if (!result) {
-      const error = new Error('Failed to list tools: No response from server.');
-      logApiError(`Error listing tools from ${url}`, error);
-      throw error;
-    }
-
-    if (this._serverVersion === null) {
-      const error = new Error('Server version not available.');
-      logApiError('Error listing tools', error);
-      throw error;
-    }
-
-    const toolsMap: Record<
-      string,
-      {
-        description: string;
-        parameters: import('../../protocol.js').ParameterSchema[];
-        authRequired?: string[];
+    if (this._telemetryEnabled) {
+      operationStart = performance.now() / 1000;
+      ({span, traceparent, tracestate} = telemetry.startSpan(
+        this._tracer,
+        'tools/list',
+        this._protocolVersion,
+        url,
+        undefined,
+        'tcp',
+      ));
+      if (span !== null && (traceparent || tracestate)) {
+        listParams = {
+          _meta: {
+            traceparent: traceparent || undefined,
+            tracestate: tracestate || undefined,
+          },
+        };
       }
-    > = {};
-
-    for (const tool of result.tools) {
-      toolsMap[tool.name] = this.convertToolSchema(tool);
     }
 
-    return {
-      serverVersion: this._serverVersion,
-      tools: toolsMap as unknown as ZodManifest['tools'], // Cast to verify structure compliance or rely on structural typing
-    };
+    let caughtError: Error | undefined;
+    try {
+      const result = await this.#sendRequest(
+        url,
+        types.ListToolsRequest,
+        listParams,
+        headers,
+      );
+
+      if (!result) {
+        const error = new Error(
+          'Failed to list tools: No response from server.',
+        );
+        logApiError(`Error listing tools from ${url}`, error);
+        throw error;
+      }
+
+      if (this._serverVersion === null) {
+        const error = new Error('Server version not available.');
+        logApiError('Error listing tools', error);
+        throw error;
+      }
+
+      const toolsMap: Record<
+        string,
+        {
+          description: string;
+          parameters: import('../../protocol.js').ParameterSchema[];
+          authRequired?: string[];
+        }
+      > = {};
+
+      for (const tool of result.tools) {
+        toolsMap[tool.name] = this.convertToolSchema(tool);
+      }
+
+      return {
+        serverVersion: this._serverVersion,
+        tools: toolsMap as unknown as ZodManifest['tools'],
+      };
+    } catch (e) {
+      caughtError = e as Error;
+      throw e;
+    } finally {
+      if (this._telemetryEnabled) {
+        telemetry.recordOperationDuration(
+          this._operationDurationHistogram,
+          performance.now() / 1000 - operationStart,
+          'tools/list',
+          this._protocolVersion,
+          url,
+          undefined,
+          'tcp',
+          caughtError,
+        );
+        telemetry.endSpan(span, caughtError);
+      }
+    }
   }
 
   async toolGet(
@@ -240,26 +335,71 @@ export class McpHttpTransportV20250618 extends McpHttpTransportBase {
       warnIfHttpAndHeaders(this._mcpBaseUrl, headers);
     }
 
+    let span: telemetry.Span | null = null;
+    let traceparent = '';
+    let tracestate = '';
+    let operationStart = 0;
+    let meta: types.MCPMeta | undefined;
+
+    if (this._telemetryEnabled) {
+      operationStart = performance.now() / 1000;
+      ({span, traceparent, tracestate} = telemetry.startSpan(
+        this._tracer,
+        'tools/call',
+        this._protocolVersion,
+        this._mcpBaseUrl,
+        toolName,
+        'tcp',
+      ));
+      if (span !== null && (traceparent || tracestate)) {
+        meta = {
+          traceparent: traceparent || undefined,
+          tracestate: tracestate || undefined,
+        };
+      }
+    }
+
     const params: types.CallToolRequestParams = {
       name: toolName,
       arguments: arguments_,
+      _meta: meta,
     };
 
-    const result = await this.#sendRequest(
-      this._mcpBaseUrl,
-      types.CallToolRequest,
-      params,
-      headers,
-    );
-
-    if (!result) {
-      const error = new Error(
-        `Failed to invoke tool '${toolName}': No response from server.`,
+    let caughtError: Error | undefined;
+    try {
+      const result = await this.#sendRequest(
+        this._mcpBaseUrl,
+        types.CallToolRequest,
+        params,
+        headers,
       );
-      logApiError(`Error invoking tool ${toolName}`, error);
-      throw error;
-    }
 
-    return this.processToolResultContent(result.content);
+      if (!result) {
+        const error = new Error(
+          `Failed to invoke tool '${toolName}': No response from server.`,
+        );
+        logApiError(`Error invoking tool ${toolName}`, error);
+        throw error;
+      }
+
+      return this.processToolResultContent(result.content);
+    } catch (e) {
+      caughtError = e as Error;
+      throw e;
+    } finally {
+      if (this._telemetryEnabled) {
+        telemetry.recordOperationDuration(
+          this._operationDurationHistogram,
+          performance.now() / 1000 - operationStart,
+          'tools/call',
+          this._protocolVersion,
+          this._mcpBaseUrl,
+          toolName,
+          'tcp',
+          caughtError,
+        );
+        telemetry.endSpan(span, caughtError);
+      }
+    }
   }
 }

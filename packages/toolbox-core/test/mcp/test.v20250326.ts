@@ -17,6 +17,7 @@ import {jest} from '@jest/globals';
 import axios, {AxiosInstance} from 'axios';
 
 import {Protocol} from '../../src/toolbox_core/protocol.js';
+import * as telemetry from '../../src/toolbox_core/mcp/telemetry.js';
 
 jest.mock('axios', () => {
   const actual = jest.requireActual('axios') as {
@@ -33,13 +34,35 @@ jest.mock('axios', () => {
 });
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-describe('McpHttpTransportV20250326', () => {
+describe.each([
+  [false, 'telemetry_disabled'],
+  [true, 'telemetry_enabled'],
+])('McpHttpTransportV20250326 [%s]', telemetryEnabled => {
   const testBaseUrl = 'http://test.loc';
   let mockSession: jest.Mocked<AxiosInstance>;
   let transport: McpHttpTransportV20250326;
   let consoleWarnSpy: ReturnType<typeof jest.spyOn>;
 
   beforeEach(() => {
+    if (telemetryEnabled) {
+      jest
+        .spyOn(telemetry, 'createOperationDurationHistogram')
+        .mockReturnValue({record: jest.fn()} as unknown as telemetry.Histogram);
+      jest
+        .spyOn(telemetry, 'createSessionDurationHistogram')
+        .mockReturnValue({record: jest.fn()} as unknown as telemetry.Histogram);
+      jest
+        .spyOn(telemetry, 'startSpan')
+        .mockReturnValue({span: null, traceparent: '', tracestate: ''});
+      jest.spyOn(telemetry, 'endSpan').mockImplementation(() => {});
+      jest
+        .spyOn(telemetry, 'recordOperationDuration')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(telemetry, 'recordSessionDuration')
+        .mockImplementation(() => {});
+    }
+
     mockSession = {
       get: jest.fn(),
       post: jest.fn(),
@@ -55,13 +78,16 @@ describe('McpHttpTransportV20250326', () => {
       testBaseUrl,
       mockSession,
       Protocol.MCP_v20250326,
+      undefined,
+      undefined,
+      telemetryEnabled,
     );
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
     jest.clearAllMocks();
-    consoleWarnSpy.mockRestore();
+    jest.restoreAllMocks();
   });
 
   describe('initialization', () => {
@@ -393,6 +419,73 @@ describe('McpHttpTransportV20250326', () => {
           }),
         }),
       );
+    });
+
+    it('should propagate traceparent in _meta when span has active context', async () => {
+      if (!telemetryEnabled) return;
+      jest.spyOn(telemetry, 'startSpan').mockReturnValue({
+        span: {} as telemetry.Span,
+        traceparent: '00-aaaa0000bbbb1111cccc2222dddd3333-eeee4444ffff5555-01',
+        tracestate: '',
+      });
+      mockSession.post
+        .mockResolvedValueOnce({
+          headers: {'mcp-session-id': 'sess-1'},
+          data: {
+            jsonrpc: '2.0',
+            id: '1',
+            result: {
+              protocolVersion: '2025-03-26',
+              capabilities: {tools: {}},
+              serverInfo: {name: 's', version: '1'},
+            },
+          },
+          status: 200,
+        })
+        .mockResolvedValueOnce({data: {}, status: 200})
+        .mockResolvedValueOnce({
+          data: {jsonrpc: '2.0', id: '2', result: {tools: []}},
+          status: 200,
+        });
+      await expect(transport.toolsList()).resolves.toBeDefined();
+    });
+
+    it('should propagate tracestate in _meta when tracestate is set and traceparent is empty', async () => {
+      if (!telemetryEnabled) return;
+      jest.spyOn(telemetry, 'startSpan').mockReturnValue({
+        span: {} as telemetry.Span,
+        traceparent: '',
+        tracestate: 'vendor=abc',
+      });
+      mockSession.post
+        .mockResolvedValueOnce({
+          headers: {'mcp-session-id': 'sess-1'},
+          data: {
+            jsonrpc: '2.0',
+            id: '1',
+            result: {
+              protocolVersion: '2025-03-26',
+              capabilities: {tools: {}},
+              serverInfo: {name: 's', version: '1'},
+            },
+          },
+          status: 200,
+        })
+        .mockResolvedValueOnce({data: {}, status: 200})
+        .mockResolvedValueOnce({
+          data: {jsonrpc: '2.0', id: '2', result: {tools: []}},
+          status: 200,
+        })
+        .mockResolvedValueOnce({
+          data: {
+            jsonrpc: '2.0',
+            id: '3',
+            result: {content: [{type: 'text', text: 'ok'}]},
+          },
+          status: 200,
+        });
+      await transport.toolsList();
+      await expect(transport.toolInvoke('myTool', {}, {})).resolves.toBe('ok');
     });
   });
 
@@ -943,6 +1036,24 @@ describe('McpHttpTransportV20250326', () => {
       );
 
       expect(consoleWarnSpy).not.toHaveBeenCalled();
+    });
+
+    it('should propagate traceparent in _meta when invoking tool with active span', async () => {
+      if (!telemetryEnabled) return;
+      jest.spyOn(telemetry, 'startSpan').mockReturnValue({
+        span: {} as telemetry.Span,
+        traceparent: '00-aaaa0000bbbb1111cccc2222dddd3333-eeee4444ffff5555-01',
+        tracestate: '',
+      });
+      mockSession.post.mockResolvedValueOnce({
+        data: {
+          jsonrpc: '2.0',
+          id: '3',
+          result: {content: [{type: 'text', text: 'ok'}]},
+        },
+        status: 200,
+      });
+      await expect(transport.toolInvoke('myTool', {}, {})).resolves.toBe('ok');
     });
   });
 });

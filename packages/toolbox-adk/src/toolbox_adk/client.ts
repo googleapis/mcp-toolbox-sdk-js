@@ -47,6 +47,7 @@ export class ToolboxClient {
     session?: AxiosInstance | null,
     clientHeaders?: ClientHeadersConfig | null,
     protocol: Protocol = Protocol.MCP,
+    telemetryEnabled = false,
   ) {
     this.coreClient = new CoreToolboxClient(
       url,
@@ -55,6 +56,7 @@ export class ToolboxClient {
       protocol,
       'toolbox-adk-js',
       VERSION,
+      telemetryEnabled,
     );
   }
 

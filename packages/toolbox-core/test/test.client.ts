@@ -110,6 +110,7 @@ describe('ToolboxClient', () => {
         Protocol.MCP_v20250618,
         undefined,
         undefined,
+        false,
       );
     });
 
@@ -124,6 +125,7 @@ describe('ToolboxClient', () => {
         Protocol.MCP_v20250618,
         undefined,
         undefined,
+        false,
       );
     });
 
@@ -143,6 +145,7 @@ describe('ToolboxClient', () => {
         Protocol.MCP_v20250618,
         undefined,
         undefined,
+        false,
       );
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining(
@@ -165,6 +168,7 @@ describe('ToolboxClient', () => {
         Protocol.MCP_v20241105,
         undefined,
         undefined,
+        false,
       );
     });
 
@@ -181,6 +185,7 @@ describe('ToolboxClient', () => {
         Protocol.MCP_v20250326,
         undefined,
         undefined,
+        false,
       );
     });
 
@@ -197,6 +202,7 @@ describe('ToolboxClient', () => {
         Protocol.MCP_v20251125,
         undefined,
         undefined,
+        false,
       );
     });
 
@@ -226,6 +232,7 @@ describe('ToolboxClient', () => {
         Protocol.MCP_v20250618,
         'custom-client',
         '1.2.3',
+        false,
       );
     });
   });

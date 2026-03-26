@@ -38,6 +38,7 @@ type MockCoreClientConstructor = (
   protocol?: string | null,
   clientName?: string,
   clientVersion?: string,
+  telemetryEnabled?: boolean,
 ) => MockCoreClient;
 
 const mockLoadTool =
@@ -105,6 +106,7 @@ describe('ToolboxClient', () => {
       'mcp-default',
       'toolbox-adk-js',
       VERSION,
+      false,
     );
   });
 
@@ -179,4 +181,19 @@ describe('ToolboxClient', () => {
 
     expect(mockLoadToolset).toHaveBeenCalledWith(undefined, {}, {}, false);
   });
+
+  it.each([false, true])(
+    'should forward telemetryEnabled=%s to core client',
+    telemetryEnabled => {
+      new ToolboxClient(
+        'http://test.url',
+        null,
+        null,
+        undefined,
+        telemetryEnabled,
+      );
+      const callArgs = MockCoreToolboxClient.mock.calls[0] as unknown[];
+      expect(callArgs[6]).toBe(telemetryEnabled);
+    },
+  );
 });

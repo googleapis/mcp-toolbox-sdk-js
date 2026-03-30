@@ -57,8 +57,14 @@ class ToolboxClient {
    * requests. If not provided, a new one will be created.
    * @param {ClientHeadersConfig} [clientHeaders] - Optional initial headers to
    * be included in each request.
+   * @param {Protocol} [protocol] - MCP protocol version to use. Defaults to
+   * the latest supported version. Pass a specific version (e.g.,
+   * `Protocol.MCP_v20241105`) to pin to an older revision.
    * @param {string} [clientName] - Optional name of the client package.
    * @param {string} [clientVersion] - Optional version of the client package.
+   * @param {boolean} [telemetryEnabled] - Set to `true` to enable OpenTelemetry
+   * tracing and metrics. Requires the optional `@opentelemetry/api` peer
+   * dependency. Silently ignored if the package is not installed.
    */
   constructor(
     url: string,
@@ -67,6 +73,7 @@ class ToolboxClient {
     protocol: Protocol = Protocol.MCP,
     clientName?: string,
     clientVersion?: string,
+    telemetryEnabled = false,
   ) {
     this.#clientHeaders = clientHeaders || {};
     warnIfHttpAndHeaders(url, this.#clientHeaders);
@@ -88,6 +95,7 @@ class ToolboxClient {
           protocol,
           clientName,
           clientVersion,
+          telemetryEnabled,
         );
         break;
       case Protocol.MCP_v20250326:
@@ -97,6 +105,7 @@ class ToolboxClient {
           protocol,
           clientName,
           clientVersion,
+          telemetryEnabled,
         );
         break;
       case Protocol.MCP_v20250618:
@@ -106,6 +115,7 @@ class ToolboxClient {
           protocol,
           clientName,
           clientVersion,
+          telemetryEnabled,
         );
         break;
       case Protocol.MCP_v20251125:
@@ -115,6 +125,7 @@ class ToolboxClient {
           protocol,
           clientName,
           clientVersion,
+          telemetryEnabled,
         );
         break;
       default:
@@ -359,6 +370,14 @@ class ToolboxClient {
     }
 
     return tools;
+  }
+
+  /**
+   * Closes the client and flushes any pending telemetry (e.g. session duration metric).
+   * Should be called when the client is no longer needed.
+   */
+  async close(): Promise<void> {
+    await this.#transport.close();
   }
 }
 

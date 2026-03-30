@@ -28,6 +28,7 @@ import {VERSION} from '../src/toolbox_adk/version.js';
 type MockCoreClient = {
   loadTool: typeof mockLoadTool;
   loadToolset: typeof mockLoadToolset;
+  close: typeof mockClose;
 };
 
 // Define the signature of the mock constructor itself
@@ -38,7 +39,10 @@ type MockCoreClientConstructor = (
   protocol?: string | null,
   clientName?: string,
   clientVersion?: string,
+  telemetryEnabled?: boolean,
 ) => MockCoreClient;
+
+const mockClose = jest.fn<() => Promise<void>>();
 
 const mockLoadTool =
   jest.fn<
@@ -64,6 +68,7 @@ const MockCoreToolboxClient = jest
   .mockImplementation(() => ({
     loadTool: mockLoadTool,
     loadToolset: mockLoadToolset,
+    close: mockClose,
   }));
 
 const MockToolboxTool = jest.fn();
@@ -88,6 +93,7 @@ describe('ToolboxClient', () => {
   beforeEach(() => {
     mockLoadTool.mockReset();
     mockLoadToolset.mockReset();
+    mockClose.mockReset();
     MockCoreToolboxClient.mockClear();
     MockToolboxTool.mockClear();
   });
@@ -105,6 +111,7 @@ describe('ToolboxClient', () => {
       'mcp-default',
       'toolbox-adk-js',
       VERSION,
+      false,
     );
   });
 
@@ -178,5 +185,29 @@ describe('ToolboxClient', () => {
     await client.loadToolset();
 
     expect(mockLoadToolset).toHaveBeenCalledWith(undefined, {}, {}, false);
+  });
+
+  it.each([false, true])(
+    'should forward telemetryEnabled=%s to core client',
+    telemetryEnabled => {
+      new ToolboxClient(
+        'http://test.url',
+        null,
+        null,
+        undefined,
+        telemetryEnabled,
+      );
+      const callArgs = MockCoreToolboxClient.mock.calls[0] as unknown[];
+      expect(callArgs[6]).toBe(telemetryEnabled);
+    },
+  );
+
+  it('should delegate close() to coreClient.close()', async () => {
+    mockClose.mockResolvedValue(undefined);
+    const client = new ToolboxClient('http://test.url');
+
+    await client.close();
+
+    expect(mockClose).toHaveBeenCalledTimes(1);
   });
 });

@@ -538,6 +538,28 @@ describe.each(getSupportedMcpVersions())(
         expect(response).toBe('null');
       });
     });
+    describe('Telemetry E2E Tests', () => {
+      it.each([false, true])(
+        'should load and invoke a tool with telemetryEnabled=%s',
+        async telemetryEnabled => {
+          const client = new ToolboxClient(
+            testBaseUrl,
+            undefined,
+            undefined,
+            protocolVersion,
+            undefined,
+            undefined,
+            telemetryEnabled,
+          );
+          const tool = await client.loadTool('get-n-rows');
+          expect(tool.getName()).toBe('get-n-rows');
+          const response = await tool({num_rows: '1'});
+          expect(typeof response).toBe('string');
+          expect(response).toContain('row1');
+        },
+      );
+    });
+
     describe('Map/Object Params E2E Tests', () => {
       let processDataTool: ReturnType<typeof ToolboxTool>;
 

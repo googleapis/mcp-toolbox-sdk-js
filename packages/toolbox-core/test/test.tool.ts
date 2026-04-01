@@ -24,14 +24,12 @@ class MockTransport implements ITransport {
   toolGet: jest.MockedFunction<ITransport['toolGet']>;
   toolsList: jest.MockedFunction<ITransport['toolsList']>;
   toolInvoke: jest.MockedFunction<ITransport['toolInvoke']>;
-  close: jest.MockedFunction<ITransport['close']>;
 
   constructor(baseUrl: string = 'https://api.example.com') {
     this.baseUrl = baseUrl;
     this.toolGet = jest.fn();
     this.toolsList = jest.fn();
     this.toolInvoke = jest.fn();
-    this.close = jest.fn().mockResolvedValue(undefined);
   }
 }
 

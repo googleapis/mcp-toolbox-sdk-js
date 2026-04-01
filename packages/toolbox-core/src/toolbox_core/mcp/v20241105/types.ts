@@ -68,23 +68,10 @@ export type Implementation = z.infer<typeof ImplementationSchema>;
 export const ClientCapabilitiesSchema = z.object({}).passthrough();
 export type ClientCapabilities = z.infer<typeof ClientCapabilitiesSchema>;
 
-/**
- * Metadata for MCP requests including OpenTelemetry trace context.
- * https://opentelemetry.io/docs/specs/semconv/gen-ai/mcp/#context-propagation
- */
-export const MCPMetaSchema = z.object({
-  traceparent: z.string().optional(),
-  tracestate: z.string().optional(),
-});
-export type MCPMeta = z.infer<typeof MCPMetaSchema>;
-
 export const InitializeRequestParamsSchema = RequestParamsSchema.extend({
   protocolVersion: z.string(),
   capabilities: ClientCapabilitiesSchema,
   clientInfo: ImplementationSchema,
-  // OpenTelemetry trace context propagation
-  // See: https://opentelemetry.io/docs/specs/semconv/gen-ai/mcp/#context-propagation
-  _meta: MCPMetaSchema.optional(),
 });
 export type InitializeRequestParams = z.infer<
   typeof InitializeRequestParamsSchema
@@ -152,26 +139,15 @@ export const InitializedNotification: MCPNotification = {
   params: {},
 };
 
-export const ListToolsRequestParamsSchema = z.object({
-  // OpenTelemetry trace context propagation
-  // See: https://opentelemetry.io/docs/specs/semconv/gen-ai/mcp/#context-propagation
-  _meta: MCPMetaSchema.optional(),
-});
-export type ListToolsRequestParams = z.infer<
-  typeof ListToolsRequestParamsSchema
->;
-
 export const ListToolsRequest: MCPRequest<ListToolsResult> = {
   method: 'tools/list',
+  params: {},
   getResultModel: () => ListToolsResultSchema,
 };
 
 export const CallToolRequestParamsSchema = z.object({
   name: z.string(),
   arguments: z.record(z.unknown()),
-  // OpenTelemetry trace context propagation
-  // See: https://opentelemetry.io/docs/specs/semconv/gen-ai/mcp/#context-propagation
-  _meta: MCPMetaSchema.optional(),
 });
 export type CallToolRequestParams = z.infer<typeof CallToolRequestParamsSchema>;
 

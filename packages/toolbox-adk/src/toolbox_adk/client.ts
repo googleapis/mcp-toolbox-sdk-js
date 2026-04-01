@@ -47,7 +47,6 @@ export class ToolboxClient {
     session?: AxiosInstance | null,
     clientHeaders?: ClientHeadersConfig | null,
     protocol: Protocol = Protocol.MCP,
-    telemetryEnabled = false,
   ) {
     this.coreClient = new CoreToolboxClient(
       url,
@@ -56,7 +55,6 @@ export class ToolboxClient {
       protocol,
       'toolbox-adk-js',
       VERSION,
-      telemetryEnabled,
     );
   }
 
@@ -108,13 +106,5 @@ export class ToolboxClient {
       strict,
     );
     return coreTools.map(coreTool => new ToolboxTool(coreTool));
-  }
-
-  /**
-   * Closes the client and flushes any pending telemetry (e.g. session duration metric).
-   * Should be called when the client is no longer needed.
-   */
-  async close(): Promise<void> {
-    await this.coreClient.close();
   }
 }

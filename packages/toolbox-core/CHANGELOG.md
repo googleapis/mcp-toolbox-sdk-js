@@ -3,23 +3,9 @@
 ## [1.0.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.3.0...core-v1.0.0) (2026-04-02)
 
 
-### Features
-
-* otel instrumentation as per MCP semantic convention ([#306](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/306)) ([807cc5f](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/807cc5fc4fe876efaeab86a8225d1f3fd7470950))
-
-
-### Miscellaneous Chores
-
-* **deps:** update dependency @types/uuid to v11 ([#203](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/203)) ([ecda227](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/ecda227cd2a35dd2e40cfd643036772859c08ffb))
-* **deps:** update mcp toolbox server version in integration tests to v0.28.0 ([#285](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/285)) ([4d473d8](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/4d473d8d7e65c63aa3076970752578b387722887))
-* **deps:** update mcp toolbox server version in integration tests to v0.30.0 ([#298](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/298)) ([6936324](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/69363249e4ff49ec3ed7b101f49bc4aa7ca93b9d))
-* **deps:** update mcp toolbox server version in integration tests to v0.31.0 ([#309](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/309)) ([57663d4](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/57663d4f695e486a009bb1fde471a92aa70aa98c))
-* release 1.0.0 ([#305](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/305)) ([4bf0a7a](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/4bf0a7a3306ae68062436a2b8c6fe7cb27ecff78))
-
-
 ### Documentation
 
-* cleanup README ([#295](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/295)) ([0a85d54](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/0a85d54d169c9b8e1a177b1dd46d286c4dd2c59b))
+* Documentation migrated to the MCP Toolbox official docsite ([#295](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/295)) ([0a85d54](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/0a85d54d169c9b8e1a177b1dd46d286c4dd2c59b))
 
 ## [0.3.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.2.1...core-v0.3.0) (2026-03-04)
 

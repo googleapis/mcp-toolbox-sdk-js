@@ -50,10 +50,4 @@ export interface ITransport {
     arguments_: Record<string, unknown>,
     headers: Record<string, string>,
   ): Promise<string>;
-
-  /**
-   * Closes the transport and flushes any pending telemetry (e.g. session duration).
-   * Must be called when the client is no longer needed.
-   */
-  close(): Promise<void>;
 }

@@ -15,7 +15,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {McpHttpTransportBase} from '../../src/toolbox_core/mcp/transportBase.js';
 import {Protocol, ZodManifest} from '../../src/toolbox_core/protocol.js';
-import * as telemetry from '../../src/toolbox_core/mcp/telemetry.js';
 import axios, {AxiosInstance} from 'axios';
 import {jest} from '@jest/globals';
 
@@ -108,10 +107,6 @@ class TestMcpTransport extends McpHttpTransportBase {
     content: {type?: string; text?: string}[],
   ): string {
     return this.processToolResultContent(content);
-  }
-
-  public testSetSessionStartTime(t: number | null): void {
-    this._sessionStartTime = t;
   }
 }
 
@@ -500,33 +495,6 @@ describe('McpHttpTransportBase', () => {
     it('should return "null" if no text content is found', () => {
       const content = [{type: 'image', data: '...'}];
       expect(transport.testProcessToolResultContent(content)).toBe('null');
-    });
-  });
-
-  describe('close', () => {
-    it('should call recordSessionDuration when session was started', async () => {
-      const transport = new TestMcpTransport(testBaseUrl, mockSession);
-      const recordSpy = jest
-        .spyOn(telemetry, 'recordSessionDuration')
-        .mockImplementation(() => {});
-
-      transport.testSetSessionStartTime(performance.now() / 1000 - 5);
-      await transport.close();
-
-      expect(recordSpy).toHaveBeenCalled();
-      recordSpy.mockRestore();
-    });
-
-    it('should not call recordSessionDuration when session was not started', async () => {
-      const transport = new TestMcpTransport(testBaseUrl, mockSession);
-      const recordSpy = jest
-        .spyOn(telemetry, 'recordSessionDuration')
-        .mockImplementation(() => {});
-
-      await transport.close();
-
-      expect(recordSpy).not.toHaveBeenCalled();
-      recordSpy.mockRestore();
     });
   });
 });

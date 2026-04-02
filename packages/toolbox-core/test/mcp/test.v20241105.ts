@@ -17,7 +17,6 @@ import {jest} from '@jest/globals';
 import axios, {AxiosInstance} from 'axios';
 
 import {Protocol} from '../../src/toolbox_core/protocol.js';
-import * as telemetry from '../../src/toolbox_core/mcp/telemetry.js';
 
 jest.mock('axios', () => {
   const actual = jest.requireActual('axios') as {
@@ -34,35 +33,13 @@ jest.mock('axios', () => {
 });
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-describe.each([
-  [false, 'telemetry_disabled'],
-  [true, 'telemetry_enabled'],
-])('McpHttpTransportV20241105 [%s]', telemetryEnabled => {
+describe('McpHttpTransportV20241105', () => {
   const testBaseUrl = 'http://test.loc';
   let mockSession: jest.Mocked<AxiosInstance>;
   let transport: McpHttpTransportV20241105;
   let consoleWarnSpy: ReturnType<typeof jest.spyOn>;
 
   beforeEach(() => {
-    if (telemetryEnabled) {
-      jest
-        .spyOn(telemetry, 'createOperationDurationHistogram')
-        .mockReturnValue({record: jest.fn()} as unknown as telemetry.Histogram);
-      jest
-        .spyOn(telemetry, 'createSessionDurationHistogram')
-        .mockReturnValue({record: jest.fn()} as unknown as telemetry.Histogram);
-      jest
-        .spyOn(telemetry, 'startSpan')
-        .mockReturnValue({span: null, traceparent: '', tracestate: ''});
-      jest.spyOn(telemetry, 'endSpan').mockImplementation(() => {});
-      jest
-        .spyOn(telemetry, 'recordOperationDuration')
-        .mockImplementation(() => {});
-      jest
-        .spyOn(telemetry, 'recordSessionDuration')
-        .mockImplementation(() => {});
-    }
-
     mockSession = {
       get: jest.fn(),
       post: jest.fn(),
@@ -78,16 +55,13 @@ describe.each([
       testBaseUrl,
       mockSession,
       Protocol.MCP_v20241105,
-      undefined,
-      undefined,
-      telemetryEnabled,
     );
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
     jest.clearAllMocks();
-    jest.restoreAllMocks();
+    consoleWarnSpy.mockRestore();
   });
 
   describe('initialization', () => {
@@ -378,71 +352,6 @@ describe.each([
         expect.anything(),
         expect.objectContaining({headers: testHeaders}),
       );
-    });
-
-    it('should propagate traceparent in _meta when span has active context', async () => {
-      if (!telemetryEnabled) return;
-      jest.spyOn(telemetry, 'startSpan').mockReturnValue({
-        span: {} as telemetry.Span,
-        traceparent: '00-aaaa0000bbbb1111cccc2222dddd3333-eeee4444ffff5555-01',
-        tracestate: '',
-      });
-      mockSession.post
-        .mockResolvedValueOnce({
-          data: {
-            jsonrpc: '2.0',
-            id: '1',
-            result: {
-              protocolVersion: '2024-11-05',
-              capabilities: {tools: {}},
-              serverInfo: {name: 's', version: '1'},
-            },
-          },
-          status: 200,
-        })
-        .mockResolvedValueOnce({data: {}, status: 200})
-        .mockResolvedValueOnce({
-          data: {jsonrpc: '2.0', id: '2', result: {tools: []}},
-          status: 200,
-        });
-      await expect(transport.toolsList()).resolves.toBeDefined();
-    });
-
-    it('should propagate tracestate in _meta when tracestate is set and traceparent is empty', async () => {
-      if (!telemetryEnabled) return;
-      jest.spyOn(telemetry, 'startSpan').mockReturnValue({
-        span: {} as telemetry.Span,
-        traceparent: '',
-        tracestate: 'vendor=abc',
-      });
-      mockSession.post
-        .mockResolvedValueOnce({
-          data: {
-            jsonrpc: '2.0',
-            id: '1',
-            result: {
-              protocolVersion: '2024-11-05',
-              capabilities: {tools: {}},
-              serverInfo: {name: 's', version: '1'},
-            },
-          },
-          status: 200,
-        })
-        .mockResolvedValueOnce({data: {}, status: 200})
-        .mockResolvedValueOnce({
-          data: {jsonrpc: '2.0', id: '2', result: {tools: []}},
-          status: 200,
-        })
-        .mockResolvedValueOnce({
-          data: {
-            jsonrpc: '2.0',
-            id: '3',
-            result: {content: [{type: 'text', text: 'ok'}]},
-          },
-          status: 200,
-        });
-      await transport.toolsList();
-      await expect(transport.toolInvoke('myTool', {}, {})).resolves.toBe('ok');
     });
   });
 
@@ -988,24 +897,6 @@ describe.each([
       );
 
       expect(consoleWarnSpy).not.toHaveBeenCalled();
-    });
-
-    it('should propagate traceparent in _meta when invoking tool with active span', async () => {
-      if (!telemetryEnabled) return;
-      jest.spyOn(telemetry, 'startSpan').mockReturnValue({
-        span: {} as telemetry.Span,
-        traceparent: '00-aaaa0000bbbb1111cccc2222dddd3333-eeee4444ffff5555-01',
-        tracestate: '',
-      });
-      mockSession.post.mockResolvedValueOnce({
-        data: {
-          jsonrpc: '2.0',
-          id: '3',
-          result: {content: [{type: 'text', text: 'ok'}]},
-        },
-        status: 200,
-      });
-      await expect(transport.toolInvoke('myTool', {}, {})).resolves.toBe('ok');
     });
   });
 });

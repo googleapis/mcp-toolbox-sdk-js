@@ -6,7 +6,7 @@
 
 The @toolbox-sdk/core package provides a Javascript interface to the [MCP Toolbox]((https://github.com/googleapis/genai-toolbox)) service, enabling you to load and invoke tools from your own applications. It is framework-agnostic and designed to seamlessly integrate with popular orchestration frameworks like Langchain, LlamaIndex and Genkit.
 
-For detailed guides, authentication examples, and advanced configuration, visit the [JS SDK Core Guide](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/core/).
+For detailed guides, authentication examples, and advanced configuration, visit the [JS SDK Core Guide](https://mcp-toolbox.dev/sdks/js-sdk/core/).
 
 <!-- TOC ignore:true -->
 - [Supported Environments](#supported-environments)
@@ -65,14 +65,14 @@ quickstart();
 
 ## Usage
 
-The core package provides a framework-agnostic way to interact with your MCP Toolbox server. For detailed guides and advanced configuration, please visit the following sections on our [Documentation Site](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/core/):
+The core package provides a framework-agnostic way to interact with your MCP Toolbox server. For detailed guides and advanced configuration, please visit the following sections on our [Documentation Site](https://mcp-toolbox.dev/sdks/js-sdk/core/):
 
-- [Transport Protocols](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/core/#transport-protocols)
-- [Loading Tools](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/core/#loading-tools)
-- [Invoking Tools](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/core/#invoking-tools)
-- [Client to Server Authentication](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/core/#client-to-server-authentication)
-- [Authenticating Tools](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/core/#authenticating-tools)
-- [Binding Parameter Values](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/core/#binding-parameter-values)
+- [Transport Protocols](https://mcp-toolbox.dev/sdks/js-sdk/core/#transport-protocols)
+- [Loading Tools](https://mcp-toolbox.dev/sdks/js-sdk/core/#loading-tools)
+- [Invoking Tools](https://mcp-toolbox.dev/sdks/js-sdk/core/#invoking-tools)
+- [Client to Server Authentication](https://mcp-toolbox.dev/sdks/js-sdk/core/#client-to-server-authentication)
+- [Authenticating Tools](https://mcp-toolbox.dev/sdks/js-sdk/core/#authenticating-tools)
+- [Binding Parameter Values](https://mcp-toolbox.dev/sdks/js-sdk/core/#binding-parameter-values)
 
 # Contributing
 

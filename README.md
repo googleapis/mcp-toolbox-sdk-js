@@ -5,13 +5,13 @@ Logo](https://raw.githubusercontent.com/googleapis/genai-toolbox/main/logo.png)
 
 [![License: Apache
 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Docs](https://img.shields.io/badge/Docs-MCP_Toolbox-blue)](https://googleapis.github.io/genai-toolbox/)
+[![Docs](https://img.shields.io/badge/Docs-MCP_Toolbox-blue)](https://mcp-toolbox.dev/)
 [![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=flat&logo=discord&logoColor=white)](https://discord.gg/Dmm69peqjh)
 [![Medium](https://img.shields.io/badge/Medium-12100E?style=flat&logo=medium&logoColor=white)](https://medium.com/@mcp_toolbox)
 
 This repository contains JavaScript SDKs for [MCP Toolbox](https://github.com/googleapis/genai-toolbox). These SDKs allow you to load and use tools defined in your MCP Toolbox server as standard JS functions or objects within your Agentic applications.
 
-For comprehensive guides, tutorials, and advanced configuration, visit the [Main Documentation Site](https://googleapis.github.io/genai-toolbox/).
+For comprehensive guides, tutorials, and advanced configuration, visit the [Main Documentation Site](https://mcp-toolbox.dev).
 
 <!-- TOC -->
 
@@ -25,12 +25,12 @@ For comprehensive guides, tutorials, and advanced configuration, visit the [Main
 
 ## Available Packages
 
-This repository hosts the following TS packages. Visit the [Main Documentation Site](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/) for detailed installation and usage instructions:
+This repository hosts the following TS packages. Visit the [Main Documentation Site](https://mcp-toolbox.dev/sdks/js-sdk/) for detailed installation and usage instructions:
 
 | Package | Target Use Case | Path | Documentation |
 | :------ | :---------- | :--- | :---------- |
-| `@toolbox-sdk/core` | Framework-agnostic / Custom apps | `packages/toolbox-core/` | [JS Core Guide](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/core/) |
-| `@toolbox-sdk/adk` | ADK applications | `packages/toolbox-adk/` | [JS ADK Guide](https://googleapis.github.io/genai-toolbox/sdks/js-sdk/adk/) |
+| `@toolbox-sdk/core` | Framework-agnostic / Custom apps | `packages/toolbox-core/` | [JS Core Guide](https://mcp-toolbox.dev/sdks/js-sdk/core/) |
+| `@toolbox-sdk/adk` | ADK applications | `packages/toolbox-adk/` | [JS ADK Guide](https://mcp-toolbox.dev/sdks/js-sdk/adk/) |
 
 ## Quick Start
 
@@ -44,7 +44,7 @@ This repository hosts the following TS packages. Visit the [Main Documentation S
     # For the ADK SDK
     npm install @toolbox-sdk/adk
     ```
-3.  **Explore Tutorials**: Check out the [JS Quickstart Tutorial](https://googleapis.github.io/genai-toolbox/getting-started/local_quickstart_js/) for a full walkthrough.
+3.  **Explore Tutorials**: Check out the [JS Quickstart Tutorial](https://mcp-toolbox.dev/getting-started/local_quickstart_js/) for a full walkthrough.
 ## Contributing
 
 Contributions are welcome! Please refer to the

@@ -1,10 +1,10 @@
-![MCP Toolbox Logo](https://raw.githubusercontent.com/googleapis/genai-toolbox/main/logo.png)
+![MCP Toolbox Logo](https://raw.githubusercontent.com/googleapis/mcp-toolbox/main/logo.png)
 
 # MCP Toolbox SDKs for Javascript
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-The @toolbox-sdk/adk package provides a Javascript interface to the [MCP Toolbox]((https://github.com/googleapis/genai-toolbox)) service, specifically designed for seamless integration with Google ADK TS. It allows you to load tools defined in the Toolbox service and use them directly within your ADK agents and workflows.
+The @toolbox-sdk/adk package provides a Javascript interface to the [MCP Toolbox]((https://github.com/googleapis/mcp-toolbox)) service, specifically designed for seamless integration with Google ADK TS. It allows you to load tools defined in the Toolbox service and use them directly within your ADK agents and workflows.
 
 For detailed guides, authentication examples, and advanced configuration, visit the [JS SDK ADK Guide](https://mcp-toolbox.dev/sdks/js-sdk/adk/).
 
@@ -84,8 +84,8 @@ file for guidelines on how to set up a development environment and run tests.
 # License
 
 This project is licensed under the Apache License 2.0. See the
-[LICENSE](https://github.com/googleapis/genai-toolbox/blob/main/LICENSE) file for details.
+[LICENSE](https://github.com/googleapis/mcp-toolbox/blob/main/LICENSE) file for details.
 
 # Support
 
-If you encounter issues or have questions, check the existing [GitHub Issues](https://github.com/googleapis/genai-toolbox/issues) for the main Toolbox project.
+If you encounter issues or have questions, check the existing [GitHub Issues](https://github.com/googleapis/mcp-toolbox/issues) for the main Toolbox project.

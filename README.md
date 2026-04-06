@@ -34,7 +34,7 @@ This repository hosts the following TS packages. Visit the [Main Documentation S
 
 ## Quick Start
 
-1.  **Set up the Toolbox Service**: Ensure you have a running MCP Toolbox server. Follow the [Toolbox Server Getting Started Guide](https://github.com/googleapis/genai-toolbox?tab=readme-ov-file#getting-started).
+1.  **Set up the Toolbox Service**: Ensure you have a running MCP Toolbox server. Follow the [Toolbox Server Getting Started Guide](https://mcp-toolbox.dev/getting-started/introduction/#getting-started).
 2.  **Install the Appropriate SDK**:
     ```bash
     # For the core, framework-agnostic SDK

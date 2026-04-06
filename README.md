@@ -25,16 +25,16 @@ For comprehensive guides, tutorials, and advanced configuration, visit the [Main
 
 ## Available Packages
 
-This repository hosts the following TS packages. Visit the [Main Documentation Site](https://mcp-toolbox.dev/sdks/js-sdk/) for detailed installation and usage instructions:
+This repository hosts the following TS packages. Visit the [Main Documentation Site](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/) for detailed installation and usage instructions:
 
 | Package | Target Use Case | Path | Documentation |
 | :------ | :---------- | :--- | :---------- |
-| `@toolbox-sdk/core` | Framework-agnostic / Custom apps | `packages/toolbox-core/` | [JS Core Guide](https://mcp-toolbox.dev/sdks/js-sdk/core/) |
-| `@toolbox-sdk/adk` | ADK applications | `packages/toolbox-adk/` | [JS ADK Guide](https://mcp-toolbox.dev/sdks/js-sdk/adk/) |
+| `@toolbox-sdk/core` | Framework-agnostic / Custom apps | `packages/toolbox-core/` | [JS Core Guide](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/core/) |
+| `@toolbox-sdk/adk` | ADK applications | `packages/toolbox-adk/` | [JS ADK Guide](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/adk/) |
 
 ## Quick Start
 
-1.  **Set up the Toolbox Service**: Ensure you have a running MCP Toolbox server. Follow the [Toolbox Server Getting Started Guide](https://mcp-toolbox.dev/getting-started/introduction/#getting-started).
+1.  **Set up the Toolbox Service**: Ensure you have a running MCP Toolbox server. Follow the [Toolbox Server Getting Started Guide](https://mcp-toolbox.dev/documentation/introduction/#getting-started).
 2.  **Install the Appropriate SDK**:
     ```bash
     # For the core, framework-agnostic SDK
@@ -44,7 +44,7 @@ This repository hosts the following TS packages. Visit the [Main Documentation S
     # For the ADK SDK
     npm install @toolbox-sdk/adk
     ```
-3.  **Explore Tutorials**: Check out the [JS Quickstart Tutorial](https://mcp-toolbox.dev/getting-started/local_quickstart_js/) for a full walkthrough.
+3.  **Explore Tutorials**: Check out the [JS Quickstart Tutorial](http://mcp-toolbox.dev/documentation/getting-started/local_quickstart_js/) for a full walkthrough.
 ## Contributing
 
 Contributions are welcome! Please refer to the

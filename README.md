@@ -34,7 +34,7 @@ This repository hosts the following TS packages. Visit the [Main Documentation S
 
 ## Quick Start
 
-1.  **Set up the Toolbox Service**: Ensure you have a running MCP Toolbox server. Follow the [Toolbox Server Getting Started Guide](https://mcp-toolbox.dev/getting-started/introduction/#getting-started).
+1.  **Set up the Toolbox Service**: Ensure you have a running MCP Toolbox server. Follow the [Toolbox Server Getting Started Guide](https://mcp-toolbox.dev/documentation/introduction/#getting-started).
 2.  **Install the Appropriate SDK**:
     ```bash
     # For the core, framework-agnostic SDK
@@ -44,7 +44,8 @@ This repository hosts the following TS packages. Visit the [Main Documentation S
     # For the ADK SDK
     npm install @toolbox-sdk/adk
     ```
-3.  **Explore Tutorials**: Check out the [JS Quickstart Tutorial](https://mcp-toolbox.dev/getting-started/local_quickstart_js/) for a full walkthrough.
+3.  **Explore Tutorials**: Check out the [JS Quickstart Tutorial](http://mcp-toolbox.dev/documentation/getting-started/local_quickstart_js/) for a full walkthrough.
+4.  
 ## Contributing
 
 Contributions are welcome! Please refer to the

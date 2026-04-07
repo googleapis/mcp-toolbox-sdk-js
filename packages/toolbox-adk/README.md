@@ -6,7 +6,7 @@
 
 The @toolbox-sdk/adk package provides a Javascript interface to the [MCP Toolbox]((https://github.com/googleapis/mcp-toolbox)) service, specifically designed for seamless integration with Google ADK TS. It allows you to load tools defined in the Toolbox service and use them directly within your ADK agents and workflows.
 
-For detailed guides, authentication examples, and advanced configuration, visit the [JS SDK ADK Guide](https://mcp-toolbox.dev/sdks/js-sdk/adk/).
+For detailed guides, authentication examples, and advanced configuration, visit the [JS SDK ADK Guide](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/adk/).
 
 <!-- TOC -->
 

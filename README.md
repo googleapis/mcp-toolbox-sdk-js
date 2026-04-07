@@ -45,7 +45,7 @@ This repository hosts the following TS packages. Visit the [Main Documentation S
     npm install @toolbox-sdk/adk
     ```
 3.  **Explore Tutorials**: Check out the [JS Quickstart Tutorial](http://mcp-toolbox.dev/documentation/getting-started/local_quickstart_js/) for a full walkthrough.
-4.  
+
 ## Contributing
 
 Contributions are welcome! Please refer to the

@@ -67,14 +67,14 @@ quickstart();
 
 ## Usage
 
-The `core` package provides a framework-agnostic way to interact with your  MCP Toolbox server. For detailed guides and advanced configuration, please visit the following sections on our [Documentation Site](https://mcp-toolbox.dev/sdks/js-sdk/adk/):
+The `core` package provides a framework-agnostic way to interact with your  MCP Toolbox server. For detailed guides and advanced configuration, please visit the following sections on our [Documentation Site](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/adk/):
 
-- [Transport Protocols](https://mcp-toolbox.dev/sdks/js-sdk/adk/#transport-protocols)
-- [Loading Tools](https://mcp-toolbox.dev/sdks/js-sdk/adk/#loading-tools)
-- [Invoking Tools](https://mcp-toolbox.dev/sdks/js-sdk/adk/#invoking-tools)
-- [Client to Server Authentication](https://mcp-toolbox.dev/sdks/js-sdk/adk/#client-to-server-authentication)
-- [Authenticating Tools](https://mcp-toolbox.dev/sdks/js-sdk/adk/#authenticating-tools)
-- [Binding Parameter Values](https://mcp-toolbox.dev/sdks/js-sdk/adk/#binding-parameter-values)
+- [Transport Protocols](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/adk/#transport-protocols)
+- [Loading Tools](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/adk/#loading-tools)
+- [Invoking Tools](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/adk/#invoking-tools)
+- [Client to Server Authentication](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/adk/#client-to-server-authentication)
+- [Authenticating Tools](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/adk/#authenticating-tools)
+- [Binding Parameter Values](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/adk/#binding-parameter-values)
 
 # Contributing
 

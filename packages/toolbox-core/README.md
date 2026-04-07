@@ -6,7 +6,7 @@
 
 The @toolbox-sdk/core package provides a Javascript interface to the [MCP Toolbox](https://github.com/googleapis/mcp-toolbox) service, enabling you to load and invoke tools from your own applications. It is framework-agnostic and designed to seamlessly integrate with popular orchestration frameworks like Langchain, LlamaIndex and Genkit.
 
-For detailed guides, authentication examples, and advanced configuration, visit the [JS SDK Core Guide](https://mcp-toolbox.dev/sdks/js-sdk/core/).
+For detailed guides, authentication examples, and advanced configuration, visit the [JS SDK Core Guide](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/core/).
 
 <!-- TOC ignore:true -->
 - [Supported Environments](#supported-environments)

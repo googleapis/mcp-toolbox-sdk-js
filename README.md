@@ -25,12 +25,12 @@ For comprehensive guides, tutorials, and advanced configuration, visit the [Main
 
 ## Available Packages
 
-This repository hosts the following TS packages. Visit the [Main Documentation Site](https://mcp-toolbox.dev/sdks/js-sdk/) for detailed installation and usage instructions:
+This repository hosts the following TS packages. Visit the [Main Documentation Site](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/) for detailed installation and usage instructions:
 
 | Package | Target Use Case | Path | Documentation |
 | :------ | :---------- | :--- | :---------- |
-| `@toolbox-sdk/core` | Framework-agnostic / Custom apps | `packages/toolbox-core/` | [JS Core Guide](https://mcp-toolbox.dev/sdks/js-sdk/core/) |
-| `@toolbox-sdk/adk` | ADK applications | `packages/toolbox-adk/` | [JS ADK Guide](https://mcp-toolbox.dev/sdks/js-sdk/adk/) |
+| `@toolbox-sdk/core` | Framework-agnostic / Custom apps | `packages/toolbox-core/` | [JS Core Guide](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/core/) |
+| `@toolbox-sdk/adk` | ADK applications | `packages/toolbox-adk/` | [JS ADK Guide](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/adk/) |
 
 ## Quick Start
 

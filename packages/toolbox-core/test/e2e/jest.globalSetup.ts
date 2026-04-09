@@ -52,9 +52,9 @@ export default async function globalSetup(): Promise<void> {
     const localToolboxPath = path.resolve(__dirname, TOOLBOX_BINARY_NAME);
 
     console.log(
-      `Downloading toolbox binary from gs://mcp-toolbox-for-databases/${toolboxGcsPath} to ${localToolboxPath}...`,
+      `Downloading toolbox binary from gs://genai-toolbox/${toolboxGcsPath} to ${localToolboxPath}...`,
     );
-    await downloadBlob('mcp-toolbox-for-databases', toolboxGcsPath, localToolboxPath);
+    await downloadBlob('genai-toolbox', toolboxGcsPath, localToolboxPath);
     console.log('Toolbox binary downloaded successfully.');
 
     // Make toolbox executable

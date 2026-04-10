@@ -60,7 +60,11 @@ export default async function globalSetup(): Promise<void> {
     console.log(
       `Downloading toolbox binary from gs://mcp-toolbox-for-databases/${toolboxGcsPath} to ${localToolboxPath}...`,
     );
-    await downloadBlob('mcp-toolbox-for-databases', toolboxGcsPath, localToolboxPath);
+    await downloadBlob(
+      'mcp-toolbox-for-databases',
+      toolboxGcsPath,
+      localToolboxPath,
+    );
     console.log('Toolbox binary downloaded successfully.');
 
     // Make toolbox executable

@@ -16,7 +16,7 @@ import {jest, describe, it, expect, beforeEach} from '@jest/globals';
 import {z} from 'zod';
 import {Type} from '@google/genai';
 import type {FunctionDeclaration} from '@google/genai';
-import type {RunAsyncToolRequest, ToolContext} from '@google/adk';
+import type {RunAsyncToolRequest, Context} from '@google/adk';
 import type {ToolboxTool as ToolboxToolType} from '../src/toolbox_adk/tool.js';
 
 const mockedConvertZod = jest.fn();
@@ -92,7 +92,7 @@ describe('ToolboxTool', () => {
 
     const request: RunAsyncToolRequest = {
       args: mockArgs,
-      toolContext: {} as unknown as ToolContext,
+      toolContext: {} as unknown as Context,
     };
 
     const result = await adkTool.runAsync(request);

@@ -50,7 +50,7 @@ describe('ToolboxClient E2E Tests', () => {
     it('should invoke the getNRowsTool', async () => {
       const response = await getNRowsTool.runAsync({
         args: {num_rows: '2'},
-        context: mockContext,
+        toolContext: mockContext,
       });
       expect(typeof response).toBe('string');
       expect(response).toContain('row1');
@@ -60,7 +60,7 @@ describe('ToolboxClient E2E Tests', () => {
 
     it('should invoke the getNRowsTool with missing params', async () => {
       await expect(
-        getNRowsTool.runAsync({args: {}, context: mockContext}),
+        getNRowsTool.runAsync({args: {}, toolContext: mockContext}),
       ).rejects.toThrow(
         /Argument validation failed for tool "get-n-rows":\s*- num_rows: Required/,
       );
@@ -70,7 +70,7 @@ describe('ToolboxClient E2E Tests', () => {
       await expect(
         getNRowsTool.runAsync({
           args: {num_rows: 2},
-          context: mockContext,
+          toolContext: mockContext,
         }),
       ).rejects.toThrow(
         /Argument validation failed for tool "get-n-rows":\s*- num_rows: Expected string, received number/,
@@ -163,7 +163,7 @@ describe('ToolboxClient E2E Tests', () => {
       const newTool = getNRowsTool.bindParam('num_rows', '3');
       const response = await newTool.runAsync({
         args: {},
-        context: mockContext,
+        toolContext: mockContext,
       }); // Invoke with no args
       expect(response).toContain('row1');
       expect(response).toContain('row2');
@@ -175,7 +175,7 @@ describe('ToolboxClient E2E Tests', () => {
       const newTool = getNRowsTool.bindParams({num_rows: '3'});
       const response = await newTool.runAsync({
         args: {},
-        context: mockContext,
+        toolContext: mockContext,
       }); // Invoke with no args
       expect(response).toContain('row1');
       expect(response).toContain('row2');
@@ -187,7 +187,7 @@ describe('ToolboxClient E2E Tests', () => {
       const newTool = getNRowsTool.bindParams({num_rows: () => '1'});
       const response = await newTool.runAsync({
         args: {},
-        context: mockContext,
+        toolContext: mockContext,
       });
       expect(response).toContain('row1');
       expect(response).not.toContain('row2');
@@ -202,7 +202,7 @@ describe('ToolboxClient E2E Tests', () => {
       const newTool = getNRowsTool.bindParams({num_rows: asyncNumProvider});
       const response = await newTool.runAsync({
         args: {},
-        context: mockContext,
+        toolContext: mockContext,
       });
       expect(response).toContain('row1');
       expect(response).not.toContain('row2');
@@ -214,7 +214,7 @@ describe('ToolboxClient E2E Tests', () => {
       });
       const response = await tool.runAsync({
         args: {},
-        context: mockContext,
+        toolContext: mockContext,
       });
       expect(response).toContain('row1');
       expect(response).toContain('row2');
@@ -272,7 +272,7 @@ describe('ToolboxClient E2E Tests', () => {
     it('should fail when running a tool requiring auth without providing auth', async () => {
       const tool = await commonToolboxClient.loadTool('get-row-by-id-auth');
       await expect(
-        tool.runAsync({args: {id: '2'}, context: mockContext}),
+        tool.runAsync({args: {id: '2'}, toolContext: mockContext}),
       ).rejects.toThrow(
         'One or more of the following authn services are required to invoke this tool: my-test-auth',
       );
@@ -286,7 +286,7 @@ describe('ToolboxClient E2E Tests', () => {
       try {
         await authTool.runAsync({
           args: {id: '2'},
-          context: mockContext,
+          toolContext: mockContext,
         });
       } catch (error) {
         expect(error).toBeInstanceOf(AxiosError);
@@ -308,7 +308,7 @@ describe('ToolboxClient E2E Tests', () => {
       });
       const response = await authTool.runAsync({
         args: {id: '2'},
-        context: mockContext,
+        toolContext: mockContext,
       });
       expect(response).toContain('row2');
     });
@@ -323,7 +323,7 @@ describe('ToolboxClient E2E Tests', () => {
       });
       const response = await authTool.runAsync({
         args: {id: '2'},
-        context: mockContext,
+        toolContext: mockContext,
       });
       expect(response).toContain('row2');
     });
@@ -331,7 +331,7 @@ describe('ToolboxClient E2E Tests', () => {
     it('should fail when a tool with a param requiring auth is run without auth', async () => {
       const tool = await commonToolboxClient.loadTool('get-row-by-email-auth');
       await expect(
-        tool.runAsync({args: {}, context: mockContext}),
+        tool.runAsync({args: {}, toolContext: mockContext}),
       ).rejects.toThrow(
         'One or more of the following authn services are required to invoke this tool: my-test-auth',
       );
@@ -343,7 +343,7 @@ describe('ToolboxClient E2E Tests', () => {
       });
       const response = await tool.runAsync({
         args: {},
-        context: mockContext,
+        toolContext: mockContext,
       });
       expect(response).toContain('row4');
       expect(response).toContain('row5');
@@ -360,7 +360,7 @@ describe('ToolboxClient E2E Tests', () => {
         },
       );
       try {
-        await tool.runAsync({args: {}, context: mockContext});
+        await tool.runAsync({args: {}, toolContext: mockContext});
       } catch (error) {
         expect(error).toBeInstanceOf(AxiosError);
         const axiosError = error as AxiosError;

@@ -92,7 +92,7 @@ describe('ToolboxTool', () => {
 
     const request: RunAsyncToolRequest = {
       args: mockArgs,
-      context: {} as unknown as Context,
+      toolContext: {} as unknown as Context,
     };
 
     const result = await adkTool.runAsync(request);

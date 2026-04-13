@@ -1,5 +1,5 @@
 ![MCP Toolbox
-Logo](https://raw.githubusercontent.com/googleapis/genai-toolbox/main/logo.png)
+Logo](https://raw.githubusercontent.com/googleapis/mcp-toolbox/main/logo.png)
 
 # MCP Toolbox SDKs for JS
 
@@ -9,7 +9,7 @@ Logo](https://raw.githubusercontent.com/googleapis/genai-toolbox/main/logo.png)
 [![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=flat&logo=discord&logoColor=white)](https://discord.gg/Dmm69peqjh)
 [![Medium](https://img.shields.io/badge/Medium-12100E?style=flat&logo=medium&logoColor=white)](https://medium.com/@mcp_toolbox)
 
-This repository contains JavaScript SDKs for [MCP Toolbox](https://github.com/googleapis/genai-toolbox). These SDKs allow you to load and use tools defined in your MCP Toolbox server as standard JS functions or objects within your Agentic applications.
+This repository contains JavaScript SDKs for [MCP Toolbox](https://github.com/googleapis/mcp-toolbox). These SDKs allow you to load and use tools defined in your MCP Toolbox server as standard JS functions or objects within your Agentic applications.
 
 For comprehensive guides, tutorials, and advanced configuration, visit the [Main Documentation Site](https://mcp-toolbox.dev).
 
@@ -45,6 +45,7 @@ This repository hosts the following TS packages. Visit the [Main Documentation S
     npm install @toolbox-sdk/adk
     ```
 3.  **Explore Tutorials**: Check out the [JS Quickstart Tutorial](http://mcp-toolbox.dev/documentation/getting-started/local_quickstart_js/) for a full walkthrough.
+
 ## Contributing
 
 Contributions are welcome! Please refer to the
@@ -60,7 +61,7 @@ for details.
 ## Support
 
 If you encounter issues or have questions, please check the existing [GitHub
-Issues](https://github.com/googleapis/genai-toolbox/issues) for the main Toolbox
+Issues](https://github.com/googleapis/mcp-toolbox/issues) for the main Toolbox
 project. If your issue is specific to one of the SDKs, please look for existing
 issues [here](https://github.com/googleapis/mcp-toolbox-sdk-js/issues) or
 open a new issue in this repository.

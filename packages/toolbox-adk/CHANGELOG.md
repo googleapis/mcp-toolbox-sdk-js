@@ -1,5 +1,41 @@
 # Changelog
 
+## [1.0.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v0.3.0...adk-v1.0.0) (2026-04-14)
+
+
+### Features
+
+* otel instrumentation as per MCP semantic convention ([#306](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/306)) ([807cc5f](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/807cc5fc4fe876efaeab86a8225d1f3fd7470950))
+
+
+### Miscellaneous Chores
+
+* **deps:** bump axios from 1.13.5 to 1.15.0 ([#328](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/328)) ([e407025](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/e40702536eb4c8db9d72a93e4c04102b46829070))
+* **deps:** update dependency googleapis/mcp-toolbox to v1 ([#326](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/326)) ([f1e6901](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/f1e69018752d16f7f2eaac84fca5c621fdbdbcfb))
+* **deps:** update js-ts-nonmajor ([#296](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/296)) ([630e261](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/630e2612463a53eb490480c63fb25228ba70249c))
+* **deps:** update js-ts-nonmajor ([#315](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/315)) ([dc335e1](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/dc335e143b145f2f28da21673e7732cdc6a2b457))
+* **deps:** update mcp toolbox server version in integration tests to v0.28.0 ([#285](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/285)) ([4d473d8](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/4d473d8d7e65c63aa3076970752578b387722887))
+* **deps:** update mcp toolbox server version in integration tests to v0.30.0 ([#298](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/298)) ([6936324](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/69363249e4ff49ec3ed7b101f49bc4aa7ca93b9d))
+* **deps:** update mcp toolbox server version in integration tests to v0.31.0 ([#309](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/309)) ([57663d4](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/57663d4f695e486a009bb1fde471a92aa70aa98c))
+* **deps:** update mcp toolbox server version in integration tests to v0.32.0 ([#323](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/323)) ([881415f](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/881415fe4f2058b1e372da4981f69104c5bbae4d))
+* **deps:** update toolbox core dep version ([#318](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/318)) ([8a83625](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/8a83625bc37f6abb469ca85e158237ef0d5d674b))
+* release 1.0.0 ([#305](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/305)) ([4bf0a7a](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/4bf0a7a3306ae68062436a2b8c6fe7cb27ecff78))
+* update bucket name ([#325](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/325)) ([2e8551a](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/2e8551a0192585af9bacd87d1fdfa018f6a77598))
+
+
+### Documentation
+
+* cleanup README ([#295](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/295)) ([0a85d54](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/0a85d54d169c9b8e1a177b1dd46d286c4dd2c59b))
+* migrate documentation links to the new docsite ([#320](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/320)) ([2249043](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/2249043c88e6620bcbdc2a9ecda573d88d443639))
+* update repo link ([#321](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/321)) ([6114a60](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/6114a60d35d7e4fa9fca96edd27fe50201b9a635))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @toolbox-sdk/core bumped from ^1.0.0 to ^1.0.1
+
 ## [0.3.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v0.2.1...adk-v0.3.0) (2026-03-04)
 
 

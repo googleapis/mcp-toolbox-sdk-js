@@ -3,6 +3,9 @@ node_modules/
 
 # Build output
 build/
+.turbo/
 
 # Coverage
 coverage/
+
+*.tsbuildinfo

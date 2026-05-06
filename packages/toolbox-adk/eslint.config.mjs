@@ -1,10 +1,17 @@
-
 import gts from 'gts';
 
 export default [
   ...gts,
   {
-    ignores: ['build/']
+    languageOptions: {
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+  {
+    ignores: ['build/', 'package/'],
   },
   {
     files: [
@@ -12,11 +19,11 @@ export default [
       '**/*.test.ts',
       '**/jest.globalSetup.ts',
       '**/jest.globalTeardown.ts',
-      '**/jest.setup.ts'
+      '**/jest.setup.ts',
     ],
     rules: {
       'n/no-unpublished-import': 'off',
-      'n/no-extraneous-import': 'off'
-    }
-  }
+      'n/no-extraneous-import': 'off',
+    },
+  },
 ];

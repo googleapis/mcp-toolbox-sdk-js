@@ -42,8 +42,8 @@
         "node": ">=20.0.0"
     },
     "scripts": {
-        "fix": "gts fix",
-        "lint": "gts check",
+        "fix": "eslint . --fix",
+        "lint": "eslint .",
         "compile": "npm run compile:esm && npm run compile:cjs",
         "compile:esm": "tsc -p tsconfig.esm.json",
         "compile:cjs": "tsc -p tsconfig.cjs.json",

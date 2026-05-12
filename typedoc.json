@@ -1,0 +1,13 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "packages/toolbox-core/src/toolbox_core/index.ts",
+    "packages/toolbox-adk/src/toolbox_adk/index.ts"
+  ],
+  "entryPointStrategy": "Expand",
+  "out": "docs-site/content/docs",
+  "plugin": ["typedoc-plugin-markdown"],
+  "hideBreadcrumbs": true,
+  "hideInPageTOC": true,
+  "readme": "none"
+}

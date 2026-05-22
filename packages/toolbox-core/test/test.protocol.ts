@@ -80,6 +80,10 @@ describe('ZodParameterSchema', () => {
       data: {name: 'testFloat', description: 'A float', type: 'float'},
     },
     {
+      description: 'correct number parameter',
+      data: {name: 'testNumber', description: 'A number', type: 'number'},
+    },
+    {
       description: 'correct boolean parameter',
       data: {name: 'testBool', description: 'A boolean', type: 'boolean'},
     },

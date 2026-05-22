@@ -177,6 +177,7 @@ export abstract class McpHttpTransportBase implements ITransport {
             | 'string'
             | 'integer'
             | 'float'
+            | 'number'
             | 'boolean',
         } as PrimitiveTypeSchema;
       } else {
@@ -193,6 +194,7 @@ export abstract class McpHttpTransportBase implements ITransport {
           | 'string'
           | 'integer'
           | 'float'
+          | 'number'
           | 'boolean'
           | undefined,
       } as PrimitiveTypeSchema;

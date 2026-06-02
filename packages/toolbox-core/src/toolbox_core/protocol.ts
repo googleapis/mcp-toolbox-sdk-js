@@ -43,6 +43,9 @@ interface IntegerType {
 interface FloatType {
   type: 'float';
 }
+interface NumberType {
+  type: 'number';
+}
 interface BooleanType {
   type: 'boolean';
 }
@@ -51,6 +54,7 @@ export type PrimitiveTypeSchema =
   | StringType
   | IntegerType
   | FloatType
+  | NumberType
   | BooleanType;
 
 interface ArrayType {
@@ -81,6 +85,7 @@ const ZodPrimitiveTypeSchema: z.ZodType<PrimitiveTypeSchema> =
     z.object({type: z.literal('string')}),
     z.object({type: z.literal('integer')}),
     z.object({type: z.literal('float')}),
+    z.object({type: z.literal('number')}),
     z.object({type: z.literal('boolean')}),
   ]);
 
@@ -90,6 +95,7 @@ const ZodTypeSchema: z.ZodType<TypeSchema> = z.lazy(() =>
     z.object({type: z.literal('string')}),
     z.object({type: z.literal('integer')}),
     z.object({type: z.literal('float')}),
+    z.object({type: z.literal('number')}),
     z.object({type: z.literal('boolean')}),
     z.object({type: z.literal('array'), items: ZodTypeSchema.optional()}),
     z.object({
@@ -136,6 +142,7 @@ function buildZodShapeFromTypeSchema(typeSchema: TypeSchema): ZodTypeAny {
     case 'integer':
       return z.number().int();
     case 'float':
+    case 'number':
       return z.number();
     case 'boolean':
       return z.boolean();

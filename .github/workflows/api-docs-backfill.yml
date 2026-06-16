@@ -20,7 +20,7 @@ on:
       package:
         description: "Package to backfill"
         type: choice
-        options: [core, tbadk, tbgenkit]
+        options: [core, adk]
         required: true
       version:
         description: "Version tag to build, e.g. v1.0.0"
@@ -38,7 +38,7 @@ concurrency:
 jobs:
   backfill:
     # Never run on forks; docs deploy only from the upstream repository.
-    if: github.repository == 'googleapis/mcp-toolbox-sdk-go'
+    if: github.repository == 'googleapis/mcp-toolbox-sdk-js'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -46,31 +46,49 @@ jobs:
     steps:
       # Build from main so the archived page carries the current version picker;
       # only the package's source comes from the tag (overlaid below) so
-      # gomarkdoc documents that version's API.
+      # typedoc documents that version's API.
       - name: Checkout main (current layout + scripts)
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           ref: main
           submodules: recursive
 
-      - name: Checkout tagged package source
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-        with:
-          ref: refs/tags/${{ inputs.package }}/${{ inputs.version }}
-          path: tagged_src
-          sparse-checkout: ${{ inputs.package }}
-
-      - name: Overlay tagged source onto main
+      # Map the URL slug to its package directory (unlike the Go repo, the slug
+      # is not the directory name).
+      - name: Resolve package directory
+        id: resolve
         env:
           PKG: ${{ inputs.package }}
         run: |
-          rm -rf "$PKG"
-          mv "tagged_src/$PKG" "$PKG"
+          case "$PKG" in
+            core) echo "dir=packages/toolbox-core" >> "$GITHUB_OUTPUT" ;;
+            adk)  echo "dir=packages/toolbox-adk"  >> "$GITHUB_OUTPUT" ;;
+            *)    echo "Unknown package: $PKG" >&2; exit 1 ;;
+          esac
 
-      - name: Set up Go
-        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
+      - name: Checkout tagged package source
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
-          go-version: '1.25.0'
+          ref: refs/tags/${{ inputs.package }}-${{ inputs.version }}
+          path: tagged_src
+          sparse-checkout: ${{ steps.resolve.outputs.dir }}
+
+      # Overlay only the tagged package's src/, keeping main's package.json,
+      # tsconfig and the root lockfile so the `npm ci` inside the build script
+      # stays in sync. typedoc reads src, so the archived page reflects the
+      # tagged version's API. (Go overlays the whole package dir; gomarkdoc has
+      # no lockfile to keep in sync.)
+      - name: Overlay tagged source onto main
+        env:
+          DIR: ${{ steps.resolve.outputs.dir }}
+        run: |
+          rm -rf "$DIR/src"
+          mv "tagged_src/$DIR/src" "$DIR/src"
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 22.16.0
 
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@2752ce1d29631191ea3f27c23495fa06139a5b78 # v3
@@ -80,8 +98,11 @@ jobs:
 
       - name: Install PostCSS Dependencies
         run: |
+          # --no-workspaces installs into docs-site/node_modules (where Hugo's
+          # PostCSS looks) instead of hoisting to the repo-root workspace store.
+          # docs-site/package.json pins postcss/postcss-cli/autoprefixer.
           cd docs-site
-          npm install postcss postcss-cli autoprefixer
+          npm install --no-workspaces
 
       - name: Build docs
         env:
@@ -89,7 +110,7 @@ jobs:
           VER: ${{ inputs.version }}
           # Deploys only run upstream (see job-level guard), so always use the
           # production domain.
-          BASE_URL: https://go.mcp-toolbox.dev/
+          BASE_URL: https://js.mcp-toolbox.dev/
         run: |
           chmod +x scripts/generate-api-docs.sh
           ./scripts/generate-api-docs.sh "$PKG" "$VER" "$BASE_URL"

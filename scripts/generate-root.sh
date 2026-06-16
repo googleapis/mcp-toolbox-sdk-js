@@ -11,7 +11,7 @@ trap 'rm -rf "$CONTENT_DIR"' EXIT
 
 cat > "$CONTENT_DIR/_index.md" <<EOF
 ---
-title: "MCP Toolbox Go SDK"
+title: "MCP Toolbox JS SDK"
 type: docs
 ---
 EOF

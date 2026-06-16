@@ -1,20 +1,30 @@
 #!/bin/bash
 set -euo pipefail
 
-export PATH="$PATH:$(go env GOPATH)/bin"
-
-PACKAGE="${1:?package required (core|tbadk|tbgenkit)}"
+PACKAGE="${1:?package required (core|adk)}"
 VERSION="${2:?version required (e.g. v1.0.0 or dev)}"
 BASE_URL="${3:-/}"
 
+# Map the URL slug to its package title, tsconfig and TypeDoc entry points.
+# core exposes a secondary ./auth export (authMethods.ts) alongside the main
+# index, so it has two entry points; adk has a single index.
 case "$PACKAGE" in
-  core)     TITLE="Core" ;;
-  tbadk)    TITLE="Tbadk" ;;
-  tbgenkit) TITLE="Tbgenkit" ;;
-  *)        echo "Unknown package: $PACKAGE" >&2; exit 1 ;;
+  core)
+    TITLE="Core"
+    TSCONFIG="packages/toolbox-core/tsconfig.esm.json"
+    ENTRIES=(packages/toolbox-core/src/toolbox_core/index.ts
+             packages/toolbox-core/src/toolbox_core/authMethods.ts) ;;
+  adk)
+    TITLE="ADK"
+    TSCONFIG="packages/toolbox-adk/tsconfig.esm.json"
+    ENTRIES=(packages/toolbox-adk/src/toolbox_adk/index.ts) ;;
+  *) echo "Unknown package: $PACKAGE" >&2; exit 1 ;;
 esac
 
-go install github.com/princjef/gomarkdoc/cmd/gomarkdoc@latest
+# Install workspace deps from the lockfile. Besides providing typedoc (a root
+# devDependency), this links the workspace symlinks so adk resolves its
+# @toolbox-sdk/core types. Mirrors the Go script's `go install gomarkdoc`.
+npm ci
 
 # Per-build content tree in a temp dir, kept out of the checked-in
 # docs-site/content so concurrent package builds never trample each other.
@@ -23,14 +33,30 @@ go install github.com/princjef/gomarkdoc/cmd/gomarkdoc@latest
 CONTENT_DIR="$(mktemp -d)"
 trap 'rm -rf "$CONTENT_DIR"' EXIT
 
-cat > "$CONTENT_DIR/_index.md" <<EOF
----
-title: "MCP Toolbox Go SDK — ${TITLE} (${VERSION})"
-type: docs
----
+# Generate a markdown tree (unlike gomarkdoc's single stream, typedoc emits many
+# files). --entryFileName _index.md makes each module index a Hugo section page
+# AND points cross-page links at _index.md so they resolve; --readme none keeps
+# the repo README out (it is rendered separately at the site root).
+npx typedoc \
+  --plugin typedoc-plugin-markdown \
+  --tsconfig "${TSCONFIG}" \
+  --out "${CONTENT_DIR}" \
+  --readme none \
+  --entryFileName _index.md \
+  "${ENTRIES[@]}"
 
-EOF
-gomarkdoc "./${PACKAGE}/..." | sed '/^# /d' >> "$CONTENT_DIR/_index.md"
+# Add Docsy frontmatter (type: docs + a title) to every generated .md. The
+# package landing page gets the friendly "<Title> (<version>)"; other pages are
+# titled after their file (or parent dir for an _index.md).
+find "${CONTENT_DIR}" -type f -name '*.md' | while read -r f; do
+  base="$(basename "$f" .md)"
+  [ "$base" = "_index" ] && base="$(basename "$(dirname "$f")")"
+  title="$base"
+  [ "$f" = "${CONTENT_DIR}/_index.md" ] && title="${TITLE} (${VERSION})"
+  tmp="$(mktemp)"
+  { printf -- '---\ntitle: "%s"\ntype: docs\n---\n\n' "$title"; cat "$f"; } > "$tmp"
+  mv "$tmp" "$f"
+done
 
 cd docs-site
 HUGO_PARAMS_VERSION="${VERSION}" HUGO_PARAMS_PACKAGE="${PACKAGE}" hugo \

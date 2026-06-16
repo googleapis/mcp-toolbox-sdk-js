@@ -4,5 +4,11 @@ node_modules/
 # Build output
 build/
 
+# Hugo docs-site build output
+docs-site/public/
+docs-site/resources/
+.hugo_build.lock
+docs-site/package-lock.json
+
 # Coverage
 coverage/

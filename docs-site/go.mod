@@ -1,4 +1,4 @@
-module github.com/googleapis/mcp-toolbox-sdk-go/docs-site
+module github.com/googleapis/mcp-toolbox-sdk-js/docs-site
 
 go 1.24.13
 

@@ -27,7 +27,7 @@ concurrency:
 jobs:
   deploy:
     # Never run on forks; docs deploy only from the upstream repository.
-    if: github.repository == 'googleapis/mcp-toolbox-sdk-go'
+    if: github.repository == 'googleapis/mcp-toolbox-sdk-js'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -38,10 +38,10 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Set up Go
-        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          go-version: '1.25.0'
+          node-version: 22.16.0
 
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@2752ce1d29631191ea3f27c23495fa06139a5b78 # v3
@@ -51,27 +51,31 @@ jobs:
           
       - name: Install PostCSS Dependencies
         run: |
+          # --no-workspaces installs into docs-site/node_modules (where Hugo's
+          # PostCSS looks) instead of hoisting to the repo-root workspace store.
+          # docs-site/package.json pins postcss/postcss-cli/autoprefixer.
           cd docs-site
-          npm install postcss postcss-cli autoprefixer
+          npm install --no-workspaces
 
       - name: Resolve build target
         id: resolve
         run: |
           # Route the git ref to the package(s) and version to build.
           # A per-package tag builds that one package; pushes to main (and manual
-          # dispatch) build all three as "dev". Any other tag is skipped.
+          # dispatch) build both as "dev". JS release tags are hyphenated
+          # (core-vX.Y.Z, adk-vX.Y.Z); release-please-* and any other tag are
+          # skipped.
           REF="${GITHUB_REF}"
           case "$REF" in
-            refs/tags/core/v*)     echo "packages=core"                >> "$GITHUB_OUTPUT"; echo "version=${REF#refs/tags/core/}"     >> "$GITHUB_OUTPUT" ;;
-            refs/tags/tbadk/v*)    echo "packages=tbadk"               >> "$GITHUB_OUTPUT"; echo "version=${REF#refs/tags/tbadk/}"    >> "$GITHUB_OUTPUT" ;;
-            refs/tags/tbgenkit/v*) echo "packages=tbgenkit"            >> "$GITHUB_OUTPUT"; echo "version=${REF#refs/tags/tbgenkit/}" >> "$GITHUB_OUTPUT" ;;
-            refs/tags/*)           echo "packages="                    >> "$GITHUB_OUTPUT"; echo "version="                          >> "$GITHUB_OUTPUT" ;;
-            *)                     echo "packages=core tbadk tbgenkit" >> "$GITHUB_OUTPUT"; echo "version=dev"                        >> "$GITHUB_OUTPUT" ;;
+            refs/tags/core-v*) echo "packages=core"     >> "$GITHUB_OUTPUT"; echo "version=${REF#refs/tags/core-}" >> "$GITHUB_OUTPUT" ;;
+            refs/tags/adk-v*)  echo "packages=adk"      >> "$GITHUB_OUTPUT"; echo "version=${REF#refs/tags/adk-}"  >> "$GITHUB_OUTPUT" ;;
+            refs/tags/*)       echo "packages="         >> "$GITHUB_OUTPUT"; echo "version="                       >> "$GITHUB_OUTPUT" ;;
+            *)                 echo "packages=core adk" >> "$GITHUB_OUTPUT"; echo "version=dev"                     >> "$GITHUB_OUTPUT" ;;
           esac
 
           # Deploys only run upstream (see job-level guard), so always use the
           # production domain.
-          echo "BASE_URL=https://go.mcp-toolbox.dev/" >> "$GITHUB_ENV"
+          echo "BASE_URL=https://js.mcp-toolbox.dev/" >> "$GITHUB_ENV"
 
       - name: Build per-package docs
         if: steps.resolve.outputs.packages != ''
@@ -94,4 +98,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs-site/public
           keep_files: true 
-          cname: ${{ github.repository == 'googleapis/mcp-toolbox-sdk-go' && 'go.mcp-toolbox.dev' || '' }}
+          cname: ${{ github.repository == 'googleapis/mcp-toolbox-sdk-js' && 'js.mcp-toolbox.dev' || '' }}

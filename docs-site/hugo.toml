@@ -13,9 +13,27 @@ title = "MCP Toolbox JS API"
   [[params.versions.core]]
     version = "dev"
     url = "/core/dev/"
+  [[params.versions.core]]
+    version = "v1.0.0"
+    url = "/core/v1.0.0/"
+  [[params.versions.core]]
+    version = "v0.3.0"
+    url = "/core/v0.3.0/"
+  [[params.versions.core]]
+    version = "v0.2.1"
+    url = "/core/v0.2.1/"
   [[params.versions.adk]]
     version = "dev"
     url = "/adk/dev/"
+  [[params.versions.adk]]
+    version = "v0.3.0"
+    url = "/adk/v0.3.0/"
+  [[params.versions.adk]]
+    version = "v0.2.1"
+    url = "/adk/v0.2.1/"
+  [[params.versions.adk]]
+    version = "v0.2.0"
+    url = "/adk/v0.2.0/"
 
 [markup.goldmark.renderer]
   unsafe = true

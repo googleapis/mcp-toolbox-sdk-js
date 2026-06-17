@@ -32,3 +32,5 @@ sourceFileExtensions:
   - "ts"
 ignoreFiles:
   - "pnpm-lock.yaml"
+  # Vendored third-party (W3Schools W3.JS), not Google-authored source.
+  - "docs-site/static/js/w3.js"

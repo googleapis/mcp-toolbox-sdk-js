@@ -1,9 +1,0 @@
-{
-  "compilerOptions": {
-  },
-  "references": [
-    { "path": "packages/toolbox-core" },
-    { "path": "packages/toolbox-adk" }
-  ],
-  "files": []
-}

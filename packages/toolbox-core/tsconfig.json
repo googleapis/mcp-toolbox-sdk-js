@@ -1,7 +1,0 @@
-{
-  "extends": "./tsconfig.esm.json",
-  "include": [
-    "src/**/*.ts",
-    "test/**/*.ts"
-  ]
-}

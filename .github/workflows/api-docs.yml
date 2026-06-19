@@ -79,6 +79,15 @@ jobs:
           # production domain.
           echo "BASE_URL=https://js.mcp-toolbox.dev/" >> "$GITHUB_ENV"
 
+      - name: Build workspace packages
+        if: steps.resolve.outputs.packages != ''
+        run: |
+          # adk's docs import @toolbox-sdk/core, whose exported types resolve to
+          # build/esm/*.d.ts. Build the workspace so those declarations exist
+          # before TypeDoc runs, otherwise adk doc generation fails with TS2307.
+          npm ci
+          npm run build
+
       - name: Build per-package docs
         if: steps.resolve.outputs.packages != ''
         run: |

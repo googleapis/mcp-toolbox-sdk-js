@@ -141,7 +141,7 @@ class ToolboxClient {
    * @param {string} toolName - The name of the tool.
    * @param {ToolSchemaFromManifest} toolSchema - The schema definition of the tool from the manifest.
    * @param {BoundParams} [boundParams] - A map of all candidate parameters to bind.
-   * @returns {ReturnType<typeof ToolboxTool>} A ToolboxTool function.
+   * @returns {ToolboxTool} A ToolboxTool function.
    */
   #createToolInstance(
     toolName: string,
@@ -149,7 +149,7 @@ class ToolboxClient {
     authTokenGetters: AuthTokenGetters = {},
     boundParams: BoundParams = {},
   ): {
-    tool: ReturnType<typeof ToolboxTool>;
+    tool: ToolboxTool;
     usedAuthKeys: Set<string>;
     usedBoundKeys: Set<string>;
   } {
@@ -202,7 +202,7 @@ class ToolboxClient {
    * @param {string} name - The unique name or identifier of the tool to load.
    * @param {AuthTokenGetters | null} [authTokenGetters] - Optional map of auth service names to token getters.
    * @param {BoundParams | null} [boundParams] - Optional parameters to pre-bind to the tool.
-   * @returns {Promise<ReturnType<typeof ToolboxTool>>} A promise that resolves
+   * @returns {Promise<ToolboxTool>} A promise that resolves
    * to a ToolboxTool function, ready for execution.
    * @throws {Error} If the tool is not found in the manifest, the manifest structure is invalid,
    * or if there's an error fetching data from the API.
@@ -211,7 +211,7 @@ class ToolboxClient {
     name: string,
     authTokenGetters: AuthTokenGetters | null = {},
     boundParams: BoundParams | null = {},
-  ): Promise<ReturnType<typeof ToolboxTool>> {
+  ): Promise<ToolboxTool> {
     warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
     const headers = await this.#resolveClientHeaders();
     const manifest = await this.#transport.toolGet(name, headers);
@@ -271,7 +271,7 @@ class ToolboxClient {
    * @param {AuthTokenGetters | null} [authTokenGetters] - Optional map of auth service names to token getters.
    * @param {BoundParams | null} [boundParams] - Optional parameters to pre-bind to the tools in the toolset.
    * @param {boolean} [strict=false] - If true, throws an error if any provided auth token or bound param is not used by at least one tool.
-   * @returns {Promise<Array<ReturnType<typeof ToolboxTool>>>} A promise that resolves
+   * @returns {Promise<ToolboxTool[]>} A promise that resolves
    * to a list of ToolboxTool functions, ready for execution.
    * @throws {Error} If the manifest structure is invalid or if there's an error fetching data from the API.
    */
@@ -280,13 +280,13 @@ class ToolboxClient {
     authTokenGetters: AuthTokenGetters | null = {},
     boundParams: BoundParams | null = {},
     strict = false,
-  ): Promise<Array<ReturnType<typeof ToolboxTool>>> {
+  ): Promise<ToolboxTool[]> {
     warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
     const toolsetName = name || '';
     const headers = await this.#resolveClientHeaders();
 
     const manifest = await this.#transport.toolsList(toolsetName, headers);
-    const tools: Array<ReturnType<typeof ToolboxTool>> = [];
+    const tools: ToolboxTool[] = [];
 
     const overallUsedAuthKeys: Set<string> = new Set();
     const overallUsedBoundParams: Set<string> = new Set();

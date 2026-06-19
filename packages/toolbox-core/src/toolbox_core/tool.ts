@@ -29,6 +29,30 @@ export type AuthTokenGetters = Record<string, AuthTokenGetter>;
 export type RequiredAuthnParams = Record<string, string[]>;
 
 /**
+ * A loaded, callable tool. Invoke it with an arguments object to run the tool on
+ * the remote Toolbox server. The attached methods return new ToolboxTool
+ * instances with additional auth-token getters or pre-bound parameters.
+ */
+export interface ToolboxTool {
+  (callArguments?: Record<string, unknown>): Promise<string>;
+  toolName: string;
+  description: string;
+  params: ZodObject<ZodRawShape>;
+  boundParams: BoundParams;
+  authTokenGetters: AuthTokenGetters;
+  requiredAuthnParams: RequiredAuthnParams;
+  requiredAuthzTokens: string[];
+  clientHeaders: ClientHeadersConfig;
+  getName(): string;
+  getDescription(): string;
+  getParamSchema(): ZodObject<ZodRawShape>;
+  addAuthTokenGetters(newAuthTokenGetters: AuthTokenGetters): ToolboxTool;
+  addAuthTokenGetter(authSource: string, getIdToken: AuthTokenGetter): ToolboxTool;
+  bindParams(paramsToBind: BoundParams): ToolboxTool;
+  bindParam(paramName: string, paramValue: BoundValue): ToolboxTool;
+}
+
+/**
  * A helper function to get the formatted auth token header name.
  * @param {string} authTokenName - The name of the authentication service.
  * @returns {string} The formatted header name.
@@ -50,10 +74,10 @@ function getAuthHeaderName(authTokenName: string): string {
  * @param {string[]} [requiredAuthzTokens] - Optional list of auth tokens that still need satisfying.
  * @param {BoundParams} [boundParams] - Optional parameters to pre-bind to the tool.
  * @param {ClientHeadersConfig} [clientHeaders] - Optional client-specific headers.
- * @returns {CallableTool & CallableToolProperties} An async function that, when
+ * @returns {ToolboxTool} An async function that, when
  * called, invokes the tool with the provided arguments.
  */
-function ToolboxTool(
+export function ToolboxTool(
   transport: ITransport,
   name: string,
   description: string,
@@ -63,7 +87,7 @@ function ToolboxTool(
   requiredAuthzTokens: string[] = [],
   boundParams: BoundParams = {},
   clientHeaders: ClientHeadersConfig = {},
-) {
+): ToolboxTool {
   const boundKeys = Object.keys(boundParams);
   const userParamSchema = paramSchema.omit(
     Object.fromEntries(boundKeys.map(k => [k, true])),
@@ -271,7 +295,5 @@ function ToolboxTool(
   callable.bindParam = function (paramName: string, paramValue: BoundValue) {
     return this.bindParams({[paramName]: paramValue});
   };
-  return callable;
+  return callable as unknown as ToolboxTool;
 }
-
-export {ToolboxTool};

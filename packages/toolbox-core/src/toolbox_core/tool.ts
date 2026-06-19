@@ -47,7 +47,10 @@ export interface ToolboxTool {
   getDescription(): string;
   getParamSchema(): ZodObject<ZodRawShape>;
   addAuthTokenGetters(newAuthTokenGetters: AuthTokenGetters): ToolboxTool;
-  addAuthTokenGetter(authSource: string, getIdToken: AuthTokenGetter): ToolboxTool;
+  addAuthTokenGetter(
+    authSource: string,
+    getIdToken: AuthTokenGetter,
+  ): ToolboxTool;
   bindParams(paramsToBind: BoundParams): ToolboxTool;
   bindParam(paramName: string, paramValue: BoundValue): ToolboxTool;
 }

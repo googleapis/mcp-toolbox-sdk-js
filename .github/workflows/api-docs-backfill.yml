@@ -15,6 +15,10 @@
 
 name: "API Reference Backfill"
 on:
+  # TEMP (do not merge): lets a draft PR trigger this workflow for a real run.
+  # On pull_request there are no dispatch inputs, so the steps below fall back
+  # to adk/v0.3.0 via `inputs.x || 'default'`.
+  pull_request:
   workflow_dispatch:
     inputs:
       package:
@@ -58,7 +62,7 @@ jobs:
       - name: Resolve package directory
         id: resolve
         env:
-          PKG: ${{ inputs.package }}
+          PKG: ${{ inputs.package || 'adk' }}
         run: |
           case "$PKG" in
             core) echo "dir=packages/toolbox-core" >> "$GITHUB_OUTPUT" ;;
@@ -69,7 +73,7 @@ jobs:
       - name: Checkout tagged package source
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
-          ref: refs/tags/${{ inputs.package }}-${{ inputs.version }}
+          ref: refs/tags/${{ inputs.package || 'adk' }}-${{ inputs.version || 'v0.3.0' }}
           path: tagged_src
           sparse-checkout: ${{ steps.resolve.outputs.dir }}
 
@@ -111,15 +115,15 @@ jobs:
       # building the overlaid tagged source could fail tsc spuriously even when
       # TypeDoc would still render the page.
       - name: Build core dependency
-        if: inputs.package == 'adk'
+        if: (inputs.package || 'adk') == 'adk'
         run: |
           npm ci
           npx turbo run build --filter=@toolbox-sdk/core
 
       - name: Build docs
         env:
-          PKG: ${{ inputs.package }}
-          VER: ${{ inputs.version }}
+          PKG: ${{ inputs.package || 'adk' }}
+          VER: ${{ inputs.version || 'v0.3.0' }}
           # Deploys only run upstream (see job-level guard), so always use the
           # production domain.
           BASE_URL: https://js.mcp-toolbox.dev/
@@ -134,8 +138,8 @@ jobs:
       - name: Open PR against gh-pages
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PKG: ${{ inputs.package }}
-          VER: ${{ inputs.version }}
+          PKG: ${{ inputs.package || 'adk' }}
+          VER: ${{ inputs.version || 'v0.3.0' }}
         run: |
           set -euo pipefail
           BRANCH="backfill/${PKG}-${VER}"

@@ -41,6 +41,6 @@
     "uuid": "^11.1.1",
     "tmp": "^0.2.7",
     "tar": "^7.5.11",
-    "@tootallnate/once": "^2.0.1"
+    "@tootallnate/once": "^3.0.0"
   }
 }

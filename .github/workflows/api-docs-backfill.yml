@@ -78,6 +78,13 @@ jobs:
       # stays in sync. typedoc reads src, so the archived page reflects the
       # tagged version's API. (Go overlays the whole package dir; gomarkdoc has
       # no lockfile to keep in sync.)
+      #
+      # Caveat: the tagged src is built against main's current deps, tsconfig
+      # and doc tooling -- not what the release shipped with. Backfill is
+      # therefore best-effort: a version whose source predates a breaking change
+      # on main (a dependency bump, stricter tsconfig, or renamed/added entry
+      # points) may fail to build. This is accepted -- backfill targets recent
+      # versions; very old tags are not guaranteed to build.
       - name: Overlay tagged source onto main
         env:
           DIR: ${{ steps.resolve.outputs.dir }}

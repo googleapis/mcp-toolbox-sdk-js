@@ -40,10 +40,11 @@ npm ci
 # The package's API reference is the home page, so /<pkg>/<version>/ lands
 # directly on the docs (the repo README lives only at the site root).
 CONTENT_DIR="$(mktemp -d)"
-BARREL=""
-# return 0 so a leftover non-zero (e.g. an empty BARREL test) never becomes the
-# script's exit code, since an EXIT trap's last status replaces it.
-cleanup() { rm -rf "$CONTENT_DIR"; [ -n "$BARREL" ] && rm -f "$BARREL"; return 0; }
+# Absolute path: the trap that removes the barrel fires after the script cd's away.
+BARREL="$(pwd)/${SRC_DIR}/__typedoc_entry.ts"
+# return 0 so a cleanup hiccup never replaces the script's real exit code (an
+# EXIT trap's last status becomes the exit code).
+cleanup() { rm -rf "$CONTENT_DIR" "$BARREL"; return 0; }
 trap cleanup EXIT
 
 # Derive the public modules from package.json's "exports": each entry's import
@@ -56,10 +57,8 @@ MODULES="$(node -e "const {exports}=require('./${PKG_DIR}/package.json'); proces
 # just the index) through a single temp barrel that re-exports them, so TypeDoc
 # collapses the project into one module and renders the whole package on one page
 # instead of emitting a separate page per entry point. The barrel lives in src
-# beside the files it re-exports so the relative paths resolve, and is removed on
-# exit. printf reuses its format once per module. Absolute path: the trap that
-# removes it fires after the script cd's away.
-BARREL="$(pwd)/${SRC_DIR}/__typedoc_entry.ts"
+# beside the files it re-exports so the relative paths resolve. printf reuses its
+# format once per module.
 printf "export * from './%s.js';\n" $MODULES > "$BARREL"
 ENTRIES=("$BARREL")
 

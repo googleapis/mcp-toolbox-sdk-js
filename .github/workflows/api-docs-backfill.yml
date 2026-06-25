@@ -29,7 +29,7 @@ on:
 
 # Each run produces an independent branch/PR, so runs for different versions can proceed in parallel.
 concurrency:
-  group: api-docs-backfill-${{ github.event.inputs.package }}-${{ github.event.inputs.version }}
+  group: api-docs-backfill-${{ inputs.package }}-${{ inputs.version }}
   cancel-in-progress: false
 
 jobs:

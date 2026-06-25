@@ -12,22 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-name: "API Reference Backfill"
+name: 'API Reference Backfill'
 on:
   workflow_dispatch:
     inputs:
       package:
-        description: "Package to backfill"
+        description: 'Package to backfill'
         type: choice
         options: [core, adk]
         required: true
       version:
-        description: "Version tag to build, e.g. v1.0.0"
+        description: 'Version tag to build, e.g. v1.0.0'
         type: string
         required: true
 
-# Each run produces an independent branch/PR, so runs for different versions can proceed in parallel.
+# Key by package+version so different versions run in parallel; never cancel a
+# queued run, so dispatching several at once can't silently drop any.
 concurrency:
   group: api-docs-backfill-${{ inputs.package }}-${{ inputs.version }}
   cancel-in-progress: false
@@ -41,17 +41,15 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      # Build from main so the archived page carries the current version picker;
-      # only the package's source comes from the tag (overlaid below) so
-      # typedoc documents that version's API.
+      # Base on main for the current docs tooling + site chrome (version picker);
+      # only the package API source comes from the tag, overlaid below.
       - name: Checkout main (current layout + scripts)
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           ref: main
           submodules: recursive
 
-      # Map the URL slug to its package directory (unlike the Go repo, the slug
-      # is not the directory name).
+      # Map the URL slug to its package directory.
       - name: Resolve package directory
         id: resolve
         env:
@@ -68,24 +66,17 @@ jobs:
         with:
           ref: refs/tags/${{ inputs.package }}-${{ inputs.version }}
           path: tagged_src
-          # adk also needs the tag's core src so the core dependency is built
-          # from the version adk shipped against (overlaid below).
+          # adk also pulls the tag's core src: it's adk's dependency, built below.
           sparse-checkout: |
             ${{ steps.resolve.outputs.dir }}
             ${{ inputs.package == 'adk' && 'packages/toolbox-core' || '' }}
 
-      # Overlay the tagged package's src/ (plus the tag's core src for an adk
-      # build), keeping main's package.json, tsconfig and the root lockfile so
-      # the `npm ci` inside the build script stays in sync. typedoc reads src,
-      # so the archived page reflects the tagged version's API. (Go overlays the
-      # whole package dir; gomarkdoc has no lockfile to keep in sync.)
+      # Swap main's src for the tag's so typedoc documents that version's API,
+      # while keeping main's package.json/tsconfig/lockfile (adk also gets core).
       #
-      # Caveat: the tagged src is built against main's current deps, tsconfig
-      # and doc tooling -- not what the release shipped with. Backfill is
-      # therefore best-effort: a version whose source predates a breaking change
-      # on main (a dependency bump, stricter tsconfig, or renamed/added entry
-      # points) may fail to build. This is accepted -- backfill targets recent
-      # versions; very old tags are not guaranteed to build.
+      # Best-effort: old src builds against main's current deps/tsconfig, so a
+      # version predating a breaking change on main may fail. Recent tags are the
+      # target; very old ones aren't guaranteed to build.
       - name: Overlay tagged source onto main
         env:
           DIR: ${{ steps.resolve.outputs.dir }}
@@ -111,21 +102,14 @@ jobs:
 
       - name: Install PostCSS Dependencies
         run: |
-          # npm ci installs the exact versions from docs-site/package-lock.json
-          # into docs-site/node_modules (where Hugo's PostCSS looks), so the
-          # build is reproducible -- a broken upstream patch can't be pulled in.
-          # --no-workspaces keeps the install out of the repo-root workspace
-          # store; docs-site/package.json pins postcss/postcss-cli/autoprefixer.
+          # Hugo's CSS pipeline needs postcss/autoprefixer in docs-site/node_modules.
           cd docs-site
           npm ci --no-workspaces
 
-      # adk's docs import @toolbox-sdk/core, whose types resolve to
-      # build/esm/*.d.ts; build core so those declarations exist before TypeDoc
-      # runs, otherwise adk doc generation fails with TS2307. Core is built from
-      # the tag's overlaid src (above), so adk documents against the core version
-      # it shipped with -- not main's core. Only core is built (not the whole
-      # workspace): building adk's own overlaid src could fail tsc spuriously
-      # even when TypeDoc would still render the page.
+      # adk imports @toolbox-sdk/core, so build core first or typedoc fails with
+      # TS2307 (missing build/esm/*.d.ts). Uses the tag's overlaid core src, so
+      # adk resolves against the core it shipped with. Only core is built -- tsc
+      # on adk's own old src could fail even when typedoc would still render it.
       - name: Build core dependency
         if: inputs.package == 'adk'
         run: |
@@ -136,17 +120,15 @@ jobs:
         env:
           PKG: ${{ inputs.package }}
           VER: ${{ inputs.version }}
-          # Deploys only run upstream (see job-level guard), so always use the
-          # production domain.
+          # Always the prod domain; deploys only run upstream (see job guard).
           BASE_URL: https://js.mcp-toolbox.dev/
         run: |
           chmod +x scripts/generate-api-docs.sh
           ./scripts/generate-api-docs.sh "$PKG" "$VER" "$BASE_URL"
 
-      # Open a PR into gh-pages instead of deploying directly, so a human reviews
-      # before the page goes live. Overlaying the build onto a clone of the live
-      # gh-pages tree mirrors keep_files: true — existing files (other versions,
-      # CNAME, .nojekyll) are preserved and the PR diff is just this version.
+      # PR into gh-pages (not a direct deploy) for human review. Overlay onto a
+      # clone of the live tree so other versions, CNAME and .nojekyll survive and
+      # the diff is just this version.
       - name: Open PR against gh-pages
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -19,16 +19,21 @@ PACKAGE="${1:?package required (core|adk)}"
 VERSION="${2:?version required (e.g. v1.0.0 or dev)}"
 BASE_URL="${3:-/}"
 
-# Map the URL slug to its package title and tsconfig.
+# Map the URL slug to its package title and source layout.
 case "$PACKAGE" in
   core)
     TITLE="Core"
-    TSCONFIG="packages/toolbox-core/tsconfig.esm.json" ;;
+    PKG_DIR="packages/toolbox-core"
+    SRC_DIR="${PKG_DIR}/src/toolbox_core"
+    MODULES="index authMethods" ;;
   adk)
     TITLE="ADK"
-    TSCONFIG="packages/toolbox-adk/tsconfig.esm.json" ;;
+    PKG_DIR="packages/toolbox-adk"
+    SRC_DIR="${PKG_DIR}/src/toolbox_adk"
+    MODULES="index" ;;
   *) echo "Unknown package: $PACKAGE" >&2; exit 1 ;;
 esac
+TSCONFIG="${PKG_DIR}/tsconfig.esm.json"
 
 # Install workspace deps from the lockfile. Besides providing typedoc (a root
 # devDependency), this links the workspace symlinks so adk resolves its
@@ -46,20 +51,16 @@ BARREL=""
 cleanup() { rm -rf "$CONTENT_DIR"; [ -n "$BARREL" ] && rm -f "$BARREL"; return 0; }
 trap cleanup EXIT
 
-# Build the TypeDoc entry list. adk has a single entry point. core has two
-# public entry points (the main index and the ./auth subpath); to render the
-# whole package on one page, document both through a single temp barrel that
-# re-exports them, so TypeDoc collapses the project into one module instead of
-# emitting a separate page per entry point. The barrel lives in src (beside the
-# files it re-exports so the relative paths resolve) and is removed on exit.
-if [ "$PACKAGE" = core ]; then
-  # Absolute path: the trap that removes it fires after the script cd's away.
-  BARREL="$(pwd)/packages/toolbox-core/src/toolbox_core/__typedoc_entry.ts"
-  printf "export * from './index.js';\nexport * from './authMethods.js';\n" > "$BARREL"
-  ENTRIES=("$BARREL")
-else
-  ENTRIES=(packages/toolbox-adk/src/toolbox_adk/index.ts)
-fi
+# Funnel a package's public entry points (core: the main index + the ./auth
+# subpath; adk: just the index) through a single temp barrel that re-exports
+# them, so TypeDoc collapses the project into one module and renders the whole
+# package on one page instead of emitting a separate page per entry point. The
+# barrel lives in src beside the files it re-exports so the relative paths
+# resolve, and is removed on exit. printf reuses its format once per module.
+# Absolute path: the trap that removes it fires after the script cd's away.
+BARREL="$(pwd)/${SRC_DIR}/__typedoc_entry.ts"
+printf "export * from './%s.js';\n" $MODULES > "$BARREL"
+ENTRIES=("$BARREL")
 
 # Generate the package's API reference as a single markdown page.
 # --outputFileStrategy modules collapses every export onto its module's page

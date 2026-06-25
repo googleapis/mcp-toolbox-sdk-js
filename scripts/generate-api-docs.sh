@@ -24,13 +24,11 @@ case "$PACKAGE" in
   core)
     TITLE="Core"
     PKG_DIR="packages/toolbox-core"
-    SRC_DIR="${PKG_DIR}/src/toolbox_core"
-    MODULES="index authMethods" ;;
+    SRC_DIR="${PKG_DIR}/src/toolbox_core" ;;
   adk)
     TITLE="ADK"
     PKG_DIR="packages/toolbox-adk"
-    SRC_DIR="${PKG_DIR}/src/toolbox_adk"
-    MODULES="index" ;;
+    SRC_DIR="${PKG_DIR}/src/toolbox_adk" ;;
   *) echo "Unknown package: $PACKAGE" >&2; exit 1 ;;
 esac
 TSCONFIG="${PKG_DIR}/tsconfig.esm.json"
@@ -51,13 +49,19 @@ BARREL=""
 cleanup() { rm -rf "$CONTENT_DIR"; [ -n "$BARREL" ] && rm -f "$BARREL"; return 0; }
 trap cleanup EXIT
 
-# Funnel a package's public entry points (core: the main index + the ./auth
-# subpath; adk: just the index) through a single temp barrel that re-exports
-# them, so TypeDoc collapses the project into one module and renders the whole
-# package on one page instead of emitting a separate page per entry point. The
-# barrel lives in src beside the files it re-exports so the relative paths
-# resolve, and is removed on exit. printf reuses its format once per module.
-# Absolute path: the trap that removes it fires after the script cd's away.
+# Derive the public modules from package.json's "exports": each entry's import
+# target (build/esm/<name>.js) maps back to a source module name (<name>). This
+# keeps the docs in lockstep with the package's public API, so adding a new
+# subpath export is documented automatically with no edit to this script.
+MODULES="$(node -e "const {exports}=require('./${PKG_DIR}/package.json'); process.stdout.write(Object.values(exports).map(e=>e.import.replace('./build/esm/','').replace('.js','')).join(' '))")"
+
+# Funnel those entry points (core: the main index + the ./auth subpath; adk:
+# just the index) through a single temp barrel that re-exports them, so TypeDoc
+# collapses the project into one module and renders the whole package on one page
+# instead of emitting a separate page per entry point. The barrel lives in src
+# beside the files it re-exports so the relative paths resolve, and is removed on
+# exit. printf reuses its format once per module. Absolute path: the trap that
+# removes it fires after the script cd's away.
 BARREL="$(pwd)/${SRC_DIR}/__typedoc_entry.ts"
 printf "export * from './%s.js';\n" $MODULES > "$BARREL"
 ENTRIES=("$BARREL")

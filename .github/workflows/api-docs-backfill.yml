@@ -12,6 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Manual fallback for (re)building a release tag's API docs when the automatic
+# deploy (api-docs.yml, on tag push) didn't run or failed. Builds entirely from
+# the tag -- a release carries its own package.json/lockfile/src plus the docs
+# tooling (docs-site/, scripts/) -- and opens a PR against gh-pages for review
+# instead of deploying directly.
+#
+# How to trigger:
+#   - UI: Actions tab -> "API Reference Backfill" -> "Run workflow", pick the
+#     package (core/adk) and enter the version tag (e.g. v1.0.0).
+#   - CLI: gh workflow run api-docs-backfill.yml -f package=core -f version=v1.0.0
+#   The package + version must match an existing release tag (<package>-<version>,
+#   e.g. core-v1.0.0). Review and merge the resulting gh-pages PR to publish.
 name: 'API Reference Backfill'
 on:
   workflow_dispatch:
@@ -41,42 +53,12 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      # Base on main for the current docs tooling + site chrome (version picker);
-      # only the package API source comes from the tag, overlaid below.
-      - name: Checkout main (current layout + scripts)
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-        with:
-          ref: main
-
-      - name: Checkout tagged package source
+      # Build entirely from the tag: its package.json/lockfile/src and the docs
+      # tooling all ship in the release, so no overlay from main is needed.
+      - name: Checkout tagged source
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           ref: refs/tags/${{ inputs.package }}-${{ inputs.version }}
-          path: tagged_src
-          # core uses only its own dir; adk also needs core (its dependency).
-          sparse-checkout: |
-            packages/toolbox-core
-            packages/toolbox-adk
-
-      # Swap main's src for the tag's so typedoc documents that version's API,
-      # while keeping main's package.json/tsconfig/lockfile. adk documents core
-      # too, so overlay both for an adk build.
-      #
-      # Best-effort: old src builds against main's current deps/tsconfig, so a
-      # version predating a breaking change on main may fail. Recent tags are the
-      # target; very old ones aren't guaranteed to build.
-      - name: Overlay tagged source onto main
-        env:
-          PKG: ${{ inputs.package }}
-        run: |
-          case "$PKG" in
-            core) DIRS=(packages/toolbox-core) ;;
-            adk)  DIRS=(packages/toolbox-adk packages/toolbox-core) ;;
-          esac
-          for d in "${DIRS[@]}"; do
-            rm -rf "$d/src"
-            mv "tagged_src/$d/src" "$d/src"
-          done
 
       - name: Setup Node
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
@@ -95,15 +77,13 @@ jobs:
           cd docs-site
           npm ci --no-workspaces
 
-      # adk imports @toolbox-sdk/core, so build core first or typedoc fails with
-      # TS2307 (missing build/esm/*.d.ts). Uses the tag's overlaid core src, so
-      # adk resolves against the core it shipped with. Only core is built -- tsc
-      # on adk's own old src could fail even when typedoc would still render it.
-      - name: Build core dependency
-        if: inputs.package == 'adk'
+      # adk's docs import @toolbox-sdk/core, whose types resolve to
+      # build/esm/*.d.ts. Build the workspace so those declarations exist before
+      # TypeDoc runs, otherwise adk doc generation fails with TS2307.
+      - name: Build workspace packages
         run: |
           npm ci
-          npx turbo run build --filter=@toolbox-sdk/core
+          npm run build
 
       - name: Build docs
         env:
@@ -147,5 +127,5 @@ jobs:
           else
             gh pr create --base gh-pages --head "$BRANCH" \
               --title "docs(api): backfill ${PKG} ${VER}" \
-              --body "Automated API reference backfill for \`${PKG}/${VER}\`, built from main tooling with the tagged source overlaid. Merging publishes to gh-pages (additive)."
+              --body "Automated API reference backfill for \`${PKG}/${VER}\`, built from the release tag. Merging publishes to gh-pages (additive)."
           fi

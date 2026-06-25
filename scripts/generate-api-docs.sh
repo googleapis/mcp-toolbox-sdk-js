@@ -15,9 +15,7 @@
 
 set -euo pipefail
 
-# Single source of truth for supported packages: name -> display title. The usage
-# hint and the title lookup both derive from it, so a package name is never
-# written twice.
+# Single source of truth for supported packages: name -> display title.
 declare -A TITLES=([core]=Core [adk]=ADK)
 VERSION="${2:?version required (e.g. v1.0.0 or dev)}"
 BASE_URL="${3:-/}"

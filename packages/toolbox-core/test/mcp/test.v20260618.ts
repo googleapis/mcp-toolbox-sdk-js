@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {McpHttpTransportV20251125} from '../../src/toolbox_core/mcp/v20251125/mcp.js';
+import {McpHttpTransportV20260618} from '../../src/toolbox_core/mcp/v20260618/mcp.js';
 import {jest} from '@jest/globals';
 import axios, {AxiosInstance} from 'axios';
 
@@ -33,10 +33,10 @@ jest.mock('axios', () => {
 });
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-describe('McpHttpTransportV20251125', () => {
+describe('McpHttpTransportV20260618', () => {
   const testBaseUrl = 'http://test.loc';
   let mockSession: jest.Mocked<AxiosInstance>;
-  let transport: McpHttpTransportV20251125;
+  let transport: McpHttpTransportV20260618;
   let consoleWarnSpy: ReturnType<typeof jest.spyOn>;
 
   beforeEach(() => {
@@ -51,10 +51,10 @@ describe('McpHttpTransportV20251125', () => {
     } as unknown as jest.Mocked<AxiosInstance>;
 
     mockedAxios.create.mockReturnValue(mockSession);
-    transport = new McpHttpTransportV20251125(
+    transport = new McpHttpTransportV20260618(
       testBaseUrl,
       mockSession,
-      Protocol.MCP_v20251125,
+      Protocol.MCP_LATEST,
     );
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
@@ -142,10 +142,10 @@ describe('McpHttpTransportV20251125', () => {
     });
 
     it('should use provided client name and version in handshake', async () => {
-      const customTransport = new McpHttpTransportV20251125(
+      const customTransport = new McpHttpTransportV20260618(
         testBaseUrl,
         mockSession,
-        Protocol.MCP_v20251125,
+        Protocol.MCP_LATEST,
         'custom-client',
         '9.9.9',
       );
@@ -876,10 +876,10 @@ describe('McpHttpTransportV20251125', () => {
         status: 200,
       };
       // Create HTTPS transport
-      const httpsTransport = new McpHttpTransportV20251125(
+      const httpsTransport = new McpHttpTransportV20260618(
         'https://secure.test.loc',
         mockSession,
-        Protocol.MCP_v20251125,
+        Protocol.MCP_LATEST,
       );
 
       // Need to mock init sequence for the new transport instance

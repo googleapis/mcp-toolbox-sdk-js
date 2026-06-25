@@ -33,9 +33,6 @@ case "$PACKAGE" in
 esac
 TSCONFIG="${PKG_DIR}/tsconfig.esm.json"
 
-# Install workspace deps from the lockfile. Besides providing typedoc (a root
-# devDependency), this links the workspace symlinks so adk resolves its
-# @toolbox-sdk/core types. Mirrors the Go script's `go install gomarkdoc`.
 npm ci
 
 # Per-build content tree in a temp dir, kept out of the checked-in
@@ -106,18 +103,13 @@ npx typedoc \
   --typeDeclarationVisibility compact \
   "${ENTRIES[@]}"
 
-# Add Docsy frontmatter (type: docs + a title) to every generated .md. The
-# package landing page gets the friendly "<Title> (<version>)"; other pages are
-# titled after their file (or parent dir for an _index.md).
-find "${CONTENT_DIR}" -type f -name '*.md' | while read -r f; do
-  base="$(basename "$f" .md)"
-  [ "$base" = "_index" ] && base="$(basename "$(dirname "$f")")"
-  title="$base"
-  [ "$f" = "${CONTENT_DIR}/_index.md" ] && title="${TITLE} (${VERSION})"
-  tmp="$(mktemp)"
-  { printf -- '---\ntitle: "%s"\ntype: docs\n---\n\n' "$title"; cat "$f"; } > "$tmp"
-  mv "$tmp" "$f"
-done
+# Prepend Docsy frontmatter (type: docs + a title) to the generated page. The
+# barrel collapses the package to one module, so TypeDoc emits a single
+# _index.md; its title is the friendly "<Title> (<version>)".
+PAGE="${CONTENT_DIR}/_index.md"
+tmp="$(mktemp)"
+{ printf -- '---\ntitle: "%s"\ntype: docs\n---\n\n' "${TITLE} (${VERSION})"; cat "${PAGE}"; } > "$tmp"
+mv "$tmp" "${PAGE}"
 
 cd docs-site
 HUGO_PARAMS_VERSION="${VERSION}" HUGO_PARAMS_PACKAGE="${PACKAGE}" hugo \

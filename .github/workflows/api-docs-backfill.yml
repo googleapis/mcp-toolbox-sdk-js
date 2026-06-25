@@ -47,7 +47,6 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           ref: main
-          submodules: recursive
 
       - name: Checkout tagged package source
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -116,9 +115,7 @@ jobs:
           chmod +x scripts/generate-api-docs.sh
           ./scripts/generate-api-docs.sh "$PKG" "$VER" "$BASE_URL"
 
-      # PR into gh-pages (not a direct deploy) for human review. Overlay onto a
-      # clone of the live tree so other versions, CNAME and .nojekyll survive and
-      # the diff is just this version.
+      # PR into gh-pages for human review.
       - name: Open PR against gh-pages
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

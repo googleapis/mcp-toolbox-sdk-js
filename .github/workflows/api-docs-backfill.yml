@@ -27,10 +27,7 @@ on:
         type: string
         required: true
 
-# Scope per version: each run produces an independent branch/PR, so runs for
-# different versions can proceed in parallel. A shared group with
-# cancel-in-progress: false would make GitHub cancel a pending run whenever a
-# newer one queues, silently dropping versions when several are dispatched.
+# Each run produces an independent branch/PR, so runs for different versions can proceed in parallel.
 concurrency:
   group: api-docs-backfill-${{ github.event.inputs.package }}-${{ github.event.inputs.version }}
   cancel-in-progress: false
@@ -71,13 +68,17 @@ jobs:
         with:
           ref: refs/tags/${{ inputs.package }}-${{ inputs.version }}
           path: tagged_src
-          sparse-checkout: ${{ steps.resolve.outputs.dir }}
+          # adk also needs the tag's core src so the core dependency is built
+          # from the version adk shipped against (overlaid below).
+          sparse-checkout: |
+            ${{ steps.resolve.outputs.dir }}
+            ${{ inputs.package == 'adk' && 'packages/toolbox-core' || '' }}
 
-      # Overlay only the tagged package's src/, keeping main's package.json,
-      # tsconfig and the root lockfile so the `npm ci` inside the build script
-      # stays in sync. typedoc reads src, so the archived page reflects the
-      # tagged version's API. (Go overlays the whole package dir; gomarkdoc has
-      # no lockfile to keep in sync.)
+      # Overlay the tagged package's src/ (plus the tag's core src for an adk
+      # build), keeping main's package.json, tsconfig and the root lockfile so
+      # the `npm ci` inside the build script stays in sync. typedoc reads src,
+      # so the archived page reflects the tagged version's API. (Go overlays the
+      # whole package dir; gomarkdoc has no lockfile to keep in sync.)
       #
       # Caveat: the tagged src is built against main's current deps, tsconfig
       # and doc tooling -- not what the release shipped with. Backfill is
@@ -88,9 +89,14 @@ jobs:
       - name: Overlay tagged source onto main
         env:
           DIR: ${{ steps.resolve.outputs.dir }}
+          PKG: ${{ inputs.package }}
         run: |
           rm -rf "$DIR/src"
           mv "tagged_src/$DIR/src" "$DIR/src"
+          if [ "$PKG" = adk ]; then
+            rm -rf packages/toolbox-core/src
+            mv tagged_src/packages/toolbox-core/src packages/toolbox-core/src
+          fi
 
       - name: Setup Node
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
@@ -115,10 +121,11 @@ jobs:
 
       # adk's docs import @toolbox-sdk/core, whose types resolve to
       # build/esm/*.d.ts; build core so those declarations exist before TypeDoc
-      # runs, otherwise adk doc generation fails with TS2307. Only core is built
-      # (not the whole workspace): a core backfill needs no dependency, and
-      # building the overlaid tagged source could fail tsc spuriously even when
-      # TypeDoc would still render the page.
+      # runs, otherwise adk doc generation fails with TS2307. Core is built from
+      # the tag's overlaid src (above), so adk documents against the core version
+      # it shipped with -- not main's core. Only core is built (not the whole
+      # workspace): building adk's own overlaid src could fail tsc spuriously
+      # even when TypeDoc would still render the page.
       - name: Build core dependency
         if: inputs.package == 'adk'
         run: |

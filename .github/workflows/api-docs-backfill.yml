@@ -1,0 +1,135 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Manual fallback for (re)building a release tag's API docs when the automatic
+# deploy (api-docs.yml, on tag push) didn't run or failed. Builds entirely from
+# the tag -- a release carries its own package.json/lockfile/src plus the docs
+# tooling (docs-site/, scripts/) -- and opens a PR against gh-pages for review
+# instead of deploying directly.
+#
+# Only works for tags that already carry the docs tooling. Tags cut before
+# TypeDoc was added to the package (i.e. before this tooling landed) will fail
+# the doc build, since the tag's own lockfile has no typedoc to install.
+#
+# How to trigger:
+#   - UI: Actions tab -> "API Reference Backfill" -> "Run workflow", pick the
+#     package (core/adk) and enter the version tag (e.g. v1.0.0).
+#   - CLI: gh workflow run api-docs-backfill.yml -f package=core -f version=v1.0.0
+#   The package + version must match an existing release tag (<package>-<version>,
+#   e.g. core-v1.0.0). Review and merge the resulting gh-pages PR to publish.
+name: 'API Reference Backfill'
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to backfill'
+        type: choice
+        options: [core, adk]
+        required: true
+      version:
+        description: 'Version tag to build, e.g. v1.0.0'
+        type: string
+        required: true
+
+# Key by package+version so different versions run in parallel; never cancel a
+# queued run, so dispatching several at once can't silently drop any.
+concurrency:
+  group: api-docs-backfill-${{ inputs.package }}-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    # Never run on forks; docs deploy only from the upstream repository.
+    if: github.repository == 'googleapis/mcp-toolbox-sdk-js'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # Build entirely from the tag: its package.json/lockfile/src and the docs
+      # tooling all ship in the release, so no overlay from main is needed.
+      - name: Checkout tagged source
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: refs/tags/${{ inputs.package }}-${{ inputs.version }}
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 22.16.0
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@2752ce1d29631191ea3f27c23495fa06139a5b78 # v3
+        with:
+          hugo-version: '0.152.2'
+          extended: true
+
+      - name: Install PostCSS Dependencies
+        run: |
+          # Hugo's CSS pipeline needs postcss/autoprefixer in docs-site/node_modules.
+          cd docs-site
+          npm ci --no-workspaces
+
+      # adk's docs import @toolbox-sdk/core, whose types resolve to
+      # build/esm/*.d.ts. Build the workspace so those declarations exist before
+      # TypeDoc runs, otherwise adk doc generation fails with TS2307.
+      - name: Build workspace packages
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build docs
+        env:
+          PKG: ${{ inputs.package }}
+          VER: ${{ inputs.version }}
+          # Always the prod domain; deploys only run upstream (see job guard).
+          BASE_URL: https://js.mcp-toolbox.dev/
+        run: |
+          chmod +x scripts/generate-api-docs.sh
+          ./scripts/generate-api-docs.sh "$PKG" "$VER" "$BASE_URL"
+
+      # PR into gh-pages for human review.
+      - name: Open PR against gh-pages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PKG: ${{ inputs.package }}
+          VER: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          BRANCH="backfill/${PKG}-${VER}"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          WORK="$(mktemp -d)"
+          git clone --depth 1 --branch gh-pages --single-branch \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$WORK"
+          cp -R "${GITHUB_WORKSPACE}/docs-site/public/." "$WORK/"
+
+          cd "$WORK"
+          git checkout -B "$BRANCH"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No documentation changes for ${PKG} ${VER}; skipping PR."
+            exit 0
+          fi
+          git commit -m "docs(api): backfill ${PKG} ${VER}"
+          git push -f origin "$BRANCH"
+
+          if gh pr view "$BRANCH" --json number >/dev/null 2>&1; then
+            echo "PR already open for ${BRANCH}; branch updated."
+          else
+            gh pr create --base gh-pages --head "$BRANCH" \
+              --title "docs(api): backfill ${PKG} ${VER}" \
+              --body "Automated API reference backfill for \`${PKG}/${VER}\`, built from the release tag. Merging publishes to gh-pages (additive)."
+          fi

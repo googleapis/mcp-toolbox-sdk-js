@@ -15,21 +15,19 @@
 
 set -euo pipefail
 
-PACKAGE="${1:?package required (core|adk)}"
+# Single source of truth for supported packages: name -> display title. The usage
+# hint and the title lookup both derive from it, so a package name is never
+# written twice.
+declare -A TITLES=([core]=Core [adk]=ADK)
 VERSION="${2:?version required (e.g. v1.0.0 or dev)}"
 BASE_URL="${3:-/}"
 
-case "$PACKAGE" in
-  core)
-    TITLE="Core"
-    PKG_DIR="packages/toolbox-core"
-    SRC_DIR="${PKG_DIR}/src/toolbox_core" ;;
-  adk)
-    TITLE="ADK"
-    PKG_DIR="packages/toolbox-adk"
-    SRC_DIR="${PKG_DIR}/src/toolbox_adk" ;;
-  *) echo "Unknown package: $PACKAGE" >&2; exit 1 ;;
-esac
+NAMES="${!TITLES[*]}"
+PACKAGE="${1:?package required (${NAMES// /|})}"
+TITLE="${TITLES[$PACKAGE]:?Unknown package: $PACKAGE}"
+
+PKG_DIR="packages/toolbox-${PACKAGE}"
+SRC_DIR="${PKG_DIR}/src/toolbox_${PACKAGE}"
 TSCONFIG="${PKG_DIR}/tsconfig.esm.json"
 
 npm ci

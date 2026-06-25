@@ -19,7 +19,8 @@ directory. Docs are built **per package, per version** and served at
 `/<package>/<version>/` (e.g. `/core/v1.0.0/`), with a `/<package>/latest/`
 redirect to the newest release. `<package>` is the URL slug `core` or `adk`.
 
-Each package renders as one page; `generate-api-docs.sh` derives the module list
+Each package renders as one page;
+[`generate-api-docs.sh`](scripts/generate-api-docs.sh) derives the module list
 from its `package.json` `exports`, so a new public subpath export is documented
 automatically.
 
@@ -48,18 +49,20 @@ each list below. It must follow the directory convention
 `packages/toolbox-<pkg>/src/toolbox_<pkg>` and have a `tsconfig.esm.json` plus a
 `package.json` whose `exports` point at `./build/esm/<name>.js`.
 
-1.  **`scripts/generate-api-docs.sh`** — add the slug and title to `TITLES`, e.g.
-    `[foo]=Foo`. `PKG_DIR`, `SRC_DIR`, `TSCONFIG`, and the module list derive from
-    the slug.
-2.  **`api-docs.yml`** (deploy) — in the *Resolve* step's `case`, add a
-    `refs/tags/foo-v*) … packages=foo …` arm and append `foo` to the `dev` default
-    (`*) … packages=core adk foo …`).
-3.  **`api-docs-backfill.yml`** (backfill) — add `foo` to the `package` input
-    `options:` and a `foo) echo "dir=packages/toolbox-foo" …` arm in *Resolve
-    package directory*. If it imports another package's types, add a dependency
-    build mirroring the `if: inputs.package == 'adk'` step.
-4.  **`docs-site/hugo.toml`** — add a `[[params.versions.foo]]` block (at least
-    `dev`); see [Adding a version to the picker](#adding-a-version-to-the-picker).
+1.  [**`scripts/generate-api-docs.sh`**](scripts/generate-api-docs.sh) — add the
+    slug and title to `TITLES`, e.g. `[foo]=Foo`. `PKG_DIR`, `SRC_DIR`, `TSCONFIG`,
+    and the module list derive from the slug.
+2.  [**`api-docs.yml`**](.github/workflows/api-docs.yml) (deploy) — in the
+    *Resolve* step's `case`, add a `refs/tags/foo-v*) … packages=foo …` arm and
+    append `foo` to the `dev` default (`*) … packages=core adk foo …`).
+3.  [**`api-docs-backfill.yml`**](.github/workflows/api-docs-backfill.yml)
+    (backfill) — add `foo` to the `package` input `options:` and a
+    `foo) echo "dir=packages/toolbox-foo" …` arm in *Resolve package directory*.
+    If it imports another package's types, add a dependency build mirroring the
+    `if: inputs.package == 'adk'` step.
+4.  [**`docs-site/hugo.toml`**](docs-site/hugo.toml) — add a
+    `[[params.versions.foo]]` block (at least `dev`); see
+    [Adding a version to the picker](#adding-a-version-to-the-picker).
 
 ### Adding a version to the picker
 

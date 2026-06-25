@@ -18,6 +18,10 @@
 # tooling (docs-site/, scripts/) -- and opens a PR against gh-pages for review
 # instead of deploying directly.
 #
+# Only works for tags that already carry the docs tooling. Tags cut before
+# TypeDoc was added to the package (i.e. before this tooling landed) will fail
+# the doc build, since the tag's own lockfile has no typedoc to install.
+#
 # How to trigger:
 #   - UI: Actions tab -> "API Reference Backfill" -> "Run workflow", pick the
 #     package (core/adk) and enter the version tag (e.g. v1.0.0).

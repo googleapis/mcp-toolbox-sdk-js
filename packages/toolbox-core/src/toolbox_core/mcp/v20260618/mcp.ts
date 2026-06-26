@@ -67,8 +67,12 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
     const reqHeaders = {...(headers || {})};
     reqHeaders['MCP-Protocol-Version'] = this._protocolVersion;
     reqHeaders['Mcp-Method'] = method;
-    if (method === 'tools/call' && typeof params === 'object' && params !== null && 'name' in params) {
-      reqHeaders['Mcp-Name'] = String((params as any).name);
+    if (typeof params === 'object' && params !== null) {
+      if ((method === 'tools/call' || method === 'prompts/get') && 'name' in params) {
+        reqHeaders['Mcp-Name'] = String((params as any).name);
+      } else if (method === 'resources/read' && 'uri' in params) {
+        reqHeaders['Mcp-Name'] = String((params as any).uri);
+      }
     }
 
     try {

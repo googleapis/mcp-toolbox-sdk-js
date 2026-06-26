@@ -12,30 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ToolboxTool} from './tool.js';
-import {AxiosInstance} from 'axios';
-import {ITransport} from './transport.types.js';
+import { ToolboxTool } from './tool.js';
+import { AxiosInstance } from 'axios';
+import { ITransport } from './transport.types.js';
 import {
   createZodSchemaFromParams,
   ParameterSchema,
   ZodManifestSchema,
   Protocol,
   getSupportedMcpVersions,
-  MCP_LATEST,
 } from './protocol.js';
-import {McpHttpTransportV20241105} from './mcp/v20241105/mcp.js';
-import {McpHttpTransportV20250618} from './mcp/v20250618/mcp.js';
-import {McpHttpTransportV20250326} from './mcp/v20250326/mcp.js';
-import {McpHttpTransportV20251125} from './mcp/v20251125/mcp.js';
-import {McpHttpTransportV20260618} from './mcp/v20260618/mcp.js';
-import {ProtocolNegotiationError} from './errorUtils.js';
+import { McpHttpTransportV20241105 } from './mcp/v20241105/mcp.js';
+import { McpHttpTransportV20250618 } from './mcp/v20250618/mcp.js';
+import { McpHttpTransportV20250326 } from './mcp/v20250326/mcp.js';
+import { McpHttpTransportV20251125 } from './mcp/v20251125/mcp.js';
+import { McpHttpTransportV20260618 } from './mcp/v20260618/mcp.js';
+import { ProtocolNegotiationError } from './errorUtils.js';
 import {
   BoundParams,
   identifyAuthRequirements,
   resolveValue,
   warnIfHttpAndHeaders,
 } from './utils.js';
-import {AuthTokenGetters, RequiredAuthnParams} from './tool.js';
+import { AuthTokenGetters, RequiredAuthnParams } from './tool.js';
 
 type Manifest = import('zod').infer<typeof ZodManifestSchema>;
 type ToolSchemaFromManifest = Manifest['tools'][string];
@@ -76,11 +75,6 @@ class ToolboxClient {
       throw new Error(`Unsupported protocol version: ${protocol}`);
     }
 
-    if (protocol !== MCP_LATEST) {
-      console.warn(
-        `A newer version of MCP: ${MCP_LATEST} is available. Please use the latest version ${MCP_LATEST} to use the latest features.`,
-      );
-    }
 
     this.#transport = this.#createTransport(
       url,
@@ -107,7 +101,7 @@ class ToolboxClient {
         return new McpHttpTransportV20250618(url, session, protocol, clientName, clientVersion);
       case Protocol.MCP_v20251125:
         return new McpHttpTransportV20251125(url, session, protocol, clientName, clientVersion);
-      case Protocol.MCP_DRAFT_2026_v1:
+      case Protocol.MCP_LATEST:
         return new McpHttpTransportV20260618(url, session, protocol, clientName, clientVersion);
       default:
         throw new Error(`Unsupported MCP protocol version: ${protocol}`);
@@ -182,7 +176,7 @@ class ToolboxClient {
 
     const usedBoundKeys = new Set(Object.keys(currBoundParams));
 
-    return {tool, usedAuthKeys, usedBoundKeys};
+    return { tool, usedAuthKeys, usedBoundKeys };
   }
 
   /**
@@ -227,7 +221,7 @@ class ToolboxClient {
       Object.prototype.hasOwnProperty.call(manifest.tools, name)
     ) {
       const specificToolSchema = manifest.tools[name];
-      const {tool, usedAuthKeys, usedBoundKeys} = this.#createToolInstance(
+      const { tool, usedAuthKeys, usedBoundKeys } = this.#createToolInstance(
         name,
         specificToolSchema,
         authTokenGetters || undefined,
@@ -318,7 +312,7 @@ class ToolboxClient {
     );
 
     for (const [toolName, toolSchema] of Object.entries(manifest.tools)) {
-      const {tool, usedAuthKeys, usedBoundKeys} = this.#createToolInstance(
+      const { tool, usedAuthKeys, usedBoundKeys } = this.#createToolInstance(
         toolName,
         toolSchema,
         authTokenGetters || {},
@@ -382,4 +376,4 @@ class ToolboxClient {
   }
 }
 
-export {ToolboxClient};
+export { ToolboxClient };

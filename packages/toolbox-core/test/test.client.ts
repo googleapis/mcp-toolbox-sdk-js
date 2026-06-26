@@ -17,7 +17,7 @@ import {ITransport} from '../src/toolbox_core/transport.types.js';
 import {
   ZodManifest,
   Protocol,
-  MCP_LATEST,
+  MCP_DRAFT,
 } from '../src/toolbox_core/protocol.js';
 import type {ToolboxClient as ToolboxClientType} from '../src/toolbox_core/client.js';
 import {ToolboxClient} from '../src/toolbox_core/client.js';
@@ -146,7 +146,7 @@ describe('ToolboxClient', () => {
       );
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining(
-          `A newer version of MCP: ${MCP_LATEST} is available`,
+          `A newer version of MCP: ${MCP_DRAFT} is available`,
         ),
       );
       consoleSpy.mockRestore();

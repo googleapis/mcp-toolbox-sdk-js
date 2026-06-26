@@ -14,7 +14,7 @@
 
 import {ToolboxClient} from '../../src/toolbox_core/client.js';
 import {ToolboxTool} from '../../src/toolbox_core/tool.js';
-import {getSupportedMcpVersions} from '../../src/toolbox_core/protocol.js';
+import {Protocol, getSupportedMcpVersions} from '../../src/toolbox_core/protocol.js';
 
 import {AxiosError} from 'axios';
 import {CustomGlobal} from './types.js';
@@ -618,3 +618,24 @@ describe.each(getSupportedMcpVersions())(
     });
   },
 );
+
+describe('Protocol Fallback E2E Test', () => {
+  it('should fallback to an older protocol against a server that does not support the draft version', async () => {
+    // The E2E server currently does not support DRAFT 2026, so this will trigger a fallback.
+    const client = new ToolboxClient(
+      'http://localhost:5000',
+      undefined,
+      undefined,
+      Protocol.MCP_v2026_DRAFT,
+    );
+
+    const tool = await client.loadTool('get-n-rows');
+    const response = await tool({num_rows: '1'});
+    expect(typeof response).toBe('string');
+    expect(response).toContain('row1');
+
+    // Verify that fallback occurred by checking the transport's final protocol version
+    // @ts-ignore - Accessing private transport property for testing
+    expect(client.transport._protocolVersion).not.toBe(Protocol.MCP_v2026_DRAFT);
+  });
+});

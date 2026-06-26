@@ -54,7 +54,7 @@ describe('McpHttpTransportV20260618', () => {
     transport = new McpHttpTransportV20260618(
       testBaseUrl,
       mockSession,
-      Protocol.MCP_LATEST,
+      Protocol.MCP_DRAFT,
     );
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
@@ -145,7 +145,7 @@ describe('McpHttpTransportV20260618', () => {
       const customTransport = new McpHttpTransportV20260618(
         testBaseUrl,
         mockSession,
-        Protocol.MCP_LATEST,
+        Protocol.MCP_DRAFT,
         'custom-client',
         '9.9.9',
       );
@@ -879,7 +879,7 @@ describe('McpHttpTransportV20260618', () => {
       const httpsTransport = new McpHttpTransportV20260618(
         'https://secure.test.loc',
         mockSession,
-        Protocol.MCP_LATEST,
+        Protocol.MCP_DRAFT,
       );
 
       // Need to mock init sequence for the new transport instance

@@ -101,7 +101,7 @@ class ToolboxClient {
         return new McpHttpTransportV20250618(url, session, protocol, clientName, clientVersion);
       case Protocol.MCP_v20251125:
         return new McpHttpTransportV20251125(url, session, protocol, clientName, clientVersion);
-      case Protocol.MCP_LATEST:
+      case Protocol.MCP_DRAFT:
         return new McpHttpTransportV20260618(url, session, protocol, clientName, clientVersion);
       default:
         throw new Error(`Unsupported MCP protocol version: ${protocol}`);

@@ -27,6 +27,7 @@ import {McpHttpTransportV20241105} from './mcp/v20241105/mcp.js';
 import {McpHttpTransportV20250618} from './mcp/v20250618/mcp.js';
 import {McpHttpTransportV20250326} from './mcp/v20250326/mcp.js';
 import {McpHttpTransportV20251125} from './mcp/v20251125/mcp.js';
+import {McpHttpTransportV20260618} from './mcp/v20260618/mcp.js';
 import {ProtocolNegotiationError} from './errorUtils.js';
 import {
   BoundParams,
@@ -106,6 +107,8 @@ class ToolboxClient {
         return new McpHttpTransportV20250618(url, session, protocol, clientName, clientVersion);
       case Protocol.MCP_v20251125:
         return new McpHttpTransportV20251125(url, session, protocol, clientName, clientVersion);
+      case Protocol.MCP_DRAFT_2026_v1:
+        return new McpHttpTransportV20260618(url, session, protocol, clientName, clientVersion);
       default:
         throw new Error(`Unsupported MCP protocol version: ${protocol}`);
     }

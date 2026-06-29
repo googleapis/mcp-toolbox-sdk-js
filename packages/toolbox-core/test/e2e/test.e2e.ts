@@ -619,7 +619,16 @@ describe.each(getSupportedMcpVersions())(
   },
 );
 
-describe('Protocol Fallback E2E Test', () => {
+describe('Protocol Configuration E2E Tests', () => {
+  it('should default to the correct protocol when none is specified', async () => {
+    const client = new ToolboxClient('http://localhost:5000');
+    
+    const tool = await client.loadTool('get-n-rows');
+    const response = await tool({num_rows: '1'});
+    expect(typeof response).toBe('string');
+    expect(response).toContain('row1');
+  });
+
   it('should fallback to an older protocol against a server that does not support the draft version', async () => {
     // The E2E server currently does not support DRAFT 2026, so this will trigger a fallback.
     const client = new ToolboxClient(

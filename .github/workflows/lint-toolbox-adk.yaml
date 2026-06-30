@@ -64,6 +64,9 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           persist-credentials: false
+          # Checking out fork code is gated behind the 'tests: run' label,
+          # which requires maintainer review before this workflow runs.
+          allow-unsafe-pr-checkout: true
       - name: Setup Node
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:

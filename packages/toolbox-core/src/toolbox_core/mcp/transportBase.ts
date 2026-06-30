@@ -78,6 +78,10 @@ export abstract class McpHttpTransportBase implements ITransport {
     await this._initPromise;
   }
 
+  get protocolVersion(): string {
+    return this._protocolVersion;
+  }
+
   get baseUrl(): string {
     return this._mcpBaseUrl;
   }

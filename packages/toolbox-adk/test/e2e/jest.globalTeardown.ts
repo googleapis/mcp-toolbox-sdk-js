@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import * as fs from 'fs-extra';
+import {ChildProcess} from 'child_process';
 import {CustomGlobal} from './types.js';
 
 const SERVER_TERMINATE_TIMEOUT_MS = 10000; // 10 seconds
@@ -22,50 +23,67 @@ export default async function globalTeardown(): Promise<void> {
   (globalThis as CustomGlobal).__SERVER_TEARDOWN_INITIATED__ = true;
 
   const customGlobal = globalThis as CustomGlobal;
-  const serverProcess = customGlobal.__TOOLBOX_SERVER_PROCESS__;
+  const serverProcess1 = customGlobal.__TOOLBOX_SERVER_PROCESS__;
+  const serverProcess2 = customGlobal.__TOOLBOX_SERVER_PROCESS_2__;
   const toolsFilePath = customGlobal.__TOOLS_FILE_PATH__;
 
-  if (serverProcess && !serverProcess.killed) {
-    console.log('Stopping toolbox server process...');
-    serverProcess.kill('SIGTERM'); // Graceful termination
+  const killServer = async (
+    serverProcess: ChildProcess | undefined,
+    name: string,
+  ) => {
+    if (serverProcess && !serverProcess.killed) {
+      console.log(`Stopping toolbox server ${name} process...`);
+      serverProcess.kill('SIGTERM'); // Graceful termination
 
-    // Wait for the process to exit
-    const stopPromise = new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        if (!serverProcess.killed) {
-          console.warn(
-            'Toolbox server did not terminate gracefully, sending SIGKILL.',
-          );
-          serverProcess.kill('SIGKILL');
-        }
-        // Resolve even if SIGKILL is needed, as we want teardown to finish
-        resolve();
-      }, SERVER_TERMINATE_TIMEOUT_MS);
+      // Wait for the process to exit
+      const stopPromise = new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          if (!serverProcess.killed) {
+            console.warn(
+              `Toolbox server ${name} did not terminate gracefully, sending SIGKILL.`,
+            );
+            serverProcess.kill('SIGKILL');
+          }
+          // Resolve even if SIGKILL is needed, as we want teardown to finish
+          resolve();
+        }, SERVER_TERMINATE_TIMEOUT_MS);
 
-      serverProcess.on('exit', (code, signal) => {
-        clearTimeout(timeout);
-        console.log(
-          `Toolbox server process exited with code ${code}, signal ${signal} during teardown.`,
+        serverProcess.on(
+          'exit',
+          (code: number | null, signal: NodeJS.Signals | null) => {
+            clearTimeout(timeout);
+            console.log(
+              `Toolbox server ${name} process exited with code ${code}, signal ${signal} during teardown.`,
+            );
+            resolve();
+          },
         );
-        resolve();
+        serverProcess.on('error', (err: Error) => {
+          // Should not happen if already running
+          clearTimeout(timeout);
+          console.error(
+            `Error during server ${name} process termination:`,
+            err,
+          );
+          reject(err);
+        });
       });
-      serverProcess.on('error', err => {
-        // Should not happen if already running
-        clearTimeout(timeout);
-        console.error('Error during server process termination:', err);
-        reject(err);
-      });
-    });
 
-    try {
-      await stopPromise;
-    } catch (error) {
-      console.error('Error while waiting for server to stop:', error);
-      if (!serverProcess.killed) serverProcess.kill('SIGKILL'); // Ensure it's killed
+      try {
+        await stopPromise;
+      } catch (error) {
+        console.error(`Error while waiting for server ${name} to stop:`, error);
+        if (!serverProcess.killed) serverProcess.kill('SIGKILL'); // Ensure it's killed
+      }
+    } else {
+      console.log(
+        `Toolbox server ${name} process was not running or already handled.`,
+      );
     }
-  } else {
-    console.log('Toolbox server process was not running or already handled.');
-  }
+  };
+
+  await killServer(serverProcess1, '1');
+  await killServer(serverProcess2, '2');
 
   if (toolsFilePath) {
     try {
@@ -79,6 +97,7 @@ export default async function globalTeardown(): Promise<void> {
     }
   }
   customGlobal.__TOOLBOX_SERVER_PROCESS__ = undefined;
+  customGlobal.__TOOLBOX_SERVER_PROCESS_2__ = undefined;
   customGlobal.__TOOLS_FILE_PATH__ = undefined;
   customGlobal.__GOOGLE_CLOUD_PROJECT__ = undefined;
 

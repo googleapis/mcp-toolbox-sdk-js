@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ToolboxTool } from './tool.js';
-import { AxiosInstance } from 'axios';
-import { ITransport } from './transport.types.js';
+import {ToolboxTool} from './tool.js';
+import {AxiosInstance} from 'axios';
+import {ITransport} from './transport.types.js';
 import {
   createZodSchemaFromParams,
   ParameterSchema,
@@ -22,19 +22,19 @@ import {
   Protocol,
   getSupportedMcpVersions,
 } from './protocol.js';
-import { McpHttpTransportV20241105 } from './mcp/v20241105/mcp.js';
-import { McpHttpTransportV20250618 } from './mcp/v20250618/mcp.js';
-import { McpHttpTransportV20250326 } from './mcp/v20250326/mcp.js';
-import { McpHttpTransportV20251125 } from './mcp/v20251125/mcp.js';
-import { McpHttpTransportV20260618 } from './mcp/v20260618/mcp.js';
-import { ProtocolNegotiationError } from './errorUtils.js';
+import {McpHttpTransportV20241105} from './mcp/v20241105/mcp.js';
+import {McpHttpTransportV20250618} from './mcp/v20250618/mcp.js';
+import {McpHttpTransportV20250326} from './mcp/v20250326/mcp.js';
+import {McpHttpTransportV20251125} from './mcp/v20251125/mcp.js';
+import {McpHttpTransportV20260618} from './mcp/v20260618/mcp.js';
+import {ProtocolNegotiationError} from './errorUtils.js';
 import {
   BoundParams,
   identifyAuthRequirements,
   resolveValue,
   warnIfHttpAndHeaders,
 } from './utils.js';
-import { AuthTokenGetters, RequiredAuthnParams } from './tool.js';
+import {AuthTokenGetters, RequiredAuthnParams} from './tool.js';
 
 type Manifest = import('zod').infer<typeof ZodManifestSchema>;
 type ToolSchemaFromManifest = Manifest['tools'][string];
@@ -48,9 +48,16 @@ export type ClientHeadersConfig = Record<string, ClientHeaderProvider>;
  * An asynchronous client for interacting with a Toolbox service.
  */
 class ToolboxClient {
+  #url: string;
   #transport: ITransport;
   #clientHeaders: ClientHeadersConfig;
 
+  /**
+   * The negotiated protocol version currently in use.
+   */
+  get protocolVersion(): Protocol {
+    return this.#transport.protocolVersion as Protocol;
+  }
   /**
    * Initializes the ToolboxClient.
    * @param {string} url - The base URL for the Toolbox service API (e.g., "http://localhost:5000").
@@ -69,12 +76,12 @@ class ToolboxClient {
     clientName?: string,
     clientVersion?: string,
   ) {
+    this.#url = url;
     this.#clientHeaders = clientHeaders || {};
     warnIfHttpAndHeaders(url, this.#clientHeaders);
     if (!getSupportedMcpVersions().includes(protocol)) {
       throw new Error(`Unsupported protocol version: ${protocol}`);
     }
-
 
     this.#transport = this.#createTransport(
       url,
@@ -94,15 +101,45 @@ class ToolboxClient {
   ): ITransport {
     switch (protocol) {
       case Protocol.MCP_v20241105:
-        return new McpHttpTransportV20241105(url, session, protocol, clientName, clientVersion);
+        return new McpHttpTransportV20241105(
+          url,
+          session,
+          protocol,
+          clientName,
+          clientVersion,
+        );
       case Protocol.MCP_v20250326:
-        return new McpHttpTransportV20250326(url, session, protocol, clientName, clientVersion);
+        return new McpHttpTransportV20250326(
+          url,
+          session,
+          protocol,
+          clientName,
+          clientVersion,
+        );
       case Protocol.MCP_v20250618:
-        return new McpHttpTransportV20250618(url, session, protocol, clientName, clientVersion);
+        return new McpHttpTransportV20250618(
+          url,
+          session,
+          protocol,
+          clientName,
+          clientVersion,
+        );
       case Protocol.MCP_v20251125:
-        return new McpHttpTransportV20251125(url, session, protocol, clientName, clientVersion);
+        return new McpHttpTransportV20251125(
+          url,
+          session,
+          protocol,
+          clientName,
+          clientVersion,
+        );
       case Protocol.MCP_DRAFT:
-        return new McpHttpTransportV20260618(url, session, protocol, clientName, clientVersion);
+        return new McpHttpTransportV20260618(
+          url,
+          session,
+          protocol,
+          clientName,
+          clientVersion,
+        );
       default:
         throw new Error(`Unsupported MCP protocol version: ${protocol}`);
     }
@@ -176,7 +213,7 @@ class ToolboxClient {
 
     const usedBoundKeys = new Set(Object.keys(currBoundParams));
 
-    return { tool, usedAuthKeys, usedBoundKeys };
+    return {tool, usedAuthKeys, usedBoundKeys};
   }
 
   /**
@@ -203,10 +240,10 @@ class ToolboxClient {
     let manifest;
     try {
       manifest = await this.#transport.toolGet(name, headers);
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (e instanceof ProtocolNegotiationError) {
         this.#transport = this.#createTransport(
-          this.#transport.baseUrl,
+          this.#url,
           undefined,
           e.fallbackVersion as Protocol,
         );
@@ -221,7 +258,7 @@ class ToolboxClient {
       Object.prototype.hasOwnProperty.call(manifest.tools, name)
     ) {
       const specificToolSchema = manifest.tools[name];
-      const { tool, usedAuthKeys, usedBoundKeys } = this.#createToolInstance(
+      const {tool, usedAuthKeys, usedBoundKeys} = this.#createToolInstance(
         name,
         specificToolSchema,
         authTokenGetters || undefined,
@@ -288,10 +325,10 @@ class ToolboxClient {
     let manifest;
     try {
       manifest = await this.#transport.toolsList(toolsetName, headers);
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (e instanceof ProtocolNegotiationError) {
         this.#transport = this.#createTransport(
-          this.#transport.baseUrl,
+          this.#url,
           undefined,
           e.fallbackVersion as Protocol,
         );
@@ -312,7 +349,7 @@ class ToolboxClient {
     );
 
     for (const [toolName, toolSchema] of Object.entries(manifest.tools)) {
-      const { tool, usedAuthKeys, usedBoundKeys } = this.#createToolInstance(
+      const {tool, usedAuthKeys, usedBoundKeys} = this.#createToolInstance(
         toolName,
         toolSchema,
         authTokenGetters || {},
@@ -376,4 +413,4 @@ class ToolboxClient {
   }
 }
 
-export { ToolboxClient };
+export {ToolboxClient};

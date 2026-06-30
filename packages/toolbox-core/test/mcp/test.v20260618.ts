@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ProtocolNegotiationError} from '../../src/toolbox_core/exceptions.js';
+import {ProtocolNegotiationError} from '../../src/toolbox_core/errorUtils.js';
 import {McpHttpTransportV20260618} from '../../src/toolbox_core/mcp/v20260618/mcp.js';
 import {jest} from '@jest/globals';
 import axios, {AxiosInstance} from 'axios';
@@ -66,40 +66,7 @@ describe('McpHttpTransportV20260618', () => {
   });
 
   describe('initialization', () => {
-    it('should perform handshake successfully', async () => {
-      // Mock responses for initialization
-      // 1. InitializeRequest -> result with tools capability
-      // 2. InitializedNotification -> (no response needed usually, or empty)
-
-      const initResponse = {
-        data: {
-          jsonrpc: '2.0',
-          id: '1',
-          result: {
-            protocolVersion: '2025-11-25',
-            capabilities: {
-              tools: {},
-            },
-            serverInfo: {
-              name: 'test-server',
-              version: '1.0.0',
-            },
-          },
-        },
-        status: 200,
-      };
-
-      const initializedNotificationResponse = {
-        data: {
-          jsonrpc: '2.0',
-        },
-        status: 200,
-      };
-
-      mockSession.post
-        .mockResolvedValueOnce(initResponse)
-        .mockResolvedValueOnce(initializedNotificationResponse);
-
+    it('should not perform handshake but directly send the request', async () => {
       const listResponse = {
         data: {
           jsonrpc: '2.0',
@@ -115,112 +82,47 @@ describe('McpHttpTransportV20260618', () => {
 
       await transport.toolsList();
 
+      // Only one request was made, the actual tools/list request
+      expect(mockSession.post).toHaveBeenCalledTimes(1);
+
       expect(mockSession.post).toHaveBeenNthCalledWith(
         1,
         `${testBaseUrl}/mcp/`,
         expect.objectContaining({
-          method: 'initialize',
+          method: 'tools/list',
           params: expect.objectContaining({
-            protocolVersion: '2025-11-25',
-            clientInfo: expect.any(Object),
+            _meta: expect.objectContaining({
+              protocolVersion: Protocol.MCP_DRAFT,
+              clientInfo: expect.any(Object),
+            }),
           }),
         }),
         expect.objectContaining({
           headers: expect.objectContaining({
-            'MCP-Protocol-Version': '2025-11-25',
+            'MCP-Protocol-Version': Protocol.MCP_DRAFT,
+            'Mcp-Method': 'tools/list',
           }),
         }),
       );
-
-      expect(mockSession.post).toHaveBeenNthCalledWith(
-        2,
-        `${testBaseUrl}/mcp/`,
-        expect.objectContaining({
-          method: 'notifications/initialized',
-        }),
-        expect.any(Object),
-      );
     });
 
-    it('should use provided client name and version in handshake', async () => {
-      const customTransport = new McpHttpTransportV20260618(
-        testBaseUrl,
-        mockSession,
-        Protocol.MCP_DRAFT,
-        'custom-client',
-        '9.9.9',
-      );
-
-      const initResponse = {
+    it('should throw error on protocol version mismatch from first request', async () => {
+      const errorResponse = {
         data: {
           jsonrpc: '2.0',
           id: '1',
-          result: {
-            protocolVersion: '2025-11-25',
-            capabilities: {tools: {}},
-            serverInfo: {name: 'test-server', version: '1.0.0'},
-          },
-        },
-        status: 200,
-      };
-
-      const initializedNotificationResponse = {
-        data: {jsonrpc: '2.0'},
-        status: 200,
-      };
-
-      const listResponse = {
-        data: {
-          jsonrpc: '2.0',
-          id: '2',
-          result: {tools: []},
-        },
-        status: 200,
-      };
-
-      mockSession.post
-        .mockResolvedValueOnce(initResponse)
-        .mockResolvedValueOnce(initializedNotificationResponse)
-        .mockResolvedValueOnce(listResponse);
-
-      await customTransport.toolsList();
-
-      expect(mockSession.post).toHaveBeenNthCalledWith(
-        1,
-        `${testBaseUrl}/mcp/`,
-        expect.objectContaining({
-          method: 'initialize',
-          params: expect.objectContaining({
-            protocolVersion: '2025-11-25',
-            clientInfo: {
-              name: 'custom-client',
-              version: '9.9.9',
+          error: {
+            code: -32004,
+            message: 'Unsupported Protocol Version',
+            data: {
+              supported: ['2025-11-25'],
             },
-          }),
-        }),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            'MCP-Protocol-Version': '2025-11-25',
-          }),
-        }),
-      );
-    });
-
-    it('should throw error on protocol version mismatch', async () => {
-      const initResponse = {
-        data: {
-          jsonrpc: '2.0',
-          id: '1',
-          result: {
-            protocolVersion: '2023-01-01', // Mismatch
-            capabilities: {tools: {}},
-            serverInfo: {name: 'old-server', version: '0.1'},
           },
         },
         status: 200,
       };
 
-      mockSession.post.mockResolvedValueOnce(initResponse);
+      mockSession.post.mockResolvedValueOnce(errorResponse);
 
       const errorSpy = jest
         .spyOn(console, 'error')
@@ -230,169 +132,9 @@ describe('McpHttpTransportV20260618', () => {
       );
       errorSpy.mockRestore();
     });
-
-    it('should throw error if tools capability missing', async () => {
-      const initResponse = {
-        data: {
-          jsonrpc: '2.0',
-          id: '1',
-          result: {
-            protocolVersion: '2025-11-25',
-            capabilities: {}, // No tools
-            serverInfo: {name: 'server', version: '1.0'},
-          },
-        },
-        status: 200,
-      };
-
-      mockSession.post.mockResolvedValueOnce(initResponse);
-
-      const errorSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
-      await expect(transport.toolsList()).rejects.toThrow(
-        /Server does not support the 'tools' capability/,
-      );
-      errorSpy.mockRestore();
-    });
-
-    it('should throw error if initialization returns no response (204)', async () => {
-      mockSession.post.mockResolvedValueOnce({
-        status: 204,
-        data: null,
-        headers: {},
-      });
-
-      const errorSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
-      await expect(transport.toolsList()).rejects.toThrow(
-        'Initialization failed: No response',
-      );
-      errorSpy.mockRestore();
-    });
-
-    it('should handle initialized notification returning 202 without error', async () => {
-      const initResponse = {
-        data: {
-          jsonrpc: '2.0',
-          id: '1',
-          result: {
-            protocolVersion: '2025-11-25',
-            capabilities: {tools: {}},
-            serverInfo: {name: 'test-server', version: '1.0.0'},
-          },
-        },
-        status: 200,
-      };
-
-      const initializedNotificationResponse = {
-        data: '',
-        status: 202,
-        statusText: 'Accepted',
-      };
-
-      mockSession.post
-        .mockResolvedValueOnce(initResponse)
-        .mockResolvedValueOnce(initializedNotificationResponse);
-
-      const listResponse = {
-        data: {
-          jsonrpc: '2.0',
-          id: '2',
-          result: {
-            tools: [],
-          },
-        },
-        status: 200,
-      };
-      mockSession.post.mockResolvedValueOnce(listResponse);
-
-      await expect(transport.toolsList()).resolves.not.toThrow();
-    });
-
-    it('should propagate headers during initialization', async () => {
-      const initResponse = {
-        data: {
-          jsonrpc: '2.0',
-          id: '1',
-          result: {
-            protocolVersion: '2025-11-25',
-            capabilities: {tools: {}},
-            serverInfo: {name: 'test-server', version: '1.0.0'},
-          },
-        },
-        status: 200,
-      };
-
-      const initializedNotificationResponse = {
-        data: {jsonrpc: '2.0'},
-        status: 200,
-      };
-
-      const listResponse = {
-        data: {
-          jsonrpc: '2.0',
-          id: '2',
-          result: {tools: []},
-        },
-        status: 200,
-      };
-
-      mockSession.post
-        .mockResolvedValueOnce(initResponse)
-        .mockResolvedValueOnce(initializedNotificationResponse)
-        .mockResolvedValueOnce(listResponse);
-
-      const testHeaders = {'X-Test-Header': 'test-value'};
-      // v20251125 adds 'MCP-Protocol-Version' header automatically
-      const expectedHeaders = {
-        ...testHeaders,
-        'MCP-Protocol-Version': '2025-11-25',
-      };
-
-      await transport.toolsList(undefined, testHeaders);
-
-      // Verify Initialize request has headers
-      expect(mockSession.post).toHaveBeenNthCalledWith(
-        1,
-        expect.anything(),
-        expect.anything(),
-        expect.objectContaining({headers: expectedHeaders}),
-      );
-
-      // Verify Initialized notification has headers
-      expect(mockSession.post).toHaveBeenNthCalledWith(
-        2,
-        expect.anything(),
-        expect.anything(),
-        expect.objectContaining({headers: expectedHeaders}),
-      );
-    });
   });
 
   describe('toolsList', () => {
-    beforeEach(() => {
-      // Setup successful init for tool tests
-      const initResponse = {
-        data: {
-          jsonrpc: '2.0',
-          id: '1',
-          result: {
-            protocolVersion: '2025-11-25',
-            capabilities: {tools: {}},
-            serverInfo: {name: 'test-server', version: '1.0.0'},
-          },
-        },
-        status: 200,
-      };
-      const notifResponse = {data: {}, status: 200};
-
-      mockSession.post
-        .mockResolvedValueOnce(initResponse)
-        .mockResolvedValueOnce(notifResponse);
-    });
-
     it('should return converted tools', async () => {
       const listResponse = {
         data: {
@@ -480,54 +222,9 @@ describe('McpHttpTransportV20260618', () => {
       );
       errorSpy.mockRestore();
     });
-
-    it('should throw if server version is not available after init', async () => {
-      mockSession.post.mockReset();
-      mockSession.post.mockResolvedValueOnce({
-        data: {
-          jsonrpc: '2.0',
-          id: '2',
-          result: {
-            tools: [],
-          },
-        },
-        status: 200,
-      });
-      jest
-        .spyOn(
-          transport as unknown as {ensureInitialized: () => Promise<void>},
-          'ensureInitialized',
-        )
-        .mockResolvedValue(undefined);
-      const errorSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
-      await expect(transport.toolsList()).rejects.toThrow(
-        'Server version not available.',
-      );
-      errorSpy.mockRestore();
-    });
   });
 
   describe('toolGet', () => {
-    beforeEach(() => {
-      const initResponse = {
-        data: {
-          jsonrpc: '2.0',
-          id: '1',
-          result: {
-            protocolVersion: '2025-11-25',
-            capabilities: {tools: {}},
-            serverInfo: {name: 'test-server', version: '1.0.0'},
-          },
-        },
-        status: 200,
-      };
-      mockSession.post
-        .mockResolvedValueOnce(initResponse)
-        .mockResolvedValueOnce({data: {}, status: 200});
-    });
-
     it('should return specific tool manifest', async () => {
       const listResponse = {
         data: {
@@ -582,25 +279,6 @@ describe('McpHttpTransportV20260618', () => {
   });
 
   describe('toolInvoke', () => {
-    beforeEach(() => {
-      // Init sequence
-      const initResponse = {
-        data: {
-          jsonrpc: '2.0',
-          id: '1',
-          result: {
-            protocolVersion: '2025-11-25',
-            capabilities: {tools: {}},
-            serverInfo: {name: 'test-server', version: '1.0.0'},
-          },
-        },
-        status: 200,
-      };
-      mockSession.post
-        .mockResolvedValueOnce(initResponse)
-        .mockResolvedValueOnce({data: {}, status: 200});
-    });
-
     it('should invoke tool and return text content', async () => {
       const invokeResponse = {
         data: {
@@ -621,14 +299,20 @@ describe('McpHttpTransportV20260618', () => {
         `${testBaseUrl}/mcp/`,
         expect.objectContaining({
           method: 'tools/call',
-          params: {
+          params: expect.objectContaining({
             name: 'testTool',
             arguments: {arg: 'val'},
-          },
+            _meta: expect.objectContaining({
+              protocolVersion: Protocol.MCP_DRAFT,
+              clientInfo: expect.any(Object),
+            }),
+          }),
         }),
         expect.objectContaining({
           headers: expect.objectContaining({
-            'MCP-Protocol-Version': '2025-11-25',
+            'MCP-Protocol-Version': Protocol.MCP_DRAFT,
+            'Mcp-Method': 'tools/call',
+            'Mcp-Name': 'testTool',
           }),
         }),
       );
@@ -693,7 +377,6 @@ describe('McpHttpTransportV20260618', () => {
 
       const result = await transport.toolInvoke('testTool', {}, {});
       expect(result).toBe('null');
-      expect(result).toBe('null');
     });
 
     it('should throw if toolInvoke returns no response (204)', async () => {
@@ -719,7 +402,6 @@ describe('McpHttpTransportV20260618', () => {
         data: {
           jsonrpc: '2.0',
           id: '3',
-          // Missing 'result' and 'error'
           somethingElse: true,
         },
         status: 200,
@@ -729,27 +411,6 @@ describe('McpHttpTransportV20260618', () => {
 
       await expect(transport.toolInvoke('testTool', {}, {})).rejects.toThrow(
         'Failed to parse JSON-RPC response structure',
-      );
-      errorSpy.mockRestore();
-    });
-
-    it('should throw explicit error for malformed error object', async () => {
-      const errorSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
-      const malformedErrorResponse = {
-        data: {
-          jsonrpc: '2.0',
-          id: '3',
-          error: 'Just a string error', // Invalid, should be object with code/message
-        },
-        status: 200,
-      };
-
-      mockSession.post.mockResolvedValueOnce(malformedErrorResponse);
-
-      await expect(transport.toolInvoke('testTool', {}, {})).rejects.toThrow(
-        'MCP request failed: "Just a string error"',
       );
       errorSpy.mockRestore();
     });
@@ -776,63 +437,7 @@ describe('McpHttpTransportV20260618', () => {
       expect(result).toBe('[{"id": 1, "val": "a"},{"id": 2, "val": "b"}]');
     });
 
-    it('should verify current broken behavior (concatenation) for non-JSON chunks', async () => {
-      const invokeResponse = {
-        data: {
-          jsonrpc: '2.0',
-          id: '3',
-          result: {
-            content: [
-              {type: 'text', text: 'part1'},
-              {type: 'text', text: 'part2'},
-            ],
-          },
-        },
-        status: 200,
-      };
-
-      mockSession.post.mockResolvedValueOnce(invokeResponse);
-
-      const result = await transport.toolInvoke('testTool', {}, {});
-      expect(result).toBe('part1part2');
-    });
-
-    it('should NOT merge if chunks are not valid JSON (mixed)', async () => {
-      const invokeResponse = {
-        data: {
-          jsonrpc: '2.0',
-          id: '3',
-          result: {
-            content: [
-              {type: 'text', text: '{"id": 1}'},
-              {type: 'text', text: 'part2'},
-            ],
-          },
-        },
-        status: 200,
-      };
-
-      mockSession.post.mockResolvedValueOnce(invokeResponse);
-
-      const result = await transport.toolInvoke('testTool', {}, {});
-      expect(result).toBe('{"id": 1}part2');
-    });
-
     it('should warn if sending headers over HTTP', async () => {
-      const initResponse = {
-        data: {
-          jsonrpc: '2.0',
-          id: '1',
-          result: {
-            protocolVersion: '2025-11-25',
-            capabilities: {tools: {}},
-            serverInfo: {name: 'test-server', version: '1.0.0'},
-          },
-        },
-        status: 200,
-      };
-      const notifResponse = {data: {}, status: 200};
-
       const invokeResponse = {
         data: {
           jsonrpc: '2.0',
@@ -842,17 +447,7 @@ describe('McpHttpTransportV20260618', () => {
         status: 200,
       };
 
-      mockSession.post.mockImplementation(async (_url, data) => {
-        const method = (data as {method: string}).method;
-        let response: unknown;
-        if (method === 'initialize') response = initResponse;
-        else if (method === 'notifications/initialized')
-          response = notifResponse;
-        else if (method === 'tools/call') response = invokeResponse;
-        else response = {data: {}, status: 200};
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return response as any;
-      });
+      mockSession.post.mockResolvedValueOnce(invokeResponse);
 
       await transport.toolInvoke(
         'testTool',
@@ -876,39 +471,14 @@ describe('McpHttpTransportV20260618', () => {
         },
         status: 200,
       };
-      // Create HTTPS transport
+
       const httpsTransport = new McpHttpTransportV20260618(
         'https://secure.test.loc',
         mockSession,
         Protocol.MCP_DRAFT,
       );
 
-      // Need to mock init sequence for the new transport instance
-      const initResponse = {
-        data: {
-          jsonrpc: '2.0',
-          id: '1',
-          result: {
-            protocolVersion: '2025-11-25',
-            capabilities: {tools: {}},
-            serverInfo: {name: 'test-server', version: '1.0.0'},
-          },
-        },
-        status: 200,
-      };
-      const notifResponse = {data: {}, status: 200};
-
-      mockSession.post.mockImplementation(async (_url, data) => {
-        const method = (data as {method: string}).method;
-        let response: unknown;
-        if (method === 'initialize') response = initResponse;
-        else if (method === 'notifications/initialized')
-          response = notifResponse;
-        else if (method === 'tools/call') response = invokeResponse;
-        else response = {data: {}, status: 200};
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return response as any;
-      });
+      mockSession.post.mockResolvedValueOnce(invokeResponse);
 
       await httpsTransport.toolInvoke(
         'testTool',

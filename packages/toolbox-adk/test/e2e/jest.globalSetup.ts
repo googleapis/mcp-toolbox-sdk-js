@@ -49,7 +49,7 @@ export default async function globalSetup(): Promise<void> {
     console.log(`Tools manifest stored at: ${toolsFilePath}`);
 
     // Download toolbox binary
-    const toolboxGcsPath = getToolboxBinaryGcsPath(toolboxVersion);
+    const toolboxGcsPath = getToolboxBinaryGcsPath();
 
     // Add these two lines to define __dirname
     const __filename = fileURLToPath(import.meta.url);
@@ -57,15 +57,13 @@ export default async function globalSetup(): Promise<void> {
 
     const localToolboxPath = path.resolve(__dirname, TOOLBOX_BINARY_NAME);
 
-    const bucketName = ['main', 'mcp-v202606'].includes(toolboxVersion) ? 'mcp-toolbox-for-databases-dev' : 'mcp-toolbox-for-databases';
+    const bucketName = ['main', 'mcp-v202606'].includes(toolboxVersion)
+      ? 'mcp-toolbox-for-databases-dev'
+      : 'mcp-toolbox-for-databases';
     console.log(
       `Downloading toolbox binary from gs://${bucketName}/${toolboxGcsPath} to ${localToolboxPath}...`,
     );
-    await downloadBlob(
-      bucketName,
-      toolboxGcsPath,
-      localToolboxPath,
-    );
+    await downloadBlob(bucketName, toolboxGcsPath, localToolboxPath);
     console.log('Toolbox binary downloaded successfully.');
 
     // Make toolbox executable
@@ -102,8 +100,13 @@ export default async function globalSetup(): Promise<void> {
       throw new Error('Failed to start toolbox server 1 process.');
     });
     serverProcess1.on('exit', (code, signal) => {
-      console.log(`Toolbox server 1 process exited with code ${code}, signal ${signal}.`);
-      if ((globalThis as CustomGlobal).__TOOLBOX_SERVER_PROCESS__ && !(globalThis as CustomGlobal).__SERVER_TEARDOWN_INITIATED__) {
+      console.log(
+        `Toolbox server 1 process exited with code ${code}, signal ${signal}.`,
+      );
+      if (
+        (globalThis as CustomGlobal).__TOOLBOX_SERVER_PROCESS__ &&
+        !(globalThis as CustomGlobal).__SERVER_TEARDOWN_INITIATED__
+      ) {
         console.error('Toolbox server 1 exited prematurely during setup.');
       }
     });
@@ -119,8 +122,13 @@ export default async function globalSetup(): Promise<void> {
       throw new Error('Failed to start toolbox server 2 process.');
     });
     serverProcess2.on('exit', (code, signal) => {
-      console.log(`Toolbox server 2 process exited with code ${code}, signal ${signal}.`);
-      if ((globalThis as CustomGlobal).__TOOLBOX_SERVER_PROCESS_2__ && !(globalThis as CustomGlobal).__SERVER_TEARDOWN_INITIATED__) {
+      console.log(
+        `Toolbox server 2 process exited with code ${code}, signal ${signal}.`,
+      );
+      if (
+        (globalThis as CustomGlobal).__TOOLBOX_SERVER_PROCESS_2__ &&
+        !(globalThis as CustomGlobal).__SERVER_TEARDOWN_INITIATED__
+      ) {
         console.error('Toolbox server 2 exited prematurely during setup.');
       }
     });
@@ -130,14 +138,24 @@ export default async function globalSetup(): Promise<void> {
     let started2 = false;
     const startTime = Date.now();
     while (Date.now() - startTime < SERVER_READY_TIMEOUT_MS) {
-      if (serverProcess1.pid && !serverProcess1.killed && serverProcess1.exitCode === null) {
+      if (
+        serverProcess1.pid &&
+        !serverProcess1.killed &&
+        serverProcess1.exitCode === null
+      ) {
         started1 = true;
       }
-      if (serverProcess2.pid && !serverProcess2.killed && serverProcess2.exitCode === null) {
+      if (
+        serverProcess2.pid &&
+        !serverProcess2.killed &&
+        serverProcess2.exitCode === null
+      ) {
         started2 = true;
       }
       if (started1 && started2) {
-        console.log('Both Toolbox servers started successfully (processes are active).');
+        console.log(
+          'Both Toolbox servers started successfully (processes are active).',
+        );
         break;
       }
       await delay(SERVER_READY_POLL_INTERVAL_MS);
@@ -145,17 +163,23 @@ export default async function globalSetup(): Promise<void> {
     }
 
     if (!started1 || !started2) {
-      if (serverProcess1 && !serverProcess1.killed) serverProcess1.kill('SIGTERM');
-      if (serverProcess2 && !serverProcess2.killed) serverProcess2.kill('SIGTERM');
-      throw new Error(`Toolbox servers failed to start within ${SERVER_READY_TIMEOUT_MS / 1000} seconds.`);
+      if (serverProcess1 && !serverProcess1.killed)
+        serverProcess1.kill('SIGTERM');
+      if (serverProcess2 && !serverProcess2.killed)
+        serverProcess2.kill('SIGTERM');
+      throw new Error(
+        `Toolbox servers failed to start within ${SERVER_READY_TIMEOUT_MS / 1000} seconds.`,
+      );
     }
 
     console.log('Jest Global Setup: Completed successfully.');
   } catch (error) {
     console.error('Jest Global Setup Failed:', error);
     // Attempt to kill servers if they started partially
-    const serverProcess1 = (globalThis as CustomGlobal).__TOOLBOX_SERVER_PROCESS__;
-    const serverProcess2 = (globalThis as CustomGlobal).__TOOLBOX_SERVER_PROCESS_2__;
+    const serverProcess1 = (globalThis as CustomGlobal)
+      .__TOOLBOX_SERVER_PROCESS__;
+    const serverProcess2 = (globalThis as CustomGlobal)
+      .__TOOLBOX_SERVER_PROCESS_2__;
     if (serverProcess1 && !serverProcess1.killed) {
       console.log('Attempting to terminate partially started server 1...');
       serverProcess1.kill('SIGKILL');

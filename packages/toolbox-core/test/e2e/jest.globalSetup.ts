@@ -48,7 +48,7 @@ export default async function globalSetup(): Promise<void> {
     console.log(`Tools manifest stored at: ${toolsFilePath}`);
 
     // Download toolbox binary
-    const toolboxGcsPath = getToolboxBinaryGcsPath();
+    const toolboxGcsPath = getToolboxBinaryGcsPath(toolboxVersion);
     const localToolboxPath = path.resolve(__dirname, TOOLBOX_BINARY_NAME);
 
     const bucketName = ['main', 'mcp-v202606'].includes(toolboxVersion)

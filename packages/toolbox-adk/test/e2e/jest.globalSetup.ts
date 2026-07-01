@@ -49,7 +49,7 @@ export default async function globalSetup(): Promise<void> {
     console.log(`Tools manifest stored at: ${toolsFilePath}`);
 
     // Download toolbox binary
-    const toolboxGcsPath = getToolboxBinaryGcsPath();
+    const toolboxGcsPath = getToolboxBinaryGcsPath(toolboxVersion);
 
     // Add these two lines to define __dirname
     const __filename = fileURLToPath(import.meta.url);

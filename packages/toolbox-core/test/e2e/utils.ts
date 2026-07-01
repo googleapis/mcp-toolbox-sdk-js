@@ -96,7 +96,7 @@ export async function downloadBlob(
 /**
  * Constructs the GCS path to the toolbox binary.
  */
-export function getToolboxBinaryGcsPath(): string {
+export function getToolboxBinaryGcsPath(toolboxVersion: string): string {
   const system = os.platform().toLowerCase(); // 'darwin', 'linux', 'windows'
   const arch = os.arch();
   let archForPath: string; // 'amd64', 'arm64'
@@ -107,7 +107,7 @@ export function getToolboxBinaryGcsPath(): string {
     archForPath = 'amd64';
   }
   const osSystemForPath = system === 'win32' ? 'windows' : system;
-  return `staging/v1.6.0-draft/${osSystemForPath}/${archForPath}/toolbox`;
+  return `${toolboxVersion}/${osSystemForPath}/${archForPath}/toolbox`;
 }
 
 export function delay(ms: number): Promise<void> {

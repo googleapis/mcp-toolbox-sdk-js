@@ -226,10 +226,20 @@ testBaseUrls.forEach(testBaseUrl => {
       });
 
       describe('Auth E2E Tests', () => {
+        let authToolboxClient: ToolboxClient;
         let authToken1: string;
         let authToken2: string;
         let authToken1Getter: () => string;
         let authToken2Getter: () => string;
+
+        beforeEach(async () => {
+          authToolboxClient = new ToolboxClient(
+            testBaseUrl,
+            undefined,
+            undefined,
+            protocolVersion,
+          );
+        });
 
         beforeAll(async () => {
           if (!projectId) {
@@ -246,7 +256,7 @@ testBaseUrls.forEach(testBaseUrl => {
 
         it('should fail when running a tool that does not require auth with auth provided', async () => {
           await expect(
-            commonToolboxClient.loadTool('get-row-by-id', {
+            authToolboxClient.loadTool('get-row-by-id', {
               'my-test-auth': authToken2Getter,
             }),
           ).rejects.toThrow(
@@ -255,14 +265,14 @@ testBaseUrls.forEach(testBaseUrl => {
         });
 
         it('should fail when running a tool requiring auth without providing auth', async () => {
-          const tool = await commonToolboxClient.loadTool('get-row-by-id-auth');
+          const tool = await authToolboxClient.loadTool('get-row-by-id-auth');
           await expect(tool({id: '2'})).rejects.toThrow(
             'One or more of the following authn services are required to invoke this tool: my-test-auth',
           );
         });
 
         it('should fail when running a tool with incorrect auth', async () => {
-          const tool = await commonToolboxClient.loadTool('get-row-by-id-auth');
+          const tool = await authToolboxClient.loadTool('get-row-by-id-auth');
           const authTool = tool.addAuthTokenGetters({
             'my-test-auth': authToken2Getter,
           });
@@ -284,7 +294,7 @@ testBaseUrls.forEach(testBaseUrl => {
         });
 
         it('should succeed when running a tool with correct auth', async () => {
-          const tool = await commonToolboxClient.loadTool('get-row-by-id-auth');
+          const tool = await authToolboxClient.loadTool('get-row-by-id-auth');
           const authTool = tool.addAuthTokenGetters({
             'my-test-auth': authToken1Getter,
           });
@@ -293,7 +303,7 @@ testBaseUrls.forEach(testBaseUrl => {
         });
 
         it('should succeed when running a tool with correct async auth', async () => {
-          const tool = await commonToolboxClient.loadTool('get-row-by-id-auth');
+          const tool = await authToolboxClient.loadTool('get-row-by-id-auth');
           const getAsyncToken = async () => {
             return authToken1Getter();
           };
@@ -305,7 +315,7 @@ testBaseUrls.forEach(testBaseUrl => {
         });
 
         it('should fail when a tool with a param requiring auth is run without auth', async () => {
-          const tool = await commonToolboxClient.loadTool(
+          const tool = await authToolboxClient.loadTool(
             'get-row-by-email-auth',
           );
           await expect(tool()).rejects.toThrow(
@@ -314,7 +324,7 @@ testBaseUrls.forEach(testBaseUrl => {
         });
 
         it('should succeed when a tool with a param requiring auth is run with correct auth', async () => {
-          const tool = await commonToolboxClient.loadTool(
+          const tool = await authToolboxClient.loadTool(
             'get-row-by-email-auth',
             {
               'my-test-auth': authToken1Getter,
@@ -327,7 +337,7 @@ testBaseUrls.forEach(testBaseUrl => {
         });
 
         it('should fail when a tool with a param requiring auth is run with insufficient auth claims', async () => {
-          const tool = await commonToolboxClient.loadTool(
+          const tool = await authToolboxClient.loadTool(
             'get-row-by-content-auth',
             {
               'my-test-auth': authToken1Getter,
@@ -356,7 +366,7 @@ testBaseUrls.forEach(testBaseUrl => {
         let searchRowsTool: ReturnType<typeof ToolboxTool>;
 
         beforeAll(async () => {
-          searchRowsTool = await commonToolboxClient.loadTool('search-rows');
+          searchRowsTool = await authToolboxClient.loadTool('search-rows');
         });
 
         it('should correctly identify required and optional parameters in the schema', () => {
@@ -547,7 +557,7 @@ testBaseUrls.forEach(testBaseUrl => {
         let processDataTool: ReturnType<typeof ToolboxTool>;
 
         beforeAll(async () => {
-          processDataTool = await commonToolboxClient.loadTool('process-data');
+          processDataTool = await authToolboxClient.loadTool('process-data');
         });
 
         it('should correctly identify map/object parameters in the schema', () => {

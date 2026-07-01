@@ -227,8 +227,8 @@ testBaseUrls.forEach(testBaseUrl => {
 
       describe('Auth E2E Tests', () => {
         // We isolate authToolboxClient to this block so that the global commonToolboxClient
-        // remains completely unauthenticated. If we mutate commonToolboxClient with auth 
-        // claims here, subsequent test suites (like pagination) would inherit the auth state 
+        // remains completely unauthenticated. If we mutate commonToolboxClient with auth
+        // claims here, subsequent test suites (like pagination) would inherit the auth state
         // and mask bugs where unauthenticated requests should rightfully fail.
         let authToolboxClient: ToolboxClient;
         let authToken1: string;

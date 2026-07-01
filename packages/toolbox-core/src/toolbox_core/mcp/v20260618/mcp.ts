@@ -16,7 +16,7 @@ import {AxiosError} from 'axios';
 import {McpHttpTransportBase} from '../transportBase.js';
 import * as types from './types.js';
 
-import {ZodManifest, Protocol} from '../../protocol.js';
+import {ZodManifest, Protocol, getSupportedMcpVersions} from '../../protocol.js';
 import {logApiError} from '../../errorUtils.js';
 import {warnIfHttpAndHeaders} from '../../utils.js';
 
@@ -122,7 +122,18 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
           ) {
             const supported = (err.data as Record<string, unknown>).supported;
             if (Array.isArray(supported) && supported.length > 0) {
-              throw new ProtocolNegotiationError(supported[0]);
+              let mutuallySupportedVersion: string | null = null;
+              for (const ourVer of getSupportedMcpVersions()) {
+                if (supported.includes(ourVer)) {
+                  mutuallySupportedVersion = ourVer;
+                  break;
+                }
+              }
+              if (mutuallySupportedVersion) {
+                throw new ProtocolNegotiationError(mutuallySupportedVersion);
+              }
+              // Fallback to the first available if no intersection is found
+              throw new ProtocolNegotiationError(String(supported[0]));
             }
           }
         }

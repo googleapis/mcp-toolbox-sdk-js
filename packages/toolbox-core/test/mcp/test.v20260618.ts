@@ -115,7 +115,7 @@ describe('McpHttpTransportV20260618', () => {
             code: -32004,
             message: 'Unsupported Protocol Version',
             data: {
-              supported: ['2025-11-25'],
+              supported: ['2024-11-05', '2025-03-26', '2025-06-18', '2025-11-25'],
             },
           },
         },
@@ -127,9 +127,13 @@ describe('McpHttpTransportV20260618', () => {
       const errorSpy = jest
         .spyOn(console, 'error')
         .mockImplementation(() => {});
-      await expect(transport.toolsList()).rejects.toThrow(
-        ProtocolNegotiationError,
-      );
+      try {
+        await transport.toolsList();
+        fail('Expected error to be thrown');
+      } catch (err: unknown) {
+        expect(err).toBeInstanceOf(ProtocolNegotiationError);
+        expect((err as ProtocolNegotiationError).fallbackVersion).toBe('2025-11-25');
+      }
       errorSpy.mockRestore();
     });
   });

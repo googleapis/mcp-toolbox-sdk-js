@@ -6,28 +6,7 @@
 ### Bug Fixes
 
 * **core:** add 'number' schema type mapping to fix float parameter loading ([#359](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/359)) ([efb2b0f](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/efb2b0f75ad1fbda495e642435fcf66d58f3ac6e))
-* give ToolboxTool a named return type ([#383](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/383)) ([804172d](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/804172dafc8085139186469ae65bab7c68490045))
 
-
-### Miscellaneous Chores
-
-* **deps:** bump axios from 1.13.5 to 1.15.0 ([#328](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/328)) ([e407025](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/e40702536eb4c8db9d72a93e4c04102b46829070))
-* **deps:** bump axios from 1.15.0 to 1.16.0 ([#340](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/340)) ([91df832](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/91df8321c1bada4998a67f7b94e914b9d86c25d3))
-* **deps:** update all non-major dependencies to v1.4.0 ([#357](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/357)) ([388966a](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/388966a08e665d0797986e47cd8f8d794416e491))
-* **deps:** update all non-major dependencies to v1.5.0 ([#382](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/382)) ([f02d916](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/f02d9165f2f4aaee63906842855bc8848956c158))
-* **deps:** update dependency eslint to v10 ([#261](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/261)) ([9579d65](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/9579d6510f66934d94c265a67d0d237f90b3283d))
-* **deps:** update dependency googleapis/mcp-toolbox to v1 ([#326](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/326)) ([f1e6901](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/f1e69018752d16f7f2eaac84fca5c621fdbdbcfb))
-* **deps:** update mcp toolbox server version in integration tests to v0.32.0 ([#323](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/323)) ([881415f](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/881415fe4f2058b1e372da4981f69104c5bbae4d))
-* **deps:** update mcp toolbox server version in integration tests to v1.2.0 ([#344](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/344)) ([734ff0e](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/734ff0e60e2c766bae9ceb3b9113f286bc9f923d))
-* **deps:** update mcp toolbox server version in integration tests to v1.6.0 ([#399](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/399)) ([370b612](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/370b612e571d0d5d61ecfaef80d6d0727230b2dc))
-* update bucket name ([#325](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/325)) ([2e8551a](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/2e8551a0192585af9bacd87d1fdfa018f6a77598))
-
-
-### Documentation
-
-* deprecate llamaindex ([#346](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/346)) ([287280d](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/287280d7b75b1144528e94122e86391cf0f87d7f))
-* migrate documentation links to the new docsite ([#320](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/320)) ([2249043](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/2249043c88e6620bcbdc2a9ecda573d88d443639))
-* update repo link ([#321](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/321)) ([6114a60](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/6114a60d35d7e4fa9fca96edd27fe50201b9a635))
 
 ## [1.0.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.3.0...core-v1.0.0) (2026-04-02)
 

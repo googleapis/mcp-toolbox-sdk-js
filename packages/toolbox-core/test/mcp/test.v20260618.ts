@@ -136,6 +136,40 @@ describe('McpHttpTransportV20260618', () => {
       }
       errorSpy.mockRestore();
     });
+
+    it('should throw error on protocol version mismatch from first request (HTTP 400)', async () => {
+      const errorResponse = {
+        response: {
+          status: 400,
+          data: {
+            jsonrpc: '2.0',
+            id: '1',
+            error: {
+              code: -32004,
+              message: 'Unsupported Protocol Version',
+              data: {
+                supported: ['2024-11-05', '2025-03-26', '2025-06-18', '2025-11-25'],
+              },
+            },
+          },
+        },
+        isAxiosError: true,
+      };
+
+      mockSession.post.mockRejectedValueOnce(errorResponse);
+
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+      try {
+        await transport.toolsList();
+        fail('Expected error to be thrown');
+      } catch (err: unknown) {
+        expect(err).toBeInstanceOf(ProtocolNegotiationError);
+        expect((err as ProtocolNegotiationError).fallbackVersion).toBe('2025-11-25');
+      }
+      errorSpy.mockRestore();
+    });
   });
 
   describe('toolsList', () => {

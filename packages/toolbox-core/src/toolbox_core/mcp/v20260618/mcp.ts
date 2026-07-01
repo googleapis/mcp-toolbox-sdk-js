@@ -166,16 +166,39 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
         (error as AxiosError).response?.status === 400 &&
         (error as AxiosError).response?.data &&
         typeof (error as AxiosError).response?.data === 'object' &&
-        'error' in
-          ((error as AxiosError).response?.data as Record<string, unknown>) &&
-        typeof ((error as AxiosError).response?.data as Record<string, unknown>)
-          .error === 'string' &&
-        (
-          ((error as AxiosError).response?.data as Record<string, unknown>)
-            .error as string
-        ).includes('invalid protocol version')
+        'error' in ((error as AxiosError).response?.data as Record<string, unknown>)
       ) {
-        throw new ProtocolNegotiationError(Protocol.MCP_LATEST);
+        const errorData = (error as AxiosError).response?.data as Record<string, unknown>;
+        const errObj = errorData.error;
+
+        if (typeof errObj === 'string' && errObj.includes('invalid protocol version')) {
+          throw new ProtocolNegotiationError(Protocol.MCP_v20250618);
+        }
+
+        if (
+          typeof errObj === 'object' &&
+          errObj !== null &&
+          'code' in errObj &&
+          (errObj as Record<string, unknown>).code === -32004
+        ) {
+          const errData = (errObj as Record<string, unknown>).data;
+          if (errData && typeof errData === 'object' && 'supported' in errData) {
+            const supported = (errData as Record<string, unknown>).supported;
+            if (Array.isArray(supported) && supported.length > 0) {
+              let mutuallySupportedVersion: string | null = null;
+              for (const ourVer of getSupportedMcpVersions()) {
+                if (supported.includes(ourVer)) {
+                  mutuallySupportedVersion = ourVer;
+                  break;
+                }
+              }
+              if (mutuallySupportedVersion) {
+                throw new ProtocolNegotiationError(mutuallySupportedVersion);
+              }
+              throw new ProtocolNegotiationError(String(supported[0]));
+            }
+          }
+        }
       }
       logApiError(`Error posting data to ${url}:`, error);
       throw error;

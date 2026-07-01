@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v0.3.0...adk-v1.0.0) (2026-07-01)
+
+
+### Features
+
+* This release marks the first stable 1.0 of @toolbox-sdk/adk, now built on the stable @toolbox-sdk/core 1.0 line.
+
+
 ## [0.3.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v0.2.1...adk-v0.3.0) (2026-03-04)
 
 

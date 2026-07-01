@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v1.0.0...core-v1.0.1) (2026-07-01)
+
+
+### Bug Fixes
+
+* **core:** add 'number' schema type mapping to fix float parameter loading ([#359](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/359)) ([efb2b0f](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/efb2b0f75ad1fbda495e642435fcf66d58f3ac6e))
+
+
 ## [1.0.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v0.3.0...core-v1.0.0) (2026-04-02)
 
 

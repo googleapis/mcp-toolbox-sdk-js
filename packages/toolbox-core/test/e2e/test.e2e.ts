@@ -366,7 +366,7 @@ testBaseUrls.forEach(testBaseUrl => {
         let searchRowsTool: ReturnType<typeof ToolboxTool>;
 
         beforeAll(async () => {
-          searchRowsTool = await authToolboxClient.loadTool('search-rows');
+          searchRowsTool = await commonToolboxClient.loadTool('search-rows');
         });
 
         it('should correctly identify required and optional parameters in the schema', () => {
@@ -557,7 +557,7 @@ testBaseUrls.forEach(testBaseUrl => {
         let processDataTool: ReturnType<typeof ToolboxTool>;
 
         beforeAll(async () => {
-          processDataTool = await authToolboxClient.loadTool('process-data');
+          processDataTool = await commonToolboxClient.loadTool('process-data');
         });
 
         it('should correctly identify map/object parameters in the schema', () => {

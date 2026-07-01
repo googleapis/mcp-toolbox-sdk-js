@@ -13,11 +13,14 @@
 # limitations under the License.
 
 name: adk
-on:
+on: # zizmor: ignore[dangerous-triggers]
   pull_request:
     paths:
       - 'packages/toolbox-adk/**'
       - '!packages/toolbox-adk/**/*.md'
+  # pull_request_target only fires on `labeled`; running fork code is gated
+  # behind the maintainer-applied 'tests: run' label (see job `if:` guards),
+  # and no secrets or write token are exposed to untrusted fork code.
   pull_request_target:
     types: [labeled]
 

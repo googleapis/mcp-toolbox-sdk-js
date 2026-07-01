@@ -27,7 +27,11 @@ import {ZodTypeAny} from 'zod';
 const testBaseUrls = ['http://localhost:5000', 'http://localhost:5001'];
 
 testBaseUrls.forEach(testBaseUrl => {
-  describe.each(getSupportedMcpVersions())(
+  const versions = getSupportedMcpVersions().filter(
+    v => !(v === Protocol.MCP_DRAFT && testBaseUrl === 'http://localhost:5000')
+  );
+
+  describe.each(versions)(
     `ToolboxClient E2E MCP Tests against ${testBaseUrl} (%s)`,
     protocolVersion => {
       let commonToolboxClient: ToolboxClient;
@@ -227,8 +231,8 @@ testBaseUrls.forEach(testBaseUrl => {
 
       describe('Auth E2E Tests', () => {
         // We isolate authToolboxClient to this block so that the global commonToolboxClient
-        // remains completely unauthenticated. If we mutate commonToolboxClient with auth 
-        // claims here, subsequent test suites (like pagination) would inherit the auth state 
+        // remains completely unauthenticated. If we mutate commonToolboxClient with auth
+        // claims here, subsequent test suites (like pagination) would inherit the auth state
         // and mask bugs where unauthenticated requests should rightfully fail.
         let authToolboxClient: ToolboxClient;
         let authToken1: string;

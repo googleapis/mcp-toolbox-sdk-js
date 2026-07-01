@@ -92,8 +92,8 @@ describe('McpHttpTransportV20260618', () => {
           method: 'tools/list',
           params: expect.objectContaining({
             _meta: expect.objectContaining({
-              protocolVersion: Protocol.MCP_DRAFT,
-              clientInfo: expect.any(Object),
+              'io.modelcontextprotocol/protocolVersion': Protocol.MCP_DRAFT,
+              'io.modelcontextprotocol/clientInfo': expect.any(Object),
             }),
           }),
         }),
@@ -303,8 +303,8 @@ describe('McpHttpTransportV20260618', () => {
             name: 'testTool',
             arguments: {arg: 'val'},
             _meta: expect.objectContaining({
-              protocolVersion: Protocol.MCP_DRAFT,
-              clientInfo: expect.any(Object),
+              'io.modelcontextprotocol/protocolVersion': Protocol.MCP_DRAFT,
+              'io.modelcontextprotocol/clientInfo': expect.any(Object),
             }),
           }),
         }),

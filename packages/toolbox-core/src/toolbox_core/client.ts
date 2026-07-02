@@ -88,6 +88,13 @@ class ToolboxClient {
       }
       
       const globalSupported = getSupportedMcpVersions();
+      
+      for (const p of protocol) {
+        if (!globalSupported.includes(p as Protocol)) {
+          throw new Error(`Invalid protocol version '${p}'. Must be one of: ${globalSupported.join(', ')}`);
+        }
+      }
+      
       const sorted: string[] = [];
       
       for (const globalVer of globalSupported) {

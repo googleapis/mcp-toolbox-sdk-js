@@ -16,7 +16,7 @@ import {AxiosError} from 'axios';
 import {McpHttpTransportBase} from '../transportBase.js';
 import * as types from './types.js';
 
-import {ZodManifest} from '../../protocol.js';
+import {ZodManifest, Protocol, getSupportedMcpVersions} from '../../protocol.js';
 import {logApiError} from '../../errorUtils.js';
 import {warnIfHttpAndHeaders} from '../../utils.js';
 
@@ -28,12 +28,12 @@ import {ProtocolNegotiationError} from '../../errorUtils.js';
 export class McpHttpTransportV20260618 extends McpHttpTransportBase {
   #getMeta() {
     return {
-      protocolVersion: this._protocolVersion,
-      clientInfo: {
+      'io.modelcontextprotocol/protocolVersion': this._protocolVersion,
+      'io.modelcontextprotocol/clientInfo': {
         name: this._clientName || 'toolbox-core-js',
         version: this._clientVersion || VERSION,
       },
-      clientCapabilities: {},
+      'io.modelcontextprotocol/clientCapabilities': {},
     };
   }
   async #sendRequest<T>(
@@ -68,10 +68,17 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
     reqHeaders['MCP-Protocol-Version'] = this._protocolVersion;
     reqHeaders['Mcp-Method'] = method;
     if (typeof params === 'object' && params !== null) {
-      if ((method === 'tools/call' || method === 'prompts/get') && 'name' in params) {
-        reqHeaders['Mcp-Name'] = String((params as any).name);
+      if (
+        (method === 'tools/call' || method === 'prompts/get') &&
+        'name' in params
+      ) {
+        reqHeaders['Mcp-Name'] = String(
+          (params as Record<string, unknown>).name,
+        );
       } else if (method === 'resources/read' && 'uri' in params) {
-        reqHeaders['Mcp-Name'] = String((params as any).uri);
+        reqHeaders['Mcp-Name'] = String(
+          (params as Record<string, unknown>).uri,
+        );
       }
     }
 
@@ -106,12 +113,28 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
           const err = errResult.data.error;
           message = `MCP request failed with code ${err.code}: ${err.message}`;
           code = String(err.code);
-          
-          if (err.code === -32004 && err.data && typeof err.data === 'object' && 'supported' in err.data) {
-             const supported = (err.data as any).supported;
-             if (Array.isArray(supported) && supported.length > 0) {
-                 throw new ProtocolNegotiationError(supported[0]);
-             }
+
+          if (
+            err.code === -32004 &&
+            err.data &&
+            typeof err.data === 'object' &&
+            'supported' in err.data
+          ) {
+            const supported = (err.data as Record<string, unknown>).supported;
+            if (Array.isArray(supported) && supported.length > 0) {
+              let mutuallySupportedVersion: string | null = null;
+              for (const ourVer of getSupportedMcpVersions()) {
+                if (supported.includes(ourVer)) {
+                  mutuallySupportedVersion = ourVer;
+                  break;
+                }
+              }
+              if (mutuallySupportedVersion) {
+                throw new ProtocolNegotiationError(mutuallySupportedVersion);
+              }
+              // Fallback to the first available if no intersection is found
+              throw new ProtocolNegotiationError(String(supported[0]));
+            }
           }
         }
 
@@ -135,16 +158,59 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
       }
 
       return null;
-    } catch (error) {
+    } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'isAxiosError' in error &&
+        (error as AxiosError).response?.status === 400 &&
+        (error as AxiosError).response?.data &&
+        typeof (error as AxiosError).response?.data === 'object' &&
+        'error' in ((error as AxiosError).response?.data as Record<string, unknown>)
+      ) {
+        const errorData = (error as AxiosError).response?.data as Record<string, unknown>;
+        const errObj = errorData.error;
+
+        if (typeof errObj === 'string' && errObj.includes('invalid protocol version')) {
+          throw new ProtocolNegotiationError(Protocol.MCP_v20250618);
+        }
+
+        if (
+          typeof errObj === 'object' &&
+          errObj !== null &&
+          'code' in errObj &&
+          (errObj as Record<string, unknown>).code === -32004
+        ) {
+          const errData = (errObj as Record<string, unknown>).data;
+          if (errData && typeof errData === 'object' && 'supported' in errData) {
+            const supported = (errData as Record<string, unknown>).supported;
+            if (Array.isArray(supported) && supported.length > 0) {
+              let mutuallySupportedVersion: string | null = null;
+              for (const ourVer of getSupportedMcpVersions()) {
+                if (supported.includes(ourVer)) {
+                  mutuallySupportedVersion = ourVer;
+                  break;
+                }
+              }
+              if (mutuallySupportedVersion) {
+                throw new ProtocolNegotiationError(mutuallySupportedVersion);
+              }
+              throw new ProtocolNegotiationError(String(supported[0]));
+            }
+          }
+        }
+      }
       logApiError(`Error posting data to ${url}:`, error);
       throw error;
     }
   }
 
   protected async initializeSession(
-    headers?: Record<string, string>,
+    // Required to match McpHttpTransportBase signature, but unused because
+    // Stateless MCP does not use an initialize handshake.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _headers?: Record<string, string>,
   ): Promise<void> {
-    // Stateless MCP does not use initialize handshake
     this._serverVersion = 'unknown';
   }
 
@@ -223,7 +289,9 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
       warnIfHttpAndHeaders(this._mcpBaseUrl, headers);
     }
 
-    const params: types.CallToolRequestParams & {_meta?: any} = {
+    const params: types.CallToolRequestParams & {
+      _meta?: Record<string, unknown>;
+    } = {
       name: toolName,
       arguments: arguments_,
       _meta: this.#getMeta(),

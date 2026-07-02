@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import {ProtocolNegotiationError} from '../../src/toolbox_core/errorUtils.js';
 import {McpHttpTransportV20241105} from '../../src/toolbox_core/mcp/v20241105/mcp.js';
 import {jest} from '@jest/globals';
 import axios, {AxiosInstance} from 'axios';
@@ -217,7 +218,7 @@ describe('McpHttpTransportV20241105', () => {
         .spyOn(console, 'error')
         .mockImplementation(() => {});
       await expect(transport.toolsList()).rejects.toThrow(
-        /MCP version mismatch/,
+        ProtocolNegotiationError,
       );
       errorSpy.mockRestore();
     });

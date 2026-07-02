@@ -107,7 +107,7 @@ export function getToolboxBinaryGcsPath(toolboxVersion: string): string {
     archForPath = 'amd64';
   }
   const osSystemForPath = system === 'win32' ? 'windows' : system;
-  return `v${toolboxVersion}/${osSystemForPath}/${archForPath}/toolbox`;
+  return `${toolboxVersion}/${osSystemForPath}/${archForPath}/toolbox`;
 }
 
 export function delay(ms: number): Promise<void> {

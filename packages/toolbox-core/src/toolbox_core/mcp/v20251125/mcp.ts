@@ -17,7 +17,7 @@ import {McpHttpTransportBase} from '../transportBase.js';
 import * as types from './types.js';
 
 import {ZodManifest} from '../../protocol.js';
-import {logApiError} from '../../errorUtils.js';
+import {logApiError, ProtocolNegotiationError} from '../../errorUtils.js';
 import {warnIfHttpAndHeaders} from '../../utils.js';
 
 import {v4 as uuidv4} from 'uuid';
@@ -108,7 +108,48 @@ export class McpHttpTransportV20251125 extends McpHttpTransportBase {
       }
 
       return null;
-    } catch (error) {
+    } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'isAxiosError' in error &&
+        (error as AxiosError).response?.status === 400 &&
+        (error as AxiosError).response?.data &&
+        typeof (error as AxiosError).response?.data === 'object' &&
+        'error' in ((error as AxiosError).response?.data as Record<string, unknown>)
+      ) {
+        const errorData = (error as AxiosError).response?.data as Record<string, unknown>;
+        const errObj = errorData.error;
+
+        if (typeof errObj === 'string' && errObj.includes('invalid protocol version')) {
+          throw new ProtocolNegotiationError(Protocol.MCP_v20250618);
+        }
+
+        if (
+          typeof errObj === 'object' &&
+          errObj !== null &&
+          'code' in errObj &&
+          (errObj as Record<string, unknown>).code === -32004
+        ) {
+          const errData = (errObj as Record<string, unknown>).data;
+          if (errData && typeof errData === 'object' && 'supported' in errData) {
+            const supported = (errData as Record<string, unknown>).supported;
+            if (Array.isArray(supported) && supported.length > 0) {
+              let mutuallySupportedVersion: string | null = null;
+              for (const ourVer of getSupportedMcpVersions()) {
+                if (supported.includes(ourVer)) {
+                  mutuallySupportedVersion = ourVer;
+                  break;
+                }
+              }
+              if (mutuallySupportedVersion) {
+                throw new ProtocolNegotiationError(mutuallySupportedVersion);
+              }
+              throw new ProtocolNegotiationError(String(supported[0]));
+            }
+          }
+        }
+      }
       logApiError(`Error posting data to ${url}:`, error);
       throw error;
     }
@@ -142,11 +183,7 @@ export class McpHttpTransportV20251125 extends McpHttpTransportBase {
     this._serverVersion = result.serverInfo.version;
 
     if (result.protocolVersion !== this._protocolVersion) {
-      const error = new Error(
-        `MCP version mismatch: client does not support server version ${result.protocolVersion}`,
-      );
-      logApiError('MCP Initialization Error', error);
-      throw error;
+      throw new ProtocolNegotiationError(result.protocolVersion as string);
     }
 
     if (!result.capabilities.tools) {

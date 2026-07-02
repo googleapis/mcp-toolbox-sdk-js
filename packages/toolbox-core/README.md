@@ -69,6 +69,17 @@ The core package provides a framework-agnostic way to interact with your MCP Too
 
 - [Transport Protocols](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/core/#transport-protocols)
 - [Loading Tools](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/core/#loading-tools)
+
+## Protocol Negotiation
+
+By default, the client negotiates the newest protocol version supported by the server. You can provide a custom list of supported protocols to restrict negotiation to specific versions or a single version. Ensure you pass the `Protocol` enum constants.
+
+```javascript
+import { ToolboxClient, Protocol } from '@toolbox-sdk/core';
+
+// Pass a custom list of supported protocols as the fourth argument
+const client = new ToolboxClient(URL, undefined, undefined, [Protocol.MCP_v20251125, Protocol.MCP_v20241105]);
+```
 - [Invoking Tools](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/core/#invoking-tools)
 - [Client to Server Authentication](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/core/#client-to-server-authentication)
 - [Authenticating Tools](https://mcp-toolbox.dev/documentation/connect-to/toolbox-sdks/javascript-sdk/core/#authenticating-tools)

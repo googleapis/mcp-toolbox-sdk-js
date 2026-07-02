@@ -205,7 +205,7 @@ describe('ToolboxClient', () => {
           undefined,
           'unknown-protocol' as Protocol,
         );
-      }).toThrow('Unsupported protocol version: unknown-protocol');
+      }).toThrow(/Invalid protocol version 'unknown-protocol'/);
     });
     
     it('should pass supportedProtocols to transport', () => {

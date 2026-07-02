@@ -24,7 +24,9 @@ import {CustomGlobal} from './types.js';
 import {authTokenGetter} from './utils.js';
 import {ZodTypeAny} from 'zod';
 
-const testBaseUrls = ['http://localhost:5000', 'http://localhost:5001'];
+const TOOLBOX_SERVER_URL_STABLE = 'http://localhost:5000';
+const TOOLBOX_SERVER_URL_DRAFT = 'http://localhost:5001';
+const testBaseUrls = [TOOLBOX_SERVER_URL_STABLE, TOOLBOX_SERVER_URL_DRAFT];
 
 testBaseUrls.forEach(testBaseUrl => {
   describe.each(getSupportedMcpVersions())(
@@ -662,12 +664,48 @@ testBaseUrls.forEach(testBaseUrl => {
       expect(typeof response).toBe('string');
       expect(response).toContain('row1');
 
-      if (testBaseUrl === 'http://localhost:5001') {
+      if (testBaseUrl === TOOLBOX_SERVER_URL_DRAFT) {
         // 5001 supports draft, so no fallback
         expect(client.protocolVersion).toBe(Protocol.MCP_v2026_DRAFT);
       } else {
         // 5000 does not support draft, so fallback
         expect(client.protocolVersion).not.toBe(Protocol.MCP_v2026_DRAFT);
+      }
+    });
+
+    it('should correctly negotiate Protocol.MCP_LATEST', async () => {
+      const client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP_LATEST,
+      );
+
+      const tool = await client.loadTool('get-n-rows');
+      const response = await tool({num_rows: '1'});
+      expect(typeof response).toBe('string');
+      expect(response).toContain('row1');
+
+      expect(client.protocolVersion).toBe(Protocol.MCP_LATEST);
+    });
+
+    it('should correctly negotiate with a custom list [Protocol.MCP_LATEST, Protocol.MCP_DRAFT]', async () => {
+      const client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        [Protocol.MCP_LATEST, Protocol.MCP_DRAFT],
+      );
+
+      const tool = await client.loadTool('get-n-rows');
+      const response = await tool({num_rows: '1'});
+      expect(typeof response).toBe('string');
+      expect(response).toContain('row1');
+
+      if (testBaseUrl === TOOLBOX_SERVER_URL_DRAFT) {
+        expect(client.protocolVersion).toBe(Protocol.MCP_DRAFT);
+      } else {
+        expect(client.protocolVersion).toBe(Protocol.MCP_LATEST);
       }
     });
   });

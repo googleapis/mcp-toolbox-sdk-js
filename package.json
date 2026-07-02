@@ -41,7 +41,7 @@
     "@typescript-eslint/utils": "^8.56.1",
     "@typescript-eslint/eslint-plugin": "^8.56.1",
     "@typescript-eslint/parser": "^8.56.1",
-    "uuid": "^11.1.1",
+    "uuid": "^14.0.0",
     "tmp": "^0.2.7",
     "tar": "^7.5.11",
     "@tootallnate/once": "^3.0.0"

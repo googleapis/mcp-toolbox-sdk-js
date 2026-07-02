@@ -83,7 +83,7 @@ By default, the client negotiates the newest protocol version supported by the s
 import { ToolboxClient, Protocol } from '@toolbox-sdk/core';
 
 // Pass a custom list of supported protocols as the fourth argument
-const client = new ToolboxClient(URL, undefined, undefined, [Protocol.MCP_v20251125, Protocol.MCP_v20241105]);
+const client = new ToolboxClient(URL, undefined, undefined, [Protocol.MCP_LATEST, Protocol.MCP_DRAFT]);
 ```
 
 # Contributing

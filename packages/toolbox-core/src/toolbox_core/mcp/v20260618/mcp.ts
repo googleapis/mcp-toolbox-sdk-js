@@ -123,7 +123,7 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
             const supported = (err.data as Record<string, unknown>).supported;
             if (Array.isArray(supported) && supported.length > 0) {
               let mutuallySupportedVersion: string | null = null;
-              for (const ourVer of getSupportedMcpVersions()) {
+              for (const ourVer of (this.supportedProtocols || getSupportedMcpVersions())) {
                 if (supported.includes(ourVer)) {
                   mutuallySupportedVersion = ourVer;
                   break;
@@ -186,7 +186,7 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
             const supported = (errData as Record<string, unknown>).supported;
             if (Array.isArray(supported) && supported.length > 0) {
               let mutuallySupportedVersion: string | null = null;
-              for (const ourVer of getSupportedMcpVersions()) {
+              for (const ourVer of (this.supportedProtocols || getSupportedMcpVersions())) {
                 if (supported.includes(ourVer)) {
                   mutuallySupportedVersion = ourVer;
                   break;

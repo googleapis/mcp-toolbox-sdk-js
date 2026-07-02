@@ -231,6 +231,62 @@ describe('McpHttpTransportV20251125', () => {
       errorSpy.mockRestore();
     });
 
+    it('should throw ProtocolNegotiationError on -32004 with supported array', async () => {
+      const errorObj = new Error('Request failed with status code 400') as any;
+      errorObj.isAxiosError = true;
+      errorObj.response = {
+        status: 400,
+        data: {
+          error: {
+            code: -32004,
+            message: 'Protocol version not supported',
+            data: {
+              supported: ['2024-11-05']
+            }
+          }
+        }
+      };
+
+      mockSession.post.mockRejectedValueOnce(errorObj);
+
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+      
+      await expect(transport.toolsList()).rejects.toThrow(
+        new ProtocolNegotiationError('2024-11-05'),
+      );
+      errorSpy.mockRestore();
+    });
+
+    it('should throw ProtocolNegotiationError on -32004 with no intersection', async () => {
+      const errorObj = new Error('Request failed with status code 400') as any;
+      errorObj.isAxiosError = true;
+      errorObj.response = {
+        status: 400,
+        data: {
+          error: {
+            code: -32004,
+            message: 'Protocol version not supported',
+            data: {
+              supported: ['9999-01-01']
+            }
+          }
+        }
+      };
+
+      mockSession.post.mockRejectedValueOnce(errorObj);
+
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+      
+      await expect(transport.toolsList()).rejects.toThrow(
+        new ProtocolNegotiationError('9999-01-01'),
+      );
+      errorSpy.mockRestore();
+    });
+
     it('should throw error if tools capability missing', async () => {
       const initResponse = {
         data: {

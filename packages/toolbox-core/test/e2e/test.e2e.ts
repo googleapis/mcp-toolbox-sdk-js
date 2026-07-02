@@ -689,12 +689,12 @@ testBaseUrls.forEach(testBaseUrl => {
       expect(client.protocolVersion).toBe(Protocol.MCP_LATEST);
     });
 
-    it('should correctly negotiate with a custom list [Protocol.MCP_LATEST, Protocol.MCP_DRAFT]', async () => {
+    it('should correctly negotiate with a custom list [Protocol.MCP_DRAFT, Protocol.MCP_LATEST]', async () => {
       const client = new ToolboxClient(
         testBaseUrl,
         undefined,
         undefined,
-        [Protocol.MCP_LATEST, Protocol.MCP_DRAFT],
+        [Protocol.MCP_DRAFT, Protocol.MCP_LATEST],
       );
 
       const tool = await client.loadTool('get-n-rows');

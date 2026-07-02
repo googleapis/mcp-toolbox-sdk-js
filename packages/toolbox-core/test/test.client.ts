@@ -21,6 +21,7 @@ import {McpHttpTransportV20241105} from '../src/toolbox_core/mcp/v20241105/mcp.j
 import {McpHttpTransportV20250326} from '../src/toolbox_core/mcp/v20250326/mcp.js';
 import {McpHttpTransportV20250618} from '../src/toolbox_core/mcp/v20250618/mcp.js';
 import {McpHttpTransportV20251125} from '../src/toolbox_core/mcp/v20251125/mcp.js';
+import {McpHttpTransportV20260618} from '../src/toolbox_core/mcp/v20260618/mcp.js';
 
 // --- Mock Transport Implementation ---
 class MockTransport implements ITransport {
@@ -67,6 +68,14 @@ jest.mock('../src/toolbox_core/mcp/v20251125/mcp', () => {
   return {
     __esModule: true,
     McpHttpTransportV20251125: jest.fn(),
+  };
+});
+
+// Mock the McpHttpTransportV20260618 module
+jest.mock('../src/toolbox_core/mcp/v20260618/mcp', () => {
+  return {
+    __esModule: true,
+    McpHttpTransportV20260618: jest.fn(),
   };
 });
 
@@ -196,7 +205,20 @@ describe('ToolboxClient', () => {
           undefined,
           'unknown-protocol' as Protocol,
         );
-      }).toThrow('Unsupported protocol version: unknown-protocol');
+      }).toThrow(/Invalid protocol version 'unknown-protocol'/);
+    });
+    
+    it('should pass supportedProtocols to transport', () => {
+      client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        ['2025-11-25', 'DRAFT-2026-v1']
+      );
+      // The array is sorted newer to older by getSupportedMcpVersions order
+      // so DRAFT-2026-v1 is first.
+      const mockInstance = (McpHttpTransportV20260618 as jest.Mock).mock.instances[0] as any;
+      expect(mockInstance.supportedProtocols).toEqual(['DRAFT-2026-v1', '2025-11-25']);
     });
 
     it('should pass client name and version to transport', () => {

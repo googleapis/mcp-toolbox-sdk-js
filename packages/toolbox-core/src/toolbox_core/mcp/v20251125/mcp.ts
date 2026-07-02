@@ -16,7 +16,7 @@ import {AxiosError} from 'axios';
 import {McpHttpTransportBase} from '../transportBase.js';
 import * as types from './types.js';
 
-import {ZodManifest} from '../../protocol.js';
+import {ZodManifest, Protocol, getSupportedMcpVersions} from '../../protocol.js';
 import {logApiError, ProtocolNegotiationError} from '../../errorUtils.js';
 import {warnIfHttpAndHeaders} from '../../utils.js';
 
@@ -136,7 +136,7 @@ export class McpHttpTransportV20251125 extends McpHttpTransportBase {
             const supported = (errData as Record<string, unknown>).supported;
             if (Array.isArray(supported) && supported.length > 0) {
               let mutuallySupportedVersion: string | null = null;
-              for (const ourVer of getSupportedMcpVersions()) {
+              for (const ourVer of (this.supportedProtocols || getSupportedMcpVersions())) {
                 if (supported.includes(ourVer)) {
                   mutuallySupportedVersion = ourVer;
                   break;

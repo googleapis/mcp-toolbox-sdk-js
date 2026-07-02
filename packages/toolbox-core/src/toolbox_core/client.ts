@@ -51,6 +51,7 @@ class ToolboxClient {
   #url: string;
   #transport: ITransport;
   #clientHeaders: ClientHeadersConfig;
+  #supportedProtocols: string[] | undefined;
 
   /**
    * The negotiated protocol version currently in use.
@@ -72,21 +73,53 @@ class ToolboxClient {
     url: string,
     session?: AxiosInstance | null,
     clientHeaders?: ClientHeadersConfig | null,
-    protocol: Protocol = Protocol.MCP,
+    protocol: Protocol | Protocol[] | string[] | string = Protocol.MCP,
     clientName?: string,
     clientVersion?: string,
   ) {
     this.#url = url;
     this.#clientHeaders = clientHeaders || {};
     warnIfHttpAndHeaders(url, this.#clientHeaders);
-    if (!getSupportedMcpVersions().includes(protocol)) {
-      throw new Error(`Unsupported protocol version: ${protocol}`);
+    
+    let initialProtocol: Protocol;
+    if (Array.isArray(protocol)) {
+      if (protocol.length === 0) {
+        throw new Error('Protocol array cannot be empty');
+      }
+      
+      const globalSupported = getSupportedMcpVersions();
+      
+      for (const p of protocol) {
+        if (!globalSupported.includes(p as Protocol)) {
+          throw new Error(`Invalid protocol version '${p}'. Must be one of: ${globalSupported.join(', ')}`);
+        }
+      }
+      
+      const sorted: string[] = [];
+      
+      for (const globalVer of globalSupported) {
+        if (protocol.includes(globalVer as any)) {
+          sorted.push(globalVer);
+        }
+      }
+      
+      if (sorted.length === 0) {
+        throw new Error('None of the provided protocols are supported');
+      }
+      
+      this.#supportedProtocols = sorted;
+      initialProtocol = sorted[0] as Protocol; // Start with the highest requested version
+    } else {
+      initialProtocol = protocol as Protocol;
+      if (!getSupportedMcpVersions().includes(initialProtocol)) {
+        throw new Error(`Unsupported protocol version: ${initialProtocol}`);
+      }
     }
 
-    this.#transport = this.#createTransport(
+    this.#transport = this.#createTransportWithProtocols(
       url,
       session || undefined,
-      protocol,
+      initialProtocol,
       clientName,
       clientVersion,
     );
@@ -143,6 +176,20 @@ class ToolboxClient {
       default:
         throw new Error(`Unsupported MCP protocol version: ${protocol}`);
     }
+  }
+
+  #createTransportWithProtocols(
+    url: string,
+    session: AxiosInstance | undefined,
+    protocol: Protocol,
+    clientName?: string,
+    clientVersion?: string,
+  ): ITransport {
+    const transport = this.#createTransport(url, session, protocol, clientName, clientVersion);
+    if (this.#supportedProtocols) {
+      transport.supportedProtocols = this.#supportedProtocols;
+    }
+    return transport;
   }
 
   /**
@@ -242,7 +289,7 @@ class ToolboxClient {
       manifest = await this.#transport.toolGet(name, headers);
     } catch (e: unknown) {
       if (e instanceof ProtocolNegotiationError) {
-        this.#transport = this.#createTransport(
+        this.#transport = this.#createTransportWithProtocols(
           this.#url,
           undefined,
           e.fallbackVersion as Protocol,
@@ -327,7 +374,7 @@ class ToolboxClient {
       manifest = await this.#transport.toolsList(toolsetName, headers);
     } catch (e: unknown) {
       if (e instanceof ProtocolNegotiationError) {
-        this.#transport = this.#createTransport(
+        this.#transport = this.#createTransportWithProtocols(
           this.#url,
           undefined,
           e.fallbackVersion as Protocol,

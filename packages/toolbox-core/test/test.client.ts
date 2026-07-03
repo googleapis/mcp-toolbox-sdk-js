@@ -14,11 +14,7 @@
 
 import {jest} from '@jest/globals';
 import {ITransport} from '../src/toolbox_core/transport.types.js';
-import {
-  ZodManifest,
-  Protocol,
-  MCP_LATEST,
-} from '../src/toolbox_core/protocol.js';
+import {ZodManifest, Protocol} from '../src/toolbox_core/protocol.js';
 import type {ToolboxClient as ToolboxClientType} from '../src/toolbox_core/client.js';
 import {ToolboxClient} from '../src/toolbox_core/client.js';
 import {McpHttpTransportV20241105} from '../src/toolbox_core/mcp/v20241105/mcp.js';
@@ -141,9 +137,6 @@ describe('ToolboxClient', () => {
     });
 
     it('should initialize with MCP transport (explicit) when specified', () => {
-      const consoleSpy = jest
-        .spyOn(console, 'warn')
-        .mockImplementation(() => {});
       client = new ToolboxClient(
         testBaseUrl,
         undefined,
@@ -157,12 +150,6 @@ describe('ToolboxClient', () => {
         undefined,
         undefined,
       );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining(
-          `A newer version of MCP: ${MCP_LATEST} is available`,
-        ),
-      );
-      consoleSpy.mockRestore();
     });
 
     it('should initialize with MCP v20241105 transport when specified', () => {

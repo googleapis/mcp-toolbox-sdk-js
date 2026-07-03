@@ -15,6 +15,7 @@
 import {z, ZodRawShape, ZodTypeAny, ZodObject} from 'zod';
 
 export enum Protocol {
+  MCP_DRAFT_2026_v1 = 'DRAFT-2026-v1',
   MCP_v20241105 = '2024-11-05',
   MCP_v20250326 = '2025-03-26',
   MCP_v20250618 = '2025-06-18',
@@ -22,14 +23,15 @@ export enum Protocol {
   MCP = MCP_v20250618, // Default MCP
 }
 
-export const MCP_LATEST = Protocol.MCP_v20251125;
+export const MCP_LATEST = Protocol.MCP_DRAFT_2026_v1;
 
 export function getSupportedMcpVersions(): Protocol[] {
   return [
-    Protocol.MCP_v20241105,
-    Protocol.MCP_v20250326,
-    Protocol.MCP_v20250618,
+    Protocol.MCP_DRAFT_2026_v1,
     Protocol.MCP_v20251125,
+    Protocol.MCP_v20250618,
+    Protocol.MCP_v20250326,
+    Protocol.MCP_v20241105,
   ];
 }
 

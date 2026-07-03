@@ -40,3 +40,13 @@ export function logApiError(baseMessage: string, error: unknown): void {
   }
   console.error(baseMessage, loggableDetails);
 }
+
+export class ProtocolNegotiationError extends Error {
+  fallbackVersion: string;
+
+  constructor(fallbackVersion: string) {
+    super(`Server requires protocol fallback to ${fallbackVersion}`);
+    this.name = 'ProtocolNegotiationError';
+    this.fallbackVersion = fallbackVersion;
+  }
+}

@@ -14,6 +14,9 @@ title = "MCP Toolbox JS API"
     version = "dev"
     url = "/core/dev/"
   [[params.versions.core]]
+    version = "v1.0.1"
+    url = "/core/v1.0.1/"
+  [[params.versions.core]]
     version = "v1.0.0"
     url = "/core/v1.0.0/"
   [[params.versions.core]]
@@ -25,6 +28,9 @@ title = "MCP Toolbox JS API"
   [[params.versions.adk]]
     version = "dev"
     url = "/adk/dev/"
+  [[params.versions.adk]]
+    version = "v1.0.0"
+    url = "/adk/v1.0.0/"
   [[params.versions.adk]]
     version = "v0.3.0"
     url = "/adk/v0.3.0/"

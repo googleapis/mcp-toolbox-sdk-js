@@ -1,5 +1,6 @@
 <a class="dropdown-item" href="/adk/latest/">latest</a>
 <a class="dropdown-item" href="/adk/dev/">dev</a>
+<a class="dropdown-item" href="/adk/v1.0.0/">v1.0.0</a>
 <a class="dropdown-item" href="/adk/v0.3.0/">v0.3.0</a>
 <a class="dropdown-item" href="/adk/v0.2.1/">v0.2.1</a>
 <a class="dropdown-item" href="/adk/v0.2.0/">v0.2.0</a>

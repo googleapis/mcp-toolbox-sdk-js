@@ -56,10 +56,9 @@ each list below. It must follow the directory convention
     *Resolve* step's `case`, add a `refs/tags/foo-v*) … packages=foo …` arm and
     append `foo` to the `dev` default (`*) … packages=core adk foo …`).
 3.  [**`api-docs-backfill.yml`**](.github/workflows/api-docs-backfill.yml)
-    (backfill) — add `foo` to the `package` input `options:` and a
-    `foo) echo "dir=packages/toolbox-foo" …` arm in *Resolve package directory*.
-    If it imports another package's types, add a dependency build mirroring the
-    `if: inputs.package == 'adk'` step.
+    (backfill) — add `foo` to the `package` input `options:`. The run checks out
+    the release tag and builds the whole workspace, so no per-package arm or
+    dependency-build step is needed.
 4.  [**`docs-site/hugo.toml`**](docs-site/hugo.toml) — add a
     `[[params.versions.foo]]` block (at least `dev`); see
     [Adding a version to the picker](#adding-a-version-to-the-picker).
@@ -76,12 +75,22 @@ tagged ref and regenerates the dropdown/`latest` files in that run. Only list a
 version whose `/<pkg>/<version>/` pages already exist (or will after this run), or
 the dropdown link 404s.
 
+If a release was tagged without this block (so the dropdown and `latest` never
+picked it up), add it to `main` afterward. The package's `releases.releases` and
+`latest` files are hoisted to `/<pkg>/` and preserved across deploys, so any later
+build — including the next `dev` push to `main` — regenerates them from `main`'s
+`hugo.toml` and fills in the missing version.
+
 ### Backfilling old docs
 
 Use the **`api-docs-backfill.yml`** (API Reference Backfill) workflow to publish
-docs for a version whose pages are missing — typically releases that predate the
-docs tooling, or a deployment that failed. It builds **one historical version per
-run**.
+docs for a version whose pages are missing — typically a tag whose on-push deploy
+failed or never ran. It builds **one version per run**.
+
+It builds **entirely from the release tag** (`<pkg>-<version>`), so it only works
+for tags that already carry the docs tooling (`docs-site/`, `scripts/`, and
+TypeDoc in the lockfile). Tags cut before that tooling landed can't be backfilled
+this way.
 
 Unlike `api-docs.yml`, this workflow does **not** deploy to production directly.
 Each run opens a **pull request into the `gh-pages` branch**, so the docs are
@@ -89,17 +98,15 @@ reviewed before they go live. The page is published only when you merge that PR.
 
 How a run works:
 
-1.  It checks out `main` for the current docs tooling (layouts, scripts, version
-    picker), then overlays the requested version's package **`src/`** from its
-    release tag (`<pkg>-<version>`), so TypeDoc documents that version's API. Only
-    `src/` is overlaid, so the root lockfile / `package.json` / `tsconfig` stay in
-    sync and `npm ci` stays valid.
-2.  For an `adk` backfill it builds `@toolbox-sdk/core` first (so `adk`'s docs
-    resolve core's types); a `core` backfill needs no dependency build.
-3.  It builds `/<package>/<version>/` (plus the package's `releases`/`latest`
-    files), overlays it onto a clone of the live `gh-pages` tree — existing
-    versions, `CNAME`, and `.nojekyll` are preserved — and opens a PR from branch
-    `backfill/<pkg>-<ver>` with `gh-pages` as the base.
+1.  It checks out the release tag `<pkg>-<version>` in full — the tag carries its
+    own `src/`, `package.json`, lockfile, and the docs tooling — and runs
+    `npm ci && npm run build` on that tree, so TypeDoc documents that version's API
+    against a self-consistent workspace. (The whole workspace is built, so an `adk`
+    backfill resolves `@toolbox-sdk/core`'s types with no extra step.)
+2.  It builds `/<package>/<version>/` (plus the package's `releases`/`latest`
+    files) from the tag's `hugo.toml`, overlays it onto a clone of the live
+    `gh-pages` tree — existing versions, `CNAME`, and `.nojekyll` are preserved —
+    and opens a PR from branch `backfill/<pkg>-<ver>` with `gh-pages` as the base.
 
 Steps to backfill:
 

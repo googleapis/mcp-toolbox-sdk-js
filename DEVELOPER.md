@@ -12,17 +12,15 @@ General contribution guidelines (CLA, code review) live in
 ## API Reference Documentation
 
 The API reference is published to [js.mcp-toolbox.dev](https://js.mcp-toolbox.dev).
+
 It is generated with [TypeDoc](https://typedoc.org/) (via
 [`typedoc-plugin-markdown`](https://typedoc-plugin-markdown.org/)) and rendered by
 [Hugo](https://gohugo.io/) + [Docsy](https://www.docsy.dev/) from the `docs-site/`
-directory. Docs are built **per package, per version** and served at
+directory. 
+
+Docs are built **per package, per version** and served at
 `/<package>/<version>/` (e.g. `/core/v1.0.0/`), with a `/<package>/latest/`
 redirect to the newest release. `<package>` is the URL slug `core` or `adk`.
-
-Each package renders as one page;
-[`generate-api-docs.sh`](scripts/generate-api-docs.sh) derives the module list
-from its `package.json` `exports`, so a new public subpath export is documented
-automatically.
 
 ### Workflows
 
@@ -75,12 +73,6 @@ tagged ref and regenerates the dropdown/`latest` files in that run. Only list a
 version whose `/<pkg>/<version>/` pages already exist (or will after this run), or
 the dropdown link 404s.
 
-If a release was tagged without this block (so the dropdown and `latest` never
-picked it up), add it to `main` afterward. The package's `releases.releases` and
-`latest` files are hoisted to `/<pkg>/` and preserved across deploys, so any later
-build — including the next `dev` push to `main` — regenerates them from `main`'s
-`hugo.toml` and fills in the missing version.
-
 ### Backfilling old docs
 
 Use the **`api-docs-backfill.yml`** (API Reference Backfill) workflow to publish
@@ -110,10 +102,7 @@ How a run works:
 
 Steps to backfill:
 
-1.  Make sure the version is listed in `docs-site/hugo.toml` (see
-    [Adding a version to the picker](#adding-a-version-to-the-picker)), so the
-    dropdown links to it.
-2.  Trigger the workflow from the Actions tab, or with:
+1.  Trigger the workflow from the Actions tab, or with:
 
     ```bash
     gh workflow run api-docs-backfill.yml -f package=core -f version=v1.0.0
@@ -122,9 +111,18 @@ Steps to backfill:
     To catch up several versions, dispatch it once per `package`/`version`. The
     concurrency group is scoped per version, so the runs are independent and none
     are cancelled — each opens its own PR.
-3.  Review the resulting `backfill/<pkg>-<ver>` PR (the diff should be just that
-    version's directory) and **merge it into `gh-pages`** to publish. Re-running
-    the workflow for the same version updates the existing PR's branch.
+2.  Review the resulting `backfill/<pkg>-<ver>` PR (the diff should be just that
+    version's directory) and **merge it into `gh-pages`** to publish the pages.
+    Re-running the workflow for the same version updates the existing PR's branch.
+3.  **Add the version to the picker** if it isn't already listed. This is a
+    separate step: the backfill builds `releases.releases`/`latest` from the
+    *tag's* `hugo.toml`, so it does **not** add the version to the live dropdown —
+    that list is regenerated from `main`'s `hugo.toml`. Add a
+    `[[params.versions.<pkg>]]` block on `main` (see
+    [Adding a version to the picker](#adding-a-version-to-the-picker)); the next
+    deploy regenerates the hoisted `/<pkg>/releases.releases` and `/<pkg>/latest`
+    to include it. Merge step 2 first so the new dropdown link resolves instead of
+    404ing.
 
 #### Previewing a backfill PR
 

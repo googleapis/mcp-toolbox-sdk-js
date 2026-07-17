@@ -14,11 +14,7 @@
 
 import {jest} from '@jest/globals';
 import {ITransport} from '../src/toolbox_core/transport.types.js';
-import {
-  ZodManifest,
-  Protocol,
-  MCP_LATEST,
-} from '../src/toolbox_core/protocol.js';
+import {ZodManifest, Protocol} from '../src/toolbox_core/protocol.js';
 import type {ToolboxClient as ToolboxClientType} from '../src/toolbox_core/client.js';
 import {ToolboxClient} from '../src/toolbox_core/client.js';
 import {McpHttpTransportV20241105} from '../src/toolbox_core/mcp/v20241105/mcp.js';
@@ -31,6 +27,7 @@ import {ProtocolNegotiationError} from '../src/toolbox_core/errorUtils.js';
 // --- Mock Transport Implementation ---
 class MockTransport implements ITransport {
   readonly baseUrl: string;
+  protocolVersion = Protocol.MCP;
   toolGet: jest.MockedFunction<ITransport['toolGet']>;
   toolsList: jest.MockedFunction<ITransport['toolsList']>;
   toolInvoke: jest.MockedFunction<ITransport['toolInvoke']>;
@@ -141,9 +138,6 @@ describe('ToolboxClient', () => {
     });
 
     it('should initialize with MCP transport (explicit) when specified', () => {
-      const consoleSpy = jest
-        .spyOn(console, 'warn')
-        .mockImplementation(() => {});
       client = new ToolboxClient(
         testBaseUrl,
         undefined,
@@ -157,12 +151,6 @@ describe('ToolboxClient', () => {
         undefined,
         undefined,
       );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining(
-          `A newer version of MCP: ${MCP_LATEST} is available`,
-        ),
-      );
-      consoleSpy.mockRestore();
     });
 
     it('should initialize with MCP v20241105 transport when specified', () => {
@@ -519,14 +507,35 @@ describe('ToolboxClient', () => {
   describe('Insecure Protocol Warnings', () => {
     let consoleSpy: jest.SpiedFunction<typeof console.warn>;
     const httpUrl = 'http://api.example.com';
+    let httpTransport: MockTransport;
+    let httpsTransport: MockTransport;
 
     beforeEach(() => {
       consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      // We need to ensure the transport has the HTTP URL for these tests
-      const httpTransport = new MockTransport(httpUrl);
-      // We mock the implementation for the default MCP version used by ToolboxClient
+      httpTransport = new MockTransport(httpUrl);
+      httpsTransport = new MockTransport(testBaseUrl);
+
+      const mockImpl = (url: unknown) => {
+        if (typeof url !== 'string') {
+          throw new Error('Expected url to be string');
+        }
+        return url.startsWith('https:') ? httpsTransport : httpTransport;
+      };
+
+      (McpHttpTransportV20241105 as unknown as jest.Mock).mockImplementation(
+        mockImpl,
+      );
+      (McpHttpTransportV20250326 as unknown as jest.Mock).mockImplementation(
+        mockImpl,
+      );
       (McpHttpTransportV20250618 as unknown as jest.Mock).mockImplementation(
-        () => httpTransport,
+        mockImpl,
+      );
+      (McpHttpTransportV20251125 as unknown as jest.Mock).mockImplementation(
+        mockImpl,
+      );
+      (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+        mockImpl,
       );
     });
 
@@ -540,7 +549,6 @@ describe('ToolboxClient', () => {
         expect.stringContaining('This connection is using HTTP'),
       );
     });
-
     it('should NOT warn when initializing with HTTPS and client headers', () => {
       new ToolboxClient(testBaseUrl, undefined, {'X-Test': 'val'});
       expect(consoleSpy).not.toHaveBeenCalledWith(
@@ -549,7 +557,6 @@ describe('ToolboxClient', () => {
     });
 
     it('should warn in loadTool with HTTP and auth tokens', async () => {
-      const httpTransport = new MockTransport(httpUrl);
       httpTransport.toolGet.mockResolvedValue({
         serverVersion: '1.0.0',
         tools: {
@@ -560,9 +567,6 @@ describe('ToolboxClient', () => {
           },
         },
       });
-      (McpHttpTransportV20250618 as unknown as jest.Mock).mockImplementation(
-        () => httpTransport,
-      );
 
       client = new ToolboxClient(httpUrl);
       await client.loadTool('testTool', {auth: () => 'token'});
@@ -570,10 +574,7 @@ describe('ToolboxClient', () => {
         expect.stringContaining('This connection is using HTTP'),
       );
     });
-
     it('should NOT warn in loadTool with HTTPS and auth tokens', async () => {
-      // Re-setup mock with HTTPS url
-      const httpsTransport = new MockTransport(testBaseUrl);
       httpsTransport.toolGet.mockResolvedValue({
         serverVersion: '1.0.0',
         tools: {
@@ -584,9 +585,6 @@ describe('ToolboxClient', () => {
           },
         },
       });
-      (McpHttpTransportV20250618 as unknown as jest.Mock).mockImplementation(
-        () => httpsTransport,
-      );
 
       client = new ToolboxClient(testBaseUrl);
       await client.loadTool('testTool', {auth: () => 'token'});
@@ -596,7 +594,6 @@ describe('ToolboxClient', () => {
     });
 
     it('should warn in loadToolset with HTTP and auth tokens', async () => {
-      const httpTransport = new MockTransport(httpUrl);
       httpTransport.toolsList.mockResolvedValue({
         serverVersion: '1.0.0',
         tools: {
@@ -607,9 +604,6 @@ describe('ToolboxClient', () => {
           },
         },
       });
-      (McpHttpTransportV20250618 as unknown as jest.Mock).mockImplementation(
-        () => httpTransport,
-      );
 
       client = new ToolboxClient(httpUrl);
       await client.loadToolset('set', {auth: () => 'token'});

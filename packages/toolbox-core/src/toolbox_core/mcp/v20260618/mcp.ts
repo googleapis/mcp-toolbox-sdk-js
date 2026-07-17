@@ -32,12 +32,12 @@ import {ProtocolNegotiationError} from '../../errorUtils.js';
 export class McpHttpTransportV20260618 extends McpHttpTransportBase {
   #getMeta() {
     return {
-      protocolVersion: this._protocolVersion,
-      clientInfo: {
+      'io.modelcontextprotocol/protocolVersion': this._protocolVersion,
+      'io.modelcontextprotocol/clientInfo': {
         name: this._clientName || 'toolbox-core-js',
         version: this._clientVersion || VERSION,
       },
-      clientCapabilities: {},
+      'io.modelcontextprotocol/clientCapabilities': {},
     };
   }
 

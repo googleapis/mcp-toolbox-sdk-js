@@ -15,14 +15,12 @@
 import {ToolboxTool} from '../src/toolbox_core/tool.js';
 import {z, ZodObject, ZodRawShape} from 'zod';
 import {ITransport} from '../src/toolbox_core/transport.types.js';
-import {Protocol} from '../src/toolbox_core/protocol.js';
 import * as utils from '../src/toolbox_core/utils.js';
 import {ClientHeadersConfig} from '../src/toolbox_core/client.js';
 
 // --- Mock Transport Implementation ---
 class MockTransport implements ITransport {
   readonly baseUrl: string;
-  protocolVersion = Protocol.MCP;
   toolGet: jest.MockedFunction<ITransport['toolGet']>;
   toolsList: jest.MockedFunction<ITransport['toolsList']>;
   toolInvoke: jest.MockedFunction<ITransport['toolInvoke']>;

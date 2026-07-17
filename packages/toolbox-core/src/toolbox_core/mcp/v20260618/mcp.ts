@@ -48,6 +48,13 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
     const isNotification = !('getResultModel' in request);
     const method = request.method;
 
+    if (isNotification) {
+      payload = {
+        jsonrpc: '2.0',
+        method,
+        params: params as Record<string, unknown>,
+      };
+    } else {
       payload = {
         jsonrpc: '2.0',
         id: uuidv4(),
@@ -59,6 +66,14 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
     // Inject Protocol Version into headers (v2025-06-18 specific)
     const reqHeaders = {...(headers || {})};
     reqHeaders['MCP-Protocol-Version'] = this._protocolVersion;
+    reqHeaders['Mcp-Method'] = method;
+    if (
+      method === 'tools/call' &&
+      typeof params === 'object' &&
+      params !== null &&
+      'name' in params
+    ) {
+      reqHeaders['Mcp-Name'] = String((params as Record<string, unknown>).name);
     }
 
     try {
@@ -66,19 +81,47 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
         headers: reqHeaders,
       });
 
+      if (
+        response.status !== 200 &&
+        response.status !== 204 &&
+        response.status !== 202
+      ) {
+        const errorText = JSON.stringify(response.data);
+        throw new Error(
           `API request failed with status ${response.status} (${response.statusText}). Server response: ${errorText}`,
         );
       }
 
+      if (response.status === 204 || response.status === 202) {
+        return null;
+      }
+
+      const jsonResp = response.data;
+
+      if (jsonResp.error) {
         const errResult = types.JSONRPCErrorSchema.safeParse(jsonResp);
         let message = `MCP request failed: ${JSON.stringify(jsonResp.error)}`;
         let code = 'MCP_ERROR';
 
+        if (errResult.success) {
+          const err = errResult.data.error;
+          message = `MCP request failed with code ${err.code}: ${err.message}`;
+          code = String(err.code);
+
+          if (
+            err.code === -32004 &&
             err.data &&
             typeof err.data === 'object' &&
             'supported' in err.data
           ) {
             const supported = (err.data as Record<string, unknown>).supported;
+            if (Array.isArray(supported) && supported.length > 0) {
+              throw new ProtocolNegotiationError(supported[0]);
+            }
+          }
+        }
+
+        throw new AxiosError(
           message,
           code,
           response.config,
@@ -88,6 +131,13 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
       }
 
       // Parse Result
+      if (!isNotification && 'getResultModel' in request) {
+        const rpcRespResult = types.JSONRPCResponseSchema.safeParse(jsonResp);
+        if (rpcRespResult.success) {
+          const resultModel = request.getResultModel();
+          return resultModel.parse(rpcRespResult.data.result);
+        }
+        throw new Error('Failed to parse JSON-RPC response structure');
       }
 
       return null;
@@ -116,6 +166,13 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
       headers,
     );
 
+    if (!result) {
+      const error = new Error('Failed to list tools: No response from server.');
+      logApiError(`Error listing tools from ${url}`, error);
+      throw error;
+    }
+
+    if (this._serverVersion === null) {
       const error = new Error('Server version not available.');
       logApiError('Error listing tools', error);
       throw error;
@@ -145,6 +202,13 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
     headers?: Record<string, string>,
   ): Promise<ZodManifest> {
     const manifest = await this.toolsList(undefined, headers);
+    if (!manifest.tools[toolName]) {
+      const error = new Error(`Tool '${toolName}' not found.`);
+      logApiError(`Error getting tool ${toolName}`, error);
+      throw error;
+    }
+
+    return {
       serverVersion: manifest.serverVersion,
       tools: {
         [toolName]: manifest.tools[toolName],
@@ -159,6 +223,13 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
   ): Promise<string> {
     await this.ensureInitialized(headers);
 
+    if (Object.keys(headers).length > 0) {
+      warnIfHttpAndHeaders(this._mcpBaseUrl, headers);
+    }
+
+    const params: types.CallToolRequestParams & {
+      _meta?: Record<string, unknown>;
+    } = {
       name: toolName,
       arguments: arguments_,
       _meta: this.#getMeta(),
@@ -171,6 +242,13 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
       headers,
     );
 
+    if (!result) {
+      const error = new Error(
+        `Failed to invoke tool '${toolName}': No response from server.`,
+      );
+      logApiError(`Error invoking tool ${toolName}`, error);
+      throw error;
+    }
 
     return this.processToolResultContent(result.content);
   }

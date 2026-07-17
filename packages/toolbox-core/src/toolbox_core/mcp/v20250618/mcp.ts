@@ -51,7 +51,7 @@ export class McpHttpTransportV20250618 extends McpHttpTransportBase {
       };
     }
 
-    // Inject Protocol Version into headers (v2025-06-18 specific)
+    // Inject Protocol Version into headers as required by MCP spec
     const reqHeaders = {...(headers || {})};
     reqHeaders['MCP-Protocol-Version'] = this._protocolVersion;
 

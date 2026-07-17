@@ -27,6 +27,8 @@ import {McpHttpTransportV20241105} from './mcp/v20241105/mcp.js';
 import {McpHttpTransportV20250618} from './mcp/v20250618/mcp.js';
 import {McpHttpTransportV20250326} from './mcp/v20250326/mcp.js';
 import {McpHttpTransportV20251125} from './mcp/v20251125/mcp.js';
+import {McpHttpTransportV20260618} from './mcp/v20260618/mcp.js';
+import {ProtocolNegotiationError} from './errorUtils.js';
 import {
   BoundParams,
   identifyAuthRequirements,
@@ -49,6 +51,8 @@ export type ClientHeadersConfig = Record<string, ClientHeaderProvider>;
 class ToolboxClient {
   #transport: ITransport;
   #clientHeaders: ClientHeadersConfig;
+  #session: AxiosInstance | undefined;
+  #baseUrl: string;
 
   /**
    * Initializes the ToolboxClient.
@@ -68,7 +72,9 @@ class ToolboxClient {
     clientName?: string,
     clientVersion?: string,
   ) {
+    this.#baseUrl = url;
     this.#clientHeaders = clientHeaders || {};
+    this.#session = session || undefined;
     warnIfHttpAndHeaders(url, this.#clientHeaders);
     if (!getSupportedMcpVersions().includes(protocol)) {
       throw new Error(`Unsupported protocol version: ${protocol}`);
@@ -80,43 +86,63 @@ class ToolboxClient {
       );
     }
 
+    this.#transport = this.#createTransport(
+      url,
+      session || undefined,
+      protocol,
+      clientName,
+      clientVersion,
+    );
+  }
+
+  #createTransport(
+    url: string,
+    session: AxiosInstance | undefined,
+    protocol: Protocol,
+    clientName?: string,
+    clientVersion?: string,
+  ): ITransport {
     switch (protocol) {
       case Protocol.MCP_v20241105:
-        this.#transport = new McpHttpTransportV20241105(
+        return new McpHttpTransportV20241105(
           url,
-          session || undefined,
+          session,
           protocol,
           clientName,
           clientVersion,
         );
-        break;
       case Protocol.MCP_v20250326:
-        this.#transport = new McpHttpTransportV20250326(
+        return new McpHttpTransportV20250326(
           url,
-          session || undefined,
+          session,
           protocol,
           clientName,
           clientVersion,
         );
-        break;
       case Protocol.MCP_v20250618:
-        this.#transport = new McpHttpTransportV20250618(
+        return new McpHttpTransportV20250618(
           url,
-          session || undefined,
+          session,
           protocol,
           clientName,
           clientVersion,
         );
-        break;
       case Protocol.MCP_v20251125:
-        this.#transport = new McpHttpTransportV20251125(
+        return new McpHttpTransportV20251125(
           url,
-          session || undefined,
+          session,
           protocol,
           clientName,
           clientVersion,
         );
-        break;
+      case Protocol.MCP_DRAFT_2026_v1:
+        return new McpHttpTransportV20260618(
+          url,
+          session,
+          protocol,
+          clientName,
+          clientVersion,
+        );
       default:
         throw new Error(`Unsupported MCP protocol version: ${protocol}`);
     }
@@ -214,7 +240,21 @@ class ToolboxClient {
   ): Promise<ToolboxTool> {
     warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
     const headers = await this.#resolveClientHeaders();
-    const manifest = await this.#transport.toolGet(name, headers);
+    let manifest;
+    try {
+      manifest = await this.#transport.toolGet(name, headers);
+    } catch (e: unknown) {
+      if (e instanceof ProtocolNegotiationError) {
+        this.#transport = this.#createTransport(
+          this.#baseUrl,
+          this.#session,
+          e.fallbackVersion,
+        );
+        manifest = await this.#transport.toolGet(name, headers);
+      } else {
+        throw e;
+      }
+    }
 
     if (
       manifest.tools &&
@@ -285,7 +325,21 @@ class ToolboxClient {
     const toolsetName = name || '';
     const headers = await this.#resolveClientHeaders();
 
-    const manifest = await this.#transport.toolsList(toolsetName, headers);
+    let manifest;
+    try {
+      manifest = await this.#transport.toolsList(toolsetName, headers);
+    } catch (e: unknown) {
+      if (e instanceof ProtocolNegotiationError) {
+        this.#transport = this.#createTransport(
+          this.#baseUrl,
+          this.#session,
+          e.fallbackVersion,
+        );
+        manifest = await this.#transport.toolsList(toolsetName, headers);
+      } else {
+        throw e;
+      }
+    }
     const tools: ToolboxTool[] = [];
 
     const overallUsedAuthKeys: Set<string> = new Set();

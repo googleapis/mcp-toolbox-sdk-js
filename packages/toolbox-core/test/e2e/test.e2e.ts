@@ -14,7 +14,10 @@
 
 import {ToolboxClient} from '../../src/toolbox_core/client.js';
 import {ToolboxTool} from '../../src/toolbox_core/tool.js';
-import {getSupportedMcpVersions} from '../../src/toolbox_core/protocol.js';
+import {
+  Protocol,
+  getSupportedMcpVersions,
+} from '../../src/toolbox_core/protocol.js';
 
 import {AxiosError} from 'axios';
 import {CustomGlobal} from './types.js';
@@ -618,3 +621,18 @@ describe.each(getSupportedMcpVersions())(
     });
   },
 );
+
+describe('ToolboxClient E2E Protocol Negotiation Fallback', () => {
+  it('should successfully fallback to a supported version when draft specs are disabled on the server', async () => {
+    const testBaseUrl = 'http://localhost:5000';
+    const client = new ToolboxClient(
+      testBaseUrl,
+      undefined,
+      undefined,
+      Protocol.MCP_DRAFT_2026_v1,
+    );
+
+    const tool = await client.loadTool('get-n-rows');
+    expect(tool.getName()).toBe('get-n-rows');
+  });
+});

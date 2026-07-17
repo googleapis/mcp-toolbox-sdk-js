@@ -25,6 +25,8 @@ import {McpHttpTransportV20241105} from '../src/toolbox_core/mcp/v20241105/mcp.j
 import {McpHttpTransportV20250326} from '../src/toolbox_core/mcp/v20250326/mcp.js';
 import {McpHttpTransportV20250618} from '../src/toolbox_core/mcp/v20250618/mcp.js';
 import {McpHttpTransportV20251125} from '../src/toolbox_core/mcp/v20251125/mcp.js';
+import {McpHttpTransportV20260618} from '../src/toolbox_core/mcp/v20260618/mcp.js';
+import {ProtocolNegotiationError} from '../src/toolbox_core/errorUtils.js';
 
 // --- Mock Transport Implementation ---
 class MockTransport implements ITransport {
@@ -73,6 +75,14 @@ jest.mock('../src/toolbox_core/mcp/v20251125/mcp', () => {
   };
 });
 
+// Mock the McpHttpTransportV20260618 module
+jest.mock('../src/toolbox_core/mcp/v20260618/mcp', () => {
+  return {
+    __esModule: true,
+    McpHttpTransportV20260618: jest.fn(),
+  };
+});
+
 describe('ToolboxClient', () => {
   const testBaseUrl = 'https://api.example.com';
   let mockTransport: MockTransport;
@@ -93,6 +103,9 @@ describe('ToolboxClient', () => {
       () => mockTransport,
     );
     (McpHttpTransportV20251125 as unknown as jest.Mock).mockImplementation(
+      () => mockTransport,
+    );
+    (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
       () => mockTransport,
     );
   });
@@ -603,6 +616,95 @@ describe('ToolboxClient', () => {
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('This connection is using HTTP'),
       );
+    });
+  });
+
+  describe('Protocol Fallback', () => {
+    it('should fall back to supported version in loadTool when transport throws ProtocolNegotiationError', async () => {
+      const draftTransport = new MockTransport(testBaseUrl);
+      const fallbackTransport = new MockTransport(testBaseUrl);
+
+      draftTransport.toolGet.mockRejectedValueOnce(
+        new ProtocolNegotiationError(Protocol.MCP_v20251125),
+      );
+
+      fallbackTransport.toolGet.mockResolvedValueOnce({
+        serverVersion: '1.0.0',
+        tools: {
+          testTool: {
+            description: 'desc',
+            parameters: [],
+          },
+        },
+      });
+
+      (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+        () => {
+          return draftTransport;
+        },
+      );
+      (McpHttpTransportV20251125 as unknown as jest.Mock).mockImplementation(
+        () => {
+          return fallbackTransport;
+        },
+      );
+
+      client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP_DRAFT_2026_v1,
+      );
+
+      const tool = await client.loadTool('testTool');
+      expect(tool.getName()).toBe('testTool');
+      expect(draftTransport.toolGet).toHaveBeenCalledTimes(1);
+      expect(fallbackTransport.toolGet).toHaveBeenCalledTimes(1);
+      expect(McpHttpTransportV20251125).toHaveBeenCalledTimes(1);
+    });
+
+    it('should fall back to supported version in loadToolset when transport throws ProtocolNegotiationError', async () => {
+      const draftTransport = new MockTransport(testBaseUrl);
+      const fallbackTransport = new MockTransport(testBaseUrl);
+
+      draftTransport.toolsList.mockRejectedValueOnce(
+        new ProtocolNegotiationError(Protocol.MCP_v20251125),
+      );
+
+      fallbackTransport.toolsList.mockResolvedValueOnce({
+        serverVersion: '1.0.0',
+        tools: {
+          testTool: {
+            description: 'desc',
+            parameters: [],
+          },
+        },
+      });
+
+      (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+        () => {
+          return draftTransport;
+        },
+      );
+      (McpHttpTransportV20251125 as unknown as jest.Mock).mockImplementation(
+        () => {
+          return fallbackTransport;
+        },
+      );
+
+      client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP_DRAFT_2026_v1,
+      );
+
+      const tools = await client.loadToolset('set');
+      expect(tools.length).toBe(1);
+      expect(tools[0].getName()).toBe('testTool');
+      expect(draftTransport.toolsList).toHaveBeenCalledTimes(1);
+      expect(fallbackTransport.toolsList).toHaveBeenCalledTimes(1);
+      expect(McpHttpTransportV20251125).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -219,8 +219,12 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
     }
   }
 
-  protected async initializeSession(): Promise<void> {
-    // Stateless MCP does not use initialize handshake
+  protected async initializeSession(
+    // Required to match McpHttpTransportBase signature, but unused because
+    // Stateless MCP does not use an initialize handshake.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _headers?: Record<string, string>,
+  ): Promise<void> {
     this._serverVersion = 'unknown';
   }
 

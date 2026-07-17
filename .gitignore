@@ -11,3 +11,9 @@ docs-site/resources/
 
 # Coverage
 coverage/
+
+# Build caches
+.turbo/
+
+# TypeScript build info
+*.tsbuildinfo

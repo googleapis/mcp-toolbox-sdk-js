@@ -55,13 +55,14 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
       const serverSupported = ((
         (errVal as Record<string, unknown>).data as Record<string, unknown>
       )?.supported || []) as string[];
-      const clientSupported = getSupportedMcpVersions();
+      const clientSupported =
+        this.supportedProtocols || getSupportedMcpVersions();
       const mutuallySupported = clientSupported.filter(v =>
         serverSupported.includes(v),
       );
 
       if (mutuallySupported.length > 0) {
-        throw new ProtocolNegotiationError(mutuallySupported[0]);
+        throw new ProtocolNegotiationError(mutuallySupported[0] as Protocol);
       } else {
         throw new Error(
           `No mutually supported protocol version. Client supports: ${clientSupported.join(
@@ -85,12 +86,15 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
 
     if (isLegacyError) {
       // Cascading Fallback
-      const clientSupported = getSupportedMcpVersions();
+      const clientSupported =
+        this.supportedProtocols || getSupportedMcpVersions();
       const currentIdx = clientSupported.indexOf(
         this._protocolVersion as Protocol,
       );
       if (currentIdx !== -1 && currentIdx + 1 < clientSupported.length) {
-        throw new ProtocolNegotiationError(clientSupported[currentIdx + 1]);
+        throw new ProtocolNegotiationError(
+          clientSupported[currentIdx + 1] as Protocol,
+        );
       } else {
         throw new Error(
           "Server threw 'invalid protocol version' but no fallback versions remain in the user's supported protocols array.",
@@ -209,9 +213,13 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
       }
       if (error instanceof AxiosError) {
         const jsonResp = error.response?.data;
-        if (jsonResp && typeof jsonResp === 'object' && 'error' in jsonResp) {
-          const errVal = (jsonResp as Record<string, unknown>).error;
-          this.#checkProtocolNegotiationError(errVal);
+        if (jsonResp) {
+          if (typeof jsonResp === 'object' && 'error' in jsonResp) {
+            const errVal = (jsonResp as Record<string, unknown>).error;
+            this.#checkProtocolNegotiationError(errVal);
+          } else if (typeof jsonResp === 'string') {
+            this.#checkProtocolNegotiationError(jsonResp);
+          }
         }
       }
       logApiError(`Error posting data to ${url}:`, error);

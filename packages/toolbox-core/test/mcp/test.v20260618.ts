@@ -382,19 +382,7 @@ describe('McpHttpTransportV20260618', () => {
       errorSpy.mockRestore();
     });
 
-    it('should throw ProtocolNegotiationError if server returns code -32004 with supported list', async () => {
-      const rpcError = {
-        jsonrpc: '2.0',
-        id: '1',
-        error: {
-          code: -32004,
-          message: 'Unsupported protocol version',
-          data: {
-            supported: ['2025-11-25'],
-          },
-        },
-      };
-
+    it('should throw ProtocolNegotiationError on -32004 with supported array', async () => {
       const config =
         {} as unknown as import('axios').InternalAxiosRequestConfig;
       const response = {
@@ -402,7 +390,15 @@ describe('McpHttpTransportV20260618', () => {
         statusText: 'Bad Request',
         headers: {},
         config,
-        data: rpcError,
+        data: {
+          error: {
+            code: -32004,
+            message: 'Protocol version not supported',
+            data: {
+              supported: ['2025-11-25'],
+            },
+          },
+        },
       } as unknown as import('axios').AxiosResponse;
 
       const axiosError = new AxiosError(
@@ -422,7 +418,151 @@ describe('McpHttpTransportV20260618', () => {
       await expect(transport.toolsList()).rejects.toThrow(
         new ProtocolNegotiationError(Protocol.MCP_v20251125),
       );
+      errorSpy.mockRestore();
+    });
 
+    it('should throw ProtocolNegotiationError on -32004 with no intersection', async () => {
+      const config =
+        {} as unknown as import('axios').InternalAxiosRequestConfig;
+      const response = {
+        status: 400,
+        statusText: 'Bad Request',
+        headers: {},
+        config,
+        data: {
+          error: {
+            code: -32004,
+            message: 'Protocol version not supported',
+            data: {
+              supported: ['9999-01-01'],
+            },
+          },
+        },
+      } as unknown as import('axios').AxiosResponse;
+
+      const axiosError = new AxiosError(
+        'Request failed with status code 400',
+        'ERR_BAD_REQUEST',
+        config,
+        {},
+        response,
+      );
+
+      mockSession.post.mockRejectedValueOnce(axiosError);
+
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      await expect(transport.toolsList()).rejects.toThrow(
+        /No mutually supported protocol version/,
+      );
+      errorSpy.mockRestore();
+    });
+
+    it('should throw ProtocolNegotiationError if server returns HTTP 200 with code -32022 and supported list', async () => {
+      const initResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '1',
+          error: {
+            code: -32022,
+            message: 'Unsupported protocol version',
+            data: {
+              supported: ['2025-11-25'],
+            },
+          },
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(initResponse);
+
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      await expect(transport.toolsList()).rejects.toThrow(
+        new ProtocolNegotiationError(Protocol.MCP_v20251125),
+      );
+      errorSpy.mockRestore();
+    });
+
+    it('should throw ProtocolNegotiationError if server returns HTTP 200 with code -32004 and supported list', async () => {
+      const initResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '1',
+          error: {
+            code: -32004,
+            message: 'Protocol version not supported',
+            data: {
+              supported: ['2025-11-25'],
+            },
+          },
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(initResponse);
+
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      await expect(transport.toolsList()).rejects.toThrow(
+        new ProtocolNegotiationError(Protocol.MCP_v20251125),
+      );
+      errorSpy.mockRestore();
+    });
+
+    it('should throw error if server returns HTTP 200 with code -32004 and no intersection', async () => {
+      const initResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '1',
+          error: {
+            code: -32004,
+            message: 'Protocol version not supported',
+            data: {
+              supported: ['9999-01-01'],
+            },
+          },
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(initResponse);
+
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      await expect(transport.toolsList()).rejects.toThrow(
+        /No mutually supported protocol version/,
+      );
+      errorSpy.mockRestore();
+    });
+
+    it('should throw ProtocolNegotiationError (legacy fallback) if server returns HTTP 200 with invalid protocol version string', async () => {
+      const initResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '1',
+          error: 'invalid protocol version',
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(initResponse);
+
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      await expect(transport.toolsList()).rejects.toThrow(
+        new ProtocolNegotiationError(Protocol.MCP_v20251125),
+      );
       errorSpy.mockRestore();
     });
 
@@ -459,6 +599,70 @@ describe('McpHttpTransportV20260618', () => {
 
       await expect(transport.toolsList()).rejects.toThrow(
         new ProtocolNegotiationError(Protocol.MCP_v20251125),
+      );
+
+      errorSpy.mockRestore();
+    });
+
+    it('should throw ProtocolNegotiationError (legacy fallback) if server returns a raw plain text string error (invalid protocol version)', async () => {
+      const config =
+        {} as unknown as import('axios').InternalAxiosRequestConfig;
+      const response = {
+        status: 400,
+        statusText: 'Bad Request',
+        headers: {},
+        config,
+        data: 'invalid protocol version',
+      } as unknown as import('axios').AxiosResponse;
+
+      const axiosError = new AxiosError(
+        'Request failed with status code 400',
+        'ERR_BAD_REQUEST',
+        config,
+        {},
+        response,
+      );
+
+      mockSession.post.mockRejectedValueOnce(axiosError);
+
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      await expect(transport.toolsList()).rejects.toThrow(
+        ProtocolNegotiationError,
+      );
+
+      errorSpy.mockRestore();
+    });
+
+    it('should throw ProtocolNegotiationError (legacy fallback) if server returns a raw plain text string error (invalid protocol version / fallback)', async () => {
+      const config =
+        {} as unknown as import('axios').InternalAxiosRequestConfig;
+      const response = {
+        status: 400,
+        statusText: 'Bad Request',
+        headers: {},
+        config,
+        data: 'invalid protocol version',
+      } as unknown as import('axios').AxiosResponse;
+
+      const axiosError = new AxiosError(
+        'Request failed with status code 400',
+        'ERR_BAD_REQUEST',
+        config,
+        {},
+        response,
+      );
+
+      mockSession.post.mockRejectedValueOnce(axiosError);
+
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      await expect(transport.toolsList()).rejects.toThrow(
+        ProtocolNegotiationError,
       );
 
       errorSpy.mockRestore();

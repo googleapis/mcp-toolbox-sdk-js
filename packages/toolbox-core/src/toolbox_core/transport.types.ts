@@ -27,6 +27,11 @@ export interface ITransport {
   readonly protocolVersion: string;
 
   /**
+   * The list of supported protocols that the client claims to support.
+   */
+  supportedProtocols?: string[];
+
+  /**
    * The base URL for the transport.
    */
   readonly baseUrl: string;

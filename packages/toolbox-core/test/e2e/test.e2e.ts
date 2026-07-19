@@ -25,9 +25,9 @@ import {CustomGlobal} from './types.js';
 import {authTokenGetter} from './utils.js';
 import {ZodTypeAny} from 'zod';
 
-const LEGACY_SERVER_URL = 'http://localhost:5000';
-const DRAFT_SERVER_URL = 'http://localhost:5001';
-const testBaseUrls = [LEGACY_SERVER_URL, DRAFT_SERVER_URL];
+const TOOLBOX_SERVER_URL_STABLE = 'http://localhost:5000';
+const TOOLBOX_SERVER_URL_DRAFT = 'http://localhost:5001';
+const testBaseUrls = [TOOLBOX_SERVER_URL_STABLE, TOOLBOX_SERVER_URL_DRAFT];
 
 testBaseUrls.forEach(testBaseUrl => {
   describe.each(getSupportedMcpVersions())(
@@ -651,7 +651,7 @@ testBaseUrls.forEach(testBaseUrl => {
       expect(response).toContain('row1');
     });
 
-    if (testBaseUrl === LEGACY_SERVER_URL) {
+    if (testBaseUrl === TOOLBOX_SERVER_URL_STABLE) {
       it('should fallback to an older protocol against a server that does not support the draft version', async () => {
         const session = axios.create();
         const postSpy = jest.spyOn(session, 'post');
@@ -672,7 +672,7 @@ testBaseUrls.forEach(testBaseUrl => {
 
         // Call 1: Draft tools/list (fails)
         const call1 = postSpy.mock.calls[0];
-        expect(call1[0]).toBe(`${LEGACY_SERVER_URL}/mcp/`);
+        expect(call1[0]).toBe(`${TOOLBOX_SERVER_URL_STABLE}/mcp/`);
         expect((call1[1] as Record<string, unknown>).method).toBe('tools/list');
         expect(call1[2]?.headers?.['MCP-Protocol-Version']).toBe(
           Protocol.MCP_DRAFT_2026_v1,
@@ -680,7 +680,7 @@ testBaseUrls.forEach(testBaseUrl => {
 
         // Call 2: Stateful Initialize (succeeds)
         const call2 = postSpy.mock.calls[1];
-        expect(call2[0]).toBe(`${LEGACY_SERVER_URL}/mcp/`);
+        expect(call2[0]).toBe(`${TOOLBOX_SERVER_URL_STABLE}/mcp/`);
         expect((call2[1] as Record<string, unknown>).method).toBe('initialize');
         expect(call2[2]?.headers?.['MCP-Protocol-Version']).toBe(
           Protocol.MCP_v20251125,
@@ -688,7 +688,7 @@ testBaseUrls.forEach(testBaseUrl => {
 
         // Call 3: Stateful Initialized Notification (succeeds)
         const call3 = postSpy.mock.calls[2];
-        expect(call3[0]).toBe(`${LEGACY_SERVER_URL}/mcp/`);
+        expect(call3[0]).toBe(`${TOOLBOX_SERVER_URL_STABLE}/mcp/`);
         expect((call3[1] as Record<string, unknown>).method).toBe(
           'notifications/initialized',
         );
@@ -698,7 +698,7 @@ testBaseUrls.forEach(testBaseUrl => {
 
         // Call 4: Stateful tools/list (succeeds)
         const call4 = postSpy.mock.calls[3];
-        expect(call4[0]).toBe(`${LEGACY_SERVER_URL}/mcp/`);
+        expect(call4[0]).toBe(`${TOOLBOX_SERVER_URL_STABLE}/mcp/`);
         expect((call4[1] as Record<string, unknown>).method).toBe('tools/list');
         expect(call4[2]?.headers?.['MCP-Protocol-Version']).toBe(
           Protocol.MCP_v20251125,
@@ -706,13 +706,13 @@ testBaseUrls.forEach(testBaseUrl => {
 
         // Call 5: Stateful tools/call (succeeds)
         const call5 = postSpy.mock.calls[4];
-        expect(call5[0]).toBe(`${LEGACY_SERVER_URL}/mcp/`);
+        expect(call5[0]).toBe(`${TOOLBOX_SERVER_URL_STABLE}/mcp/`);
         expect((call5[1] as Record<string, unknown>).method).toBe('tools/call');
         expect(call5[2]?.headers?.['MCP-Protocol-Version']).toBe(
           Protocol.MCP_v20251125,
         );
       });
-    } else if (testBaseUrl === DRAFT_SERVER_URL) {
+    } else if (testBaseUrl === TOOLBOX_SERVER_URL_DRAFT) {
       it('should successfully connect using the draft version without fallback', async () => {
         const session = axios.create();
         const postSpy = jest.spyOn(session, 'post');
@@ -728,12 +728,13 @@ testBaseUrls.forEach(testBaseUrl => {
         const response = await tool({num_rows: '1'});
         expect(typeof response).toBe('string');
         expect(response).toContain('row1');
+        expect(client.protocolVersion).toBe(Protocol.MCP_DRAFT_2026_v1);
 
         expect(postSpy).toHaveBeenCalledTimes(2);
 
         // Call 1: Draft tools/list (succeeds)
         const call1 = postSpy.mock.calls[0];
-        expect(call1[0]).toBe(`${DRAFT_SERVER_URL}/mcp/`);
+        expect(call1[0]).toBe(`${TOOLBOX_SERVER_URL_DRAFT}/mcp/`);
         expect((call1[1] as Record<string, unknown>).method).toBe('tools/list');
         expect(call1[2]?.headers?.['MCP-Protocol-Version']).toBe(
           Protocol.MCP_DRAFT_2026_v1,
@@ -741,12 +742,48 @@ testBaseUrls.forEach(testBaseUrl => {
 
         // Call 2: Draft tools/call (succeeds)
         const call2 = postSpy.mock.calls[1];
-        expect(call2[0]).toBe(`${DRAFT_SERVER_URL}/mcp/`);
+        expect(call2[0]).toBe(`${TOOLBOX_SERVER_URL_DRAFT}/mcp/`);
         expect((call2[1] as Record<string, unknown>).method).toBe('tools/call');
         expect(call2[2]?.headers?.['MCP-Protocol-Version']).toBe(
           Protocol.MCP_DRAFT_2026_v1,
         );
       });
     }
+
+    it('should correctly negotiate Protocol.MCP_LATEST', async () => {
+      const client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP_LATEST,
+      );
+
+      const tool = await client.loadTool('get-n-rows');
+      const response = await tool({num_rows: '1'});
+      expect(typeof response).toBe('string');
+      expect(response).toContain('row1');
+
+      expect(client.protocolVersion).toBe(Protocol.MCP_LATEST);
+    });
+
+    it('should correctly negotiate with a custom list [Protocol.MCP_v20241105, Protocol.MCP_v20250326, Protocol.MCP_LATEST, Protocol.MCP_DRAFT]', async () => {
+      const client = new ToolboxClient(testBaseUrl, undefined, undefined, [
+        Protocol.MCP_v20241105,
+        Protocol.MCP_v20250326,
+        Protocol.MCP_LATEST,
+        Protocol.MCP_DRAFT,
+      ]);
+
+      const tool = await client.loadTool('get-n-rows');
+      const response = await tool({num_rows: '1'});
+      expect(typeof response).toBe('string');
+      expect(response).toContain('row1');
+
+      if (testBaseUrl === TOOLBOX_SERVER_URL_DRAFT) {
+        expect(client.protocolVersion).toBe(Protocol.MCP_DRAFT);
+      } else {
+        expect(client.protocolVersion).toBe(Protocol.MCP_LATEST);
+      }
+    });
   });
 });

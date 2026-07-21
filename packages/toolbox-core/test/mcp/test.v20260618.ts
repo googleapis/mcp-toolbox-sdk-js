@@ -131,6 +131,20 @@ describe('McpHttpTransportV20260618', () => {
 
       const manifest = await transport.toolsList();
 
+      expect(mockSession.post).toHaveBeenLastCalledWith(
+        expect.any(String),
+        expect.any(Object),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'MCP-Protocol-Version': 'DRAFT-2026-v1',
+            'Mcp-Method': 'tools/list',
+          }),
+        }),
+      );
+      expect(
+        mockSession.post.mock.calls[0][2]?.headers?.['Mcp-Name'],
+      ).toBeUndefined();
+
       expect(manifest.tools['testTool']).toBeDefined();
       expect(manifest.tools['testTool'].description).toBe('A test tool');
       expect(manifest.tools['testTool'].parameters).toBeDefined();
@@ -238,6 +252,8 @@ describe('McpHttpTransportV20260618', () => {
         expect.objectContaining({
           headers: expect.objectContaining({
             'MCP-Protocol-Version': 'DRAFT-2026-v1',
+            'Mcp-Method': 'tools/call',
+            'Mcp-Name': 'testTool',
           }),
         }),
       );
@@ -360,7 +376,51 @@ describe('McpHttpTransportV20260618', () => {
         .mockImplementation(() => {});
 
       await expect(transport.toolsList()).rejects.toThrow(
-        ProtocolNegotiationError,
+        new ProtocolNegotiationError(Protocol.MCP_v20251125),
+      );
+
+      errorSpy.mockRestore();
+    });
+
+    it('should throw ProtocolNegotiationError if server returns code -32004 with supported list', async () => {
+      const rpcError = {
+        jsonrpc: '2.0',
+        id: '1',
+        error: {
+          code: -32004,
+          message: 'Unsupported protocol version',
+          data: {
+            supported: ['2025-11-25'],
+          },
+        },
+      };
+
+      const config =
+        {} as unknown as import('axios').InternalAxiosRequestConfig;
+      const response = {
+        status: 400,
+        statusText: 'Bad Request',
+        headers: {},
+        config,
+        data: rpcError,
+      } as unknown as import('axios').AxiosResponse;
+
+      const axiosError = new AxiosError(
+        'Request failed with status code 400',
+        'ERR_BAD_REQUEST',
+        config,
+        {},
+        response,
+      );
+
+      mockSession.post.mockRejectedValueOnce(axiosError);
+
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      await expect(transport.toolsList()).rejects.toThrow(
+        new ProtocolNegotiationError(Protocol.MCP_v20251125),
       );
 
       errorSpy.mockRestore();
@@ -398,7 +458,7 @@ describe('McpHttpTransportV20260618', () => {
         .mockImplementation(() => {});
 
       await expect(transport.toolsList()).rejects.toThrow(
-        ProtocolNegotiationError,
+        new ProtocolNegotiationError(Protocol.MCP_v20251125),
       );
 
       errorSpy.mockRestore();

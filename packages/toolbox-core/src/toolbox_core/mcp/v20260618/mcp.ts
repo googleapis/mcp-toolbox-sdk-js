@@ -44,12 +44,13 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
   #checkProtocolNegotiationError(errVal: unknown): void {
     if (!errVal) return;
 
-    // Check for unsupported protocol version error code (-32022)
+    // Check for unsupported protocol version error code (-32022 or -32004)
     if (
       typeof errVal === 'object' &&
       errVal !== null &&
       'code' in errVal &&
-      (errVal as Record<string, unknown>).code === -32022
+      ((errVal as Record<string, unknown>).code === -32022 ||
+        (errVal as Record<string, unknown>).code === -32004)
     ) {
       const serverSupported = ((
         (errVal as Record<string, unknown>).data as Record<string, unknown>
@@ -71,19 +72,16 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
     }
 
     // Check for legacy fallback (string or object message matching)
+    const errMsg =
+      typeof errVal === 'string'
+        ? errVal.toLowerCase()
+        : typeof errVal === 'object' && errVal !== null && 'message' in errVal
+          ? String((errVal as Record<string, unknown>).message).toLowerCase()
+          : '';
+
     const isLegacyError =
-      (typeof errVal === 'string' &&
-        (errVal.toLowerCase().includes('invalid protocol version') ||
-          errVal.toLowerCase().includes('unsupported protocol version'))) ||
-      (typeof errVal === 'object' &&
-        errVal !== null &&
-        'message' in errVal &&
-        (String((errVal as Record<string, unknown>).message)
-          .toLowerCase()
-          .includes('invalid protocol version') ||
-          String((errVal as Record<string, unknown>).message)
-            .toLowerCase()
-            .includes('unsupported protocol version')));
+      errMsg.includes('invalid protocol version') ||
+      errMsg.includes('unsupported protocol version');
 
     if (isLegacyError) {
       // Cascading Fallback
@@ -131,6 +129,23 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
     // Inject Protocol Version into headers as required by MCP spec
     const reqHeaders = {...(headers || {})};
     reqHeaders['MCP-Protocol-Version'] = this._protocolVersion;
+
+    // Inject SEP-2243 routing headers
+    reqHeaders['Mcp-Method'] = method;
+    if (typeof params === 'object' && params !== null) {
+      if (
+        (method === 'tools/call' || method === 'prompts/get') &&
+        'name' in params
+      ) {
+        reqHeaders['Mcp-Name'] = String(
+          (params as Record<string, unknown>).name,
+        );
+      } else if (method === 'resources/read' && 'uri' in params) {
+        reqHeaders['Mcp-Name'] = String(
+          (params as Record<string, unknown>).uri,
+        );
+      }
+    }
 
     try {
       const response = await this._session.post(url, payload, {
@@ -189,6 +204,9 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
 
       return null;
     } catch (error) {
+      if (error instanceof ProtocolNegotiationError) {
+        throw error;
+      }
       if (error instanceof AxiosError) {
         const jsonResp = error.response?.data;
         if (jsonResp && typeof jsonResp === 'object' && 'error' in jsonResp) {
@@ -275,7 +293,9 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
       warnIfHttpAndHeaders(this._mcpBaseUrl, headers);
     }
 
-    const params = {
+    const params: types.CallToolRequestParams & {
+      _meta?: Record<string, unknown>;
+    } = {
       name: toolName,
       arguments: arguments_,
       _meta: this.#getMeta(),

@@ -54,6 +54,12 @@ class ToolboxClient {
   #baseUrl: string;
 
   /**
+   * The negotiated protocol version currently in use.
+   */
+  get protocolVersion(): Protocol {
+    return this.#transport.protocolVersion as Protocol;
+  }
+  /**
    * Initializes the ToolboxClient.
    * @param {string} url - The base URL for the Toolbox service API (e.g., "http://localhost:5000").
    * @param {AxiosInstance} [session] - Optional Axios instance for making HTTP

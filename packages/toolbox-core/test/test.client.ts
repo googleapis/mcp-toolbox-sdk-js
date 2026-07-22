@@ -114,10 +114,10 @@ describe('ToolboxClient', () => {
   describe('Initialization', () => {
     it('should initialize with the correct base URL (default MCP)', () => {
       client = new ToolboxClient(testBaseUrl);
-      expect(McpHttpTransportV20250618).toHaveBeenCalledWith(
+      expect(McpHttpTransportV20251125).toHaveBeenCalledWith(
         testBaseUrl,
         undefined,
-        Protocol.MCP_v20250618,
+        Protocol.MCP_v20251125,
         undefined,
         undefined,
       );
@@ -128,10 +128,10 @@ describe('ToolboxClient', () => {
         get: jest.fn(),
       } as unknown as import('axios').AxiosInstance;
       client = new ToolboxClient(testBaseUrl, mockSession);
-      expect(McpHttpTransportV20250618).toHaveBeenCalledWith(
+      expect(McpHttpTransportV20251125).toHaveBeenCalledWith(
         testBaseUrl,
         mockSession,
-        Protocol.MCP_v20250618,
+        Protocol.MCP_v20251125,
         undefined,
         undefined,
       );
@@ -144,10 +144,10 @@ describe('ToolboxClient', () => {
         undefined,
         Protocol.MCP,
       );
-      expect(McpHttpTransportV20250618).toHaveBeenCalledWith(
+      expect(McpHttpTransportV20251125).toHaveBeenCalledWith(
         testBaseUrl,
         undefined,
-        Protocol.MCP_v20250618,
+        Protocol.MCP_v20251125,
         undefined,
         undefined,
       );
@@ -185,6 +185,22 @@ describe('ToolboxClient', () => {
       );
     });
 
+    it('should initialize with MCP v20250618 transport when specified', () => {
+      client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP_v20250618,
+      );
+      expect(McpHttpTransportV20250618).toHaveBeenCalledWith(
+        testBaseUrl,
+        undefined,
+        Protocol.MCP_v20250618,
+        undefined,
+        undefined,
+      );
+    });
+
     it('should initialize with MCP v20251125 transport when specified', () => {
       client = new ToolboxClient(
         testBaseUrl,
@@ -196,6 +212,38 @@ describe('ToolboxClient', () => {
         testBaseUrl,
         undefined,
         Protocol.MCP_v20251125,
+        undefined,
+        undefined,
+      );
+    });
+
+    it('should initialize with MCP DRAFT 2026 v1 transport when specified', () => {
+      client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP_DRAFT_2026_v1,
+      );
+      expect(McpHttpTransportV20260618).toHaveBeenCalledWith(
+        testBaseUrl,
+        undefined,
+        Protocol.MCP_DRAFT_2026_v1,
+        undefined,
+        undefined,
+      );
+    });
+
+    it('should initialize with MCP DRAFT alias transport when specified', () => {
+      client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP_DRAFT,
+      );
+      expect(McpHttpTransportV20260618).toHaveBeenCalledWith(
+        testBaseUrl,
+        undefined,
+        Protocol.MCP_DRAFT,
         undefined,
         undefined,
       );

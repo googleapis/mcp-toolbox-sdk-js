@@ -15,6 +15,7 @@
 import {
   resolveValue,
   identifyAuthRequirements,
+  warnIfHttpAndHeaders,
 } from '../src/toolbox_core/utils';
 
 describe('resolveValue', () => {
@@ -211,5 +212,47 @@ describe('identifyAuthRequirements', () => {
     expect(remainingAuthnParams).toEqual({});
     expect(remainingAuthzTokens).toEqual([]);
     expect(usedServices).toEqual(new Set(['serviceA']));
+  });
+});
+
+describe('warnIfHttpAndHeaders', () => {
+  let consoleSpy: jest.SpiedFunction<typeof console.warn>;
+
+  beforeEach(() => {
+    consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleSpy.mockRestore();
+  });
+
+  it('should log a warning if URL is HTTP and headers are present', () => {
+    warnIfHttpAndHeaders('http://api.example.com', {
+      Authorization: 'Bearer token',
+    });
+    expect(consoleSpy).toHaveBeenCalledTimes(1);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'This connection is using HTTP. To prevent credential exposure, please ensure all communication is sent over HTTPS.',
+      ),
+    );
+  });
+
+  it('should not log a warning if URL is HTTP but headers are empty', () => {
+    warnIfHttpAndHeaders('http://api.example.com', {});
+    expect(consoleSpy).not.toHaveBeenCalled();
+  });
+
+  it('should not log a warning if URL is HTTP but headers are null/undefined', () => {
+    warnIfHttpAndHeaders('http://api.example.com', null);
+    warnIfHttpAndHeaders('http://api.example.com', undefined);
+    expect(consoleSpy).not.toHaveBeenCalled();
+  });
+
+  it('should not log a warning if URL is HTTPS even if headers are present', () => {
+    warnIfHttpAndHeaders('https://api.example.com', {
+      Authorization: 'Bearer token',
+    });
+    expect(consoleSpy).not.toHaveBeenCalled();
   });
 });

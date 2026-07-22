@@ -151,6 +151,18 @@ testBaseUrls.forEach(testBaseUrl => {
         expect(loadedToolNames).toEqual(expectedDefaultTools);
       });
 
+      it('should successfully load the toolset with an explicit protocol', async () => {
+        const explicitClient = new ToolboxClient(
+          testBaseUrl,
+          undefined,
+          undefined,
+          Protocol.MCP_v20251125,
+        );
+        const loadedTools = await explicitClient.loadToolset();
+        expect(Array.isArray(loadedTools)).toBe(true);
+        expect(loadedTools.length).toBeGreaterThan(0);
+      });
+
       it('should throw an error when trying to load a non-existent toolset', async () => {
         await expect(
           commonToolboxClient.loadToolset('non-existent-toolset'),

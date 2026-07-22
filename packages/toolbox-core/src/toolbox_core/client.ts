@@ -52,6 +52,7 @@ class ToolboxClient {
   #clientHeaders: ClientHeadersConfig;
   #session: AxiosInstance | undefined;
   #baseUrl: string;
+  #supportedProtocols: string[];
 
   /**
    * The negotiated protocol version currently in use.
@@ -73,7 +74,7 @@ class ToolboxClient {
     url: string,
     session?: AxiosInstance | null,
     clientHeaders?: ClientHeadersConfig | null,
-    protocol: Protocol = Protocol.MCP,
+    protocol: Protocol | Protocol[] | string[] | string = Protocol.MCP,
     clientName?: string,
     clientVersion?: string,
   ) {
@@ -81,14 +82,47 @@ class ToolboxClient {
     this.#clientHeaders = clientHeaders || {};
     this.#session = session || undefined;
     warnIfHttpAndHeaders(url, this.#clientHeaders);
-    if (!getSupportedMcpVersions().includes(protocol)) {
-      throw new Error(`Unsupported protocol version: ${protocol}`);
+
+    let initialProtocol: Protocol;
+    if (Array.isArray(protocol)) {
+      if (protocol.length === 0) {
+        throw new Error('Protocol array cannot be empty');
+      }
+
+      const globalSupported = getSupportedMcpVersions();
+
+      for (const p of protocol) {
+        if (!globalSupported.includes(p as Protocol)) {
+          throw new Error(
+            `Invalid protocol version '${p}'. Must be one of: ${globalSupported.join(', ')}`,
+          );
+        }
+      }
+
+      const requestedSet = new Set<string>(protocol);
+      const sorted = globalSupported.filter(globalVer =>
+        requestedSet.has(globalVer),
+      );
+
+      if (sorted.length === 0) {
+        throw new Error('None of the provided protocols are supported');
+      }
+
+      this.#supportedProtocols = sorted;
+      initialProtocol = sorted[0] as Protocol; // Start with the highest requested version
+    } else {
+      initialProtocol = protocol as Protocol;
+      const globalSupported = getSupportedMcpVersions();
+      if (!globalSupported.includes(initialProtocol)) {
+        throw new Error(`Invalid protocol version '${initialProtocol}'`);
+      }
+      this.#supportedProtocols = globalSupported;
     }
 
-    this.#transport = this.#createTransport(
+    this.#transport = this.#createTransportWithProtocols(
       url,
       session || undefined,
-      protocol,
+      initialProtocol,
       clientName,
       clientVersion,
     );
@@ -145,6 +179,26 @@ class ToolboxClient {
       default:
         throw new Error(`Unsupported MCP protocol version: ${protocol}`);
     }
+  }
+
+  #createTransportWithProtocols(
+    url: string,
+    session: AxiosInstance | undefined,
+    protocol: Protocol,
+    clientName?: string,
+    clientVersion?: string,
+  ): ITransport {
+    const transport = this.#createTransport(
+      url,
+      session,
+      protocol,
+      clientName,
+      clientVersion,
+    );
+    if (this.#supportedProtocols) {
+      transport.supportedProtocols = this.#supportedProtocols;
+    }
+    return transport;
   }
 
   /**
@@ -218,6 +272,49 @@ class ToolboxClient {
     return {tool, usedAuthKeys, usedBoundKeys};
   }
 
+  async #executeWithFallback<T>(action: () => Promise<T>): Promise<T> {
+    while (true) {
+      try {
+        return await action();
+      } catch (e: unknown) {
+        if (e instanceof ProtocolNegotiationError) {
+          const serverVersion = e.fallbackVersion as string;
+          let mutuallySupported: string[] | null = null;
+
+          if (this.#supportedProtocols.includes(serverVersion as Protocol)) {
+            mutuallySupported = [serverVersion];
+          } else {
+            const allVersions = getSupportedMcpVersions();
+            if (allVersions.includes(serverVersion as Protocol)) {
+              const idx = allVersions.indexOf(serverVersion as Protocol);
+              const serverSupported = allVersions.slice(idx);
+              mutuallySupported = this.#supportedProtocols.filter(v =>
+                serverSupported.includes(v as Protocol),
+              );
+            }
+          }
+
+          if (!mutuallySupported || mutuallySupported.length === 0) {
+            throw new Error('No mutually supported protocol version');
+          }
+
+          const fallbackProtocol = mutuallySupported[0] as Protocol;
+          if (fallbackProtocol === this.#transport.protocolVersion) {
+            throw e;
+          }
+
+          this.#transport = this.#createTransportWithProtocols(
+            this.#baseUrl,
+            this.#session,
+            fallbackProtocol,
+          );
+        } else {
+          throw e;
+        }
+      }
+    }
+  }
+
   /**
    * Asynchronously loads a tool from the server.
    * Retrieves the schema for the specified tool from the Toolbox server and
@@ -239,21 +336,9 @@ class ToolboxClient {
   ): Promise<ToolboxTool> {
     warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
     const headers = await this.#resolveClientHeaders();
-    let manifest;
-    try {
-      manifest = await this.#transport.toolGet(name, headers);
-    } catch (e: unknown) {
-      if (e instanceof ProtocolNegotiationError) {
-        this.#transport = this.#createTransport(
-          this.#baseUrl,
-          this.#session,
-          e.fallbackVersion,
-        );
-        manifest = await this.#transport.toolGet(name, headers);
-      } else {
-        throw e;
-      }
-    }
+    const manifest = await this.#executeWithFallback(() =>
+      this.#transport.toolGet(name, headers),
+    );
 
     if (
       manifest.tools &&
@@ -324,21 +409,9 @@ class ToolboxClient {
     const toolsetName = name || '';
     const headers = await this.#resolveClientHeaders();
 
-    let manifest;
-    try {
-      manifest = await this.#transport.toolsList(toolsetName, headers);
-    } catch (e: unknown) {
-      if (e instanceof ProtocolNegotiationError) {
-        this.#transport = this.#createTransport(
-          this.#baseUrl,
-          this.#session,
-          e.fallbackVersion,
-        );
-        manifest = await this.#transport.toolsList(toolsetName, headers);
-      } else {
-        throw e;
-      }
-    }
+    const manifest = await this.#executeWithFallback(() =>
+      this.#transport.toolsList(toolsetName, headers),
+    );
     const tools: ToolboxTool[] = [];
 
     const overallUsedAuthKeys: Set<string> = new Set();

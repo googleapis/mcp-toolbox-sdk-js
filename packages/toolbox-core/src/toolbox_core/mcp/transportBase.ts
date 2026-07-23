@@ -45,6 +45,7 @@ export abstract class McpHttpTransportBase implements ITransport {
   protected _mcpBaseUrl: string;
   protected _protocolVersion: string;
   protected _serverVersion: string | null = null;
+  public supportedProtocols?: string[];
 
   protected _manageSession: boolean;
   protected _session: AxiosInstance;
@@ -76,6 +77,10 @@ export abstract class McpHttpTransportBase implements ITransport {
       this._initPromise = this.initializeSession(headers);
     }
     await this._initPromise;
+  }
+
+  get protocolVersion(): string {
+    return this._protocolVersion;
   }
 
   get baseUrl(): string {

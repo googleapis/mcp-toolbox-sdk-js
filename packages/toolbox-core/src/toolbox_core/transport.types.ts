@@ -22,6 +22,16 @@ import {ZodManifest} from './protocol.js';
  */
 export interface ITransport {
   /**
+   * The negotiated protocol version of the transport.
+   */
+  readonly protocolVersion: string;
+
+  /**
+   * The list of supported protocols that the client claims to support.
+   */
+  supportedProtocols?: string[];
+
+  /**
    * The base URL for the transport.
    */
   readonly baseUrl: string;

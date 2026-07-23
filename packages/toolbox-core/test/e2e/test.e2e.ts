@@ -14,84 +14,129 @@
 
 import {ToolboxClient} from '../../src/toolbox_core/client.js';
 import {ToolboxTool} from '../../src/toolbox_core/tool.js';
-import {getSupportedMcpVersions} from '../../src/toolbox_core/protocol.js';
+import {
+  Protocol,
+  getSupportedMcpVersions,
+} from '../../src/toolbox_core/protocol.js';
 
-import {AxiosError} from 'axios';
+import {jest} from '@jest/globals';
+import axios, {AxiosError} from 'axios';
 import {CustomGlobal} from './types.js';
 import {authTokenGetter} from './utils.js';
 import {ZodTypeAny} from 'zod';
 
-describe.each(getSupportedMcpVersions())(
-  'ToolboxClient E2E MCP Tests (%s)',
-  protocolVersion => {
-    let commonToolboxClient: ToolboxClient;
-    let getNRowsTool: ReturnType<typeof ToolboxTool>;
-    const testBaseUrl = 'http://localhost:5000';
-    const projectId = (globalThis as CustomGlobal).__GOOGLE_CLOUD_PROJECT__;
+const TOOLBOX_SERVER_URL_STABLE = 'http://localhost:5000';
+const TOOLBOX_SERVER_URL_DRAFT = 'http://localhost:5001';
+const testBaseUrls = [TOOLBOX_SERVER_URL_STABLE, TOOLBOX_SERVER_URL_DRAFT];
 
-    beforeAll(async () => {
-      commonToolboxClient = new ToolboxClient(
-        testBaseUrl,
-        undefined,
-        undefined,
-        protocolVersion,
-      );
-    });
+testBaseUrls.forEach(testBaseUrl => {
+  describe.each(getSupportedMcpVersions())(
+    `ToolboxClient E2E MCP Tests against ${testBaseUrl} (%s)`,
+    protocolVersion => {
+      let commonToolboxClient: ToolboxClient;
+      let getNRowsTool: ReturnType<typeof ToolboxTool>;
+      const projectId = (globalThis as CustomGlobal).__GOOGLE_CLOUD_PROJECT__;
 
-    beforeEach(async () => {
-      getNRowsTool = await commonToolboxClient.loadTool('get-n-rows');
-      expect(getNRowsTool.getName()).toBe('get-n-rows');
-    });
-
-    describe('invokeTool', () => {
-      it('should invoke the getNRowsTool', async () => {
-        const response = await getNRowsTool({num_rows: '2'});
-        expect(typeof response).toBe('string');
-        expect(response).toContain('row1');
-        expect(response).toContain('row2');
-        expect(response).not.toContain('row3');
-      });
-
-      it('should invoke the getNRowsTool with missing params', async () => {
-        await expect(getNRowsTool()).rejects.toThrow(
-          /Argument validation failed for tool "get-n-rows":\s*- num_rows: Required/,
+      beforeAll(async () => {
+        commonToolboxClient = new ToolboxClient(
+          testBaseUrl,
+          undefined,
+          undefined,
+          protocolVersion,
         );
       });
 
-      it('should invoke the getNRowsTool with wrong param type', async () => {
-        await expect(getNRowsTool({num_rows: 2})).rejects.toThrow(
-          /Argument validation failed for tool "get-n-rows":\s*- num_rows: Expected string, received number/,
-        );
+      beforeEach(async () => {
+        getNRowsTool = await commonToolboxClient.loadTool('get-n-rows');
+        expect(getNRowsTool.getName()).toBe('get-n-rows');
       });
-    });
 
-    describe('loadToolset', () => {
-      const specificToolsetTestCases = [
-        {
-          name: 'my-toolset',
-          expectedLength: 1,
-          expectedTools: ['get-row-by-id'],
-        },
-        {
-          name: 'my-toolset-2',
-          expectedLength: 2,
-          expectedTools: ['get-n-rows', 'get-row-by-id'],
-        },
-      ];
+      describe('invokeTool', () => {
+        it('should invoke the getNRowsTool', async () => {
+          const response = await getNRowsTool({num_rows: '2'});
+          expect(typeof response).toBe('string');
+          expect(response).toContain('row1');
+          expect(response).toContain('row2');
+          expect(response).not.toContain('row3');
+        });
 
-      specificToolsetTestCases.forEach(testCase => {
-        it(`should successfully load the specific toolset "${testCase.name}"`, async () => {
-          const loadedTools = await commonToolboxClient.loadToolset(
-            testCase.name,
+        it('should invoke the getNRowsTool with missing params', async () => {
+          await expect(getNRowsTool()).rejects.toThrow(
+            /Argument validation failed for tool "get-n-rows":\s*- num_rows: Required/,
+          );
+        });
+
+        it('should invoke the getNRowsTool with wrong param type', async () => {
+          await expect(getNRowsTool({num_rows: 2})).rejects.toThrow(
+            /Argument validation failed for tool "get-n-rows":\s*- num_rows: Expected string, received number/,
+          );
+        });
+      });
+
+      describe('loadToolset', () => {
+        const specificToolsetTestCases = [
+          {
+            name: 'my-toolset',
+            expectedLength: 1,
+            expectedTools: ['get-row-by-id'],
+          },
+          {
+            name: 'my-toolset-2',
+            expectedLength: 2,
+            expectedTools: ['get-n-rows', 'get-row-by-id'],
+          },
+        ];
+
+        specificToolsetTestCases.forEach(testCase => {
+          it(`should successfully load the specific toolset "${testCase.name}"`, async () => {
+            const loadedTools = await commonToolboxClient.loadToolset(
+              testCase.name,
+            );
+
+            expect(Array.isArray(loadedTools)).toBe(true);
+            expect(loadedTools.length).toBe(testCase.expectedLength);
+
+            const loadedToolNames = new Set(
+              loadedTools.map(tool => tool.getName()),
+            );
+            expect(loadedToolNames).toEqual(new Set(testCase.expectedTools));
+
+            for (const tool of loadedTools) {
+              expect(typeof tool).toBe('function');
+              expect(tool.getName).toBeInstanceOf(Function);
+              expect(tool.getDescription).toBeInstanceOf(Function);
+              expect(tool.getParamSchema).toBeInstanceOf(Function);
+            }
+          });
+        });
+
+        it('should successfully load the default toolset (all tools)', async () => {
+          const loadedTools = await commonToolboxClient.loadToolset(); // Load the default toolset (no name provided)
+          expect(Array.isArray(loadedTools)).toBe(true);
+          expect(loadedTools.length).toBeGreaterThan(0);
+          const getNRowsToolFromSet = loadedTools.find(
+            tool => tool.getName() === 'get-n-rows',
           );
 
-          expect(Array.isArray(loadedTools)).toBe(true);
-          expect(loadedTools.length).toBe(testCase.expectedLength);
+          expect(getNRowsToolFromSet).toBeDefined();
+          expect(typeof getNRowsToolFromSet).toBe('function');
+          expect(getNRowsToolFromSet?.getName()).toBe('get-n-rows');
+          expect(getNRowsToolFromSet?.getDescription()).toBeDefined();
+          expect(getNRowsToolFromSet?.getParamSchema()).toBeDefined();
 
           const loadedToolNames = new Set(
             loadedTools.map(tool => tool.getName()),
           );
-          expect(loadedToolNames).toEqual(new Set(testCase.expectedTools));
+          const expectedDefaultTools = new Set([
+            'get-row-by-content-auth',
+            'get-row-by-email-auth',
+            'get-row-by-id-auth',
+            'get-row-by-id',
+            'get-n-rows',
+            'search-rows',
+            'process-data',
+          ]);
+          expect(loadedToolNames).toEqual(expectedDefaultTools);
 
           for (const tool of loadedTools) {
             expect(typeof tool).toBe('function');
@@ -100,521 +145,645 @@ describe.each(getSupportedMcpVersions())(
             expect(tool.getParamSchema).toBeInstanceOf(Function);
           }
         });
-      });
 
-      it('should successfully load the default toolset (all tools)', async () => {
-        const loadedTools = await commonToolboxClient.loadToolset(); // Load the default toolset (no name provided)
-        expect(Array.isArray(loadedTools)).toBe(true);
-        expect(loadedTools.length).toBeGreaterThan(0);
-        const getNRowsToolFromSet = loadedTools.find(
-          tool => tool.getName() === 'get-n-rows',
-        );
-
-        expect(getNRowsToolFromSet).toBeDefined();
-        expect(typeof getNRowsToolFromSet).toBe('function');
-        expect(getNRowsToolFromSet?.getName()).toBe('get-n-rows');
-        expect(getNRowsToolFromSet?.getDescription()).toBeDefined();
-        expect(getNRowsToolFromSet?.getParamSchema()).toBeDefined();
-
-        const loadedToolNames = new Set(
-          loadedTools.map(tool => tool.getName()),
-        );
-        const expectedDefaultTools = new Set([
-          'get-row-by-content-auth',
-          'get-row-by-email-auth',
-          'get-row-by-id-auth',
-          'get-row-by-id',
-          'get-n-rows',
-          'search-rows',
-          'process-data',
-        ]);
-        expect(loadedToolNames).toEqual(expectedDefaultTools);
-
-        for (const tool of loadedTools) {
-          expect(typeof tool).toBe('function');
-          expect(tool.getName).toBeInstanceOf(Function);
-          expect(tool.getDescription).toBeInstanceOf(Function);
-          expect(tool.getParamSchema).toBeInstanceOf(Function);
-        }
-      });
-
-      it('should throw an error when trying to load a non-existent toolset', async () => {
-        await expect(
-          commonToolboxClient.loadToolset('non-existent-toolset'),
-        ).rejects.toThrow(
-          /MCP request failed with code -32600: toolset does not exist/,
-        );
-      });
-    });
-    describe('bindParams', () => {
-      it('should throw an error when attempting to provide user arguments for bound params', async () => {
-        const newTool = getNRowsTool.bindParam('num_rows', '3');
-        await expect(newTool({num_rows: '4'})).rejects.toThrow(
-          "unexpected parameter 'num_rows' provided",
-        );
-      });
-
-      it('should successfully bind a parameter with bindParam and invoke', async () => {
-        const newTool = getNRowsTool.bindParam('num_rows', '3');
-        const response = await newTool(); // Invoke with no args
-        expect(response).toContain('row1');
-        expect(response).toContain('row2');
-        expect(response).toContain('row3');
-        expect(response).not.toContain('row4');
-      });
-
-      it('should successfully bind parameters with bindParams and invoke', async () => {
-        const newTool = getNRowsTool.bindParams({num_rows: '3'});
-        const response = await newTool(); // Invoke with no args
-        expect(response).toContain('row1');
-        expect(response).toContain('row2');
-        expect(response).toContain('row3');
-        expect(response).not.toContain('row4');
-      });
-
-      it('should successfully bind a synchronous function value', async () => {
-        const newTool = getNRowsTool.bindParams({num_rows: () => '1'});
-        const response = await newTool();
-        expect(response).toContain('row1');
-        expect(response).not.toContain('row2');
-      });
-
-      it('should successfully bind an asynchronous function value', async () => {
-        const asyncNumProvider = async () => {
-          await new Promise(resolve => setTimeout(resolve, 10));
-          return '1';
-        };
-
-        const newTool = getNRowsTool.bindParams({num_rows: asyncNumProvider});
-        const response = await newTool();
-        expect(response).toContain('row1');
-        expect(response).not.toContain('row2');
-      });
-
-      it('should successfully bind parameters at load time', async () => {
-        const tool = await commonToolboxClient.loadTool('get-n-rows', null, {
-          num_rows: '3',
-        });
-        const response = await tool();
-        expect(response).toContain('row1');
-        expect(response).toContain('row2');
-        expect(response).toContain('row3');
-        expect(response).not.toContain('row4');
-      });
-
-      it('should throw an error when re-binding an existing parameter', () => {
-        const newTool = getNRowsTool.bindParam('num_rows', '1');
-        expect(() => {
-          newTool.bindParam('num_rows', '2');
-        }).toThrow(
-          "Cannot re-bind parameter: parameter 'num_rows' is already bound in tool 'get-n-rows'.",
-        );
-      });
-
-      it('should throw an error when binding a non-existent parameter', () => {
-        expect(() => {
-          getNRowsTool.bindParam('non_existent_param', '2');
-        }).toThrow(
-          "Unable to bind parameter: no parameter named 'non_existent_param' in tool 'get-n-rows'.",
-        );
-      });
-    });
-
-    describe('Auth E2E Tests', () => {
-      let authToken1: string;
-      let authToken2: string;
-      let authToken1Getter: () => string;
-      let authToken2Getter: () => string;
-
-      beforeAll(async () => {
-        if (!projectId) {
-          throw new Error(
-            'GOOGLE_CLOUD_PROJECT is not defined. Cannot run Auth E2E tests.',
+        it('should throw an error when trying to load a non-existent toolset', async () => {
+          await expect(
+            commonToolboxClient.loadToolset('non-existent-toolset'),
+          ).rejects.toThrow(
+            /MCP request failed with code -32600: toolset does not exist/,
           );
-        }
-        authToken1 = await authTokenGetter(projectId, 'sdk_testing_client1');
-        authToken2 = await authTokenGetter(projectId, 'sdk_testing_client2');
+        });
+      });
+      describe('bindParams', () => {
+        it('should throw an error when attempting to provide user arguments for bound params', async () => {
+          const newTool = getNRowsTool.bindParam('num_rows', '3');
+          await expect(newTool({num_rows: '4'})).rejects.toThrow(
+            "unexpected parameter 'num_rows' provided",
+          );
+        });
 
-        authToken1Getter = () => authToken1;
-        authToken2Getter = () => authToken2;
+        it('should successfully bind a parameter with bindParam and invoke', async () => {
+          const newTool = getNRowsTool.bindParam('num_rows', '3');
+          const response = await newTool(); // Invoke with no args
+          expect(response).toContain('row1');
+          expect(response).toContain('row2');
+          expect(response).toContain('row3');
+          expect(response).not.toContain('row4');
+        });
+
+        it('should successfully bind parameters with bindParams and invoke', async () => {
+          const newTool = getNRowsTool.bindParams({num_rows: '3'});
+          const response = await newTool(); // Invoke with no args
+          expect(response).toContain('row1');
+          expect(response).toContain('row2');
+          expect(response).toContain('row3');
+          expect(response).not.toContain('row4');
+        });
+
+        it('should successfully bind a synchronous function value', async () => {
+          const newTool = getNRowsTool.bindParams({num_rows: () => '1'});
+          const response = await newTool();
+          expect(response).toContain('row1');
+          expect(response).not.toContain('row2');
+        });
+
+        it('should successfully bind an asynchronous function value', async () => {
+          const asyncNumProvider = async () => {
+            await new Promise(resolve => setTimeout(resolve, 10));
+            return '1';
+          };
+
+          const newTool = getNRowsTool.bindParams({num_rows: asyncNumProvider});
+          const response = await newTool();
+          expect(response).toContain('row1');
+          expect(response).not.toContain('row2');
+        });
+
+        it('should successfully bind parameters at load time', async () => {
+          const tool = await commonToolboxClient.loadTool('get-n-rows', null, {
+            num_rows: '3',
+          });
+          const response = await tool();
+          expect(response).toContain('row1');
+          expect(response).toContain('row2');
+          expect(response).toContain('row3');
+          expect(response).not.toContain('row4');
+        });
+
+        it('should throw an error when re-binding an existing parameter', () => {
+          const newTool = getNRowsTool.bindParam('num_rows', '1');
+          expect(() => {
+            newTool.bindParam('num_rows', '2');
+          }).toThrow(
+            "Cannot re-bind parameter: parameter 'num_rows' is already bound in tool 'get-n-rows'.",
+          );
+        });
+
+        it('should throw an error when binding a non-existent parameter', () => {
+          expect(() => {
+            getNRowsTool.bindParam('non_existent_param', '2');
+          }).toThrow(
+            "Unable to bind parameter: no parameter named 'non_existent_param' in tool 'get-n-rows'.",
+          );
+        });
       });
 
-      it('should fail when running a tool that does not require auth with auth provided', async () => {
-        await expect(
-          commonToolboxClient.loadTool('get-row-by-id', {
+      describe('Auth E2E Tests', () => {
+        // We isolate authToolboxClient to this block so that the global commonToolboxClient
+        // remains completely unauthenticated. If we mutate commonToolboxClient with auth
+        // claims here, subsequent test suites (like pagination) would inherit the auth state
+        // and mask bugs where unauthenticated requests should rightfully fail.
+        let authToolboxClient: ToolboxClient;
+        let authToken1: string;
+        let authToken2: string;
+        let authToken1Getter: () => string;
+        let authToken2Getter: () => string;
+
+        beforeEach(async () => {
+          authToolboxClient = new ToolboxClient(
+            testBaseUrl,
+            undefined,
+            undefined,
+            protocolVersion,
+          );
+        });
+
+        beforeAll(async () => {
+          if (!projectId) {
+            throw new Error(
+              'GOOGLE_CLOUD_PROJECT is not defined. Cannot run Auth E2E tests.',
+            );
+          }
+          authToken1 = await authTokenGetter(projectId, 'sdk_testing_client1');
+          authToken2 = await authTokenGetter(projectId, 'sdk_testing_client2');
+
+          authToken1Getter = () => authToken1;
+          authToken2Getter = () => authToken2;
+        });
+
+        it('should fail when running a tool that does not require auth with auth provided', async () => {
+          await expect(
+            authToolboxClient.loadTool('get-row-by-id', {
+              'my-test-auth': authToken2Getter,
+            }),
+          ).rejects.toThrow(
+            "Validation failed for tool 'get-row-by-id': unused auth tokens: my-test-auth",
+          );
+        });
+
+        it('should fail when running a tool requiring auth without providing auth', async () => {
+          const tool = await authToolboxClient.loadTool('get-row-by-id-auth');
+          await expect(tool({id: '2'})).rejects.toThrow(
+            'One or more of the following authn services are required to invoke this tool: my-test-auth',
+          );
+        });
+
+        it('should fail when running a tool with incorrect auth', async () => {
+          const tool = await authToolboxClient.loadTool('get-row-by-id-auth');
+          const authTool = tool.addAuthTokenGetters({
             'my-test-auth': authToken2Getter,
-          }),
-        ).rejects.toThrow(
-          "Validation failed for tool 'get-row-by-id': unused auth tokens: my-test-auth",
-        );
-      });
-
-      it('should fail when running a tool requiring auth without providing auth', async () => {
-        const tool = await commonToolboxClient.loadTool('get-row-by-id-auth');
-        await expect(tool({id: '2'})).rejects.toThrow(
-          'One or more of the following authn services are required to invoke this tool: my-test-auth',
-        );
-      });
-
-      it('should fail when running a tool with incorrect auth', async () => {
-        const tool = await commonToolboxClient.loadTool('get-row-by-id-auth');
-        const authTool = tool.addAuthTokenGetters({
-          'my-test-auth': authToken2Getter,
-        });
-        try {
-          await authTool({id: '2'});
-        } catch (error) {
-          expect(error).toBeInstanceOf(AxiosError);
-          const axiosError = error as AxiosError;
-          expect(axiosError.response?.data).toEqual(
-            expect.objectContaining({
-              error: expect.objectContaining({
-                message: expect.stringMatching(
-                  /unauthorized|missing or invalid authentication header|unauthorized Tool call/,
-                ),
+          });
+          try {
+            await authTool({id: '2'});
+          } catch (error) {
+            expect(error).toBeInstanceOf(AxiosError);
+            const axiosError = error as AxiosError;
+            expect(axiosError.response?.data).toEqual(
+              expect.objectContaining({
+                error: expect.objectContaining({
+                  message: expect.stringMatching(
+                    /unauthorized|missing or invalid authentication header|unauthorized Tool call/,
+                  ),
+                }),
               }),
-            }),
+            );
+          }
+        });
+
+        it('should succeed when running a tool with correct auth', async () => {
+          const tool = await authToolboxClient.loadTool('get-row-by-id-auth');
+          const authTool = tool.addAuthTokenGetters({
+            'my-test-auth': authToken1Getter,
+          });
+          const response = await authTool({id: '2'});
+          expect(response).toContain('row2');
+        });
+
+        it('should succeed when running a tool with correct async auth', async () => {
+          const tool = await authToolboxClient.loadTool('get-row-by-id-auth');
+          const getAsyncToken = async () => {
+            return authToken1Getter();
+          };
+          const authTool = tool.addAuthTokenGetters({
+            'my-test-auth': getAsyncToken,
+          });
+          const response = await authTool({id: '2'});
+          expect(response).toContain('row2');
+        });
+
+        it('should fail when a tool with a param requiring auth is run without auth', async () => {
+          const tool = await authToolboxClient.loadTool(
+            'get-row-by-email-auth',
           );
-        }
-      });
-
-      it('should succeed when running a tool with correct auth', async () => {
-        const tool = await commonToolboxClient.loadTool('get-row-by-id-auth');
-        const authTool = tool.addAuthTokenGetters({
-          'my-test-auth': authToken1Getter,
+          await expect(tool()).rejects.toThrow(
+            'One or more of the following authn services are required to invoke this tool: my-test-auth',
+          );
         });
-        const response = await authTool({id: '2'});
-        expect(response).toContain('row2');
-      });
 
-      it('should succeed when running a tool with correct async auth', async () => {
-        const tool = await commonToolboxClient.loadTool('get-row-by-id-auth');
-        const getAsyncToken = async () => {
-          return authToken1Getter();
-        };
-        const authTool = tool.addAuthTokenGetters({
-          'my-test-auth': getAsyncToken,
+        it('should succeed when a tool with a param requiring auth is run with correct auth', async () => {
+          const tool = await authToolboxClient.loadTool(
+            'get-row-by-email-auth',
+            {
+              'my-test-auth': authToken1Getter,
+            },
+          );
+          const response = await tool();
+          expect(response).toContain('row4');
+          expect(response).toContain('row5');
+          expect(response).toContain('row6');
         });
-        const response = await authTool({id: '2'});
-        expect(response).toContain('row2');
-      });
 
-      it('should fail when a tool with a param requiring auth is run without auth', async () => {
-        const tool = await commonToolboxClient.loadTool(
-          'get-row-by-email-auth',
-        );
-        await expect(tool()).rejects.toThrow(
-          'One or more of the following authn services are required to invoke this tool: my-test-auth',
-        );
-      });
-
-      it('should succeed when a tool with a param requiring auth is run with correct auth', async () => {
-        const tool = await commonToolboxClient.loadTool(
-          'get-row-by-email-auth',
-          {
-            'my-test-auth': authToken1Getter,
-          },
-        );
-        const response = await tool();
-        expect(response).toContain('row4');
-        expect(response).toContain('row5');
-        expect(response).toContain('row6');
-      });
-
-      it('should fail when a tool with a param requiring auth is run with insufficient auth claims', async () => {
-        const tool = await commonToolboxClient.loadTool(
-          'get-row-by-content-auth',
-          {
-            'my-test-auth': authToken1Getter,
-          },
-        );
-        try {
-          await tool();
-          throw new Error('Expected tool invocation to fail');
-        } catch (error) {
-          expect(error).toBeInstanceOf(AxiosError);
-          const axiosError = error as AxiosError;
-          expect(axiosError.response?.data).toEqual(
-            expect.objectContaining({
-              error: expect.objectContaining({
-                message: expect.stringMatching(
-                  /provided parameters were invalid/,
-                ),
+        it('should fail when a tool with a param requiring auth is run with insufficient auth claims', async () => {
+          const tool = await authToolboxClient.loadTool(
+            'get-row-by-content-auth',
+            {
+              'my-test-auth': authToken1Getter,
+            },
+          );
+          try {
+            await tool();
+            throw new Error('Expected tool invocation to fail');
+          } catch (error) {
+            expect(error).toBeInstanceOf(AxiosError);
+            const axiosError = error as AxiosError;
+            expect(axiosError.response?.data).toEqual(
+              expect.objectContaining({
+                error: expect.objectContaining({
+                  message: expect.stringMatching(
+                    /provided parameters were invalid/,
+                  ),
+                }),
               }),
-            }),
+            );
+          }
+        });
+      });
+
+      describe('Optional Params E2E Tests', () => {
+        let searchRowsTool: ReturnType<typeof ToolboxTool>;
+
+        beforeAll(async () => {
+          searchRowsTool = await commonToolboxClient.loadTool('search-rows');
+        });
+
+        it('should correctly identify required and optional parameters in the schema', () => {
+          const paramSchema = searchRowsTool.getParamSchema();
+          const {shape} = paramSchema;
+
+          // Required param 'email'
+          expect(shape.email.isOptional()).toBe(false);
+          expect(shape.email.isNullable()).toBe(false);
+          expect(shape.email._def.typeName).toBe('ZodString');
+
+          // Optional param 'data'
+          expect(shape.data.isOptional()).toBe(true);
+          expect(shape.data.isNullable()).toBe(true);
+          {
+            let inner: ZodTypeAny = shape.data as unknown as ZodTypeAny;
+            while (
+              inner?._def?.typeName === 'ZodOptional' ||
+              inner?._def?.typeName === 'ZodNullable' ||
+              inner?._def?.typeName === 'ZodDefault'
+            ) {
+              inner = inner._def.innerType;
+            }
+            expect(inner._def.typeName).toBe('ZodString');
+          }
+
+          // Optional param 'id'
+          expect(shape.id.isOptional()).toBe(true);
+          expect(shape.id.isNullable()).toBe(true);
+          {
+            let inner: ZodTypeAny = shape.id as unknown as ZodTypeAny;
+            while (
+              inner?._def?.typeName === 'ZodOptional' ||
+              inner?._def?.typeName === 'ZodNullable' ||
+              inner?._def?.typeName === 'ZodDefault'
+            ) {
+              inner = inner._def.innerType;
+            }
+            expect(inner._def.typeName).toBe('ZodNumber');
+          }
+        });
+
+        it('should run tool with optional params omitted', async () => {
+          const response = await searchRowsTool({
+            email: 'twishabansal@google.com',
+          });
+          expect(typeof response).toBe('string');
+          expect(response).toContain('"email":"twishabansal@google.com"');
+          expect(response).not.toContain('row1');
+          expect(response).toContain('row2');
+          expect(response).not.toContain('row3');
+          expect(response).not.toContain('row4');
+          expect(response).not.toContain('row5');
+          expect(response).not.toContain('row6');
+        });
+
+        it('should run tool with optional data provided', async () => {
+          const response = await searchRowsTool({
+            email: 'twishabansal@google.com',
+            data: 'row3',
+          });
+          expect(typeof response).toBe('string');
+          expect(response).toContain('"email":"twishabansal@google.com"');
+          expect(response).not.toContain('row1');
+          expect(response).not.toContain('row2');
+          expect(response).toContain('row3');
+          expect(response).not.toContain('row4');
+          expect(response).not.toContain('row5');
+          expect(response).not.toContain('row6');
+        });
+
+        it('should run tool with optional data as null', async () => {
+          const response = await searchRowsTool({
+            email: 'twishabansal@google.com',
+            data: null,
+          });
+          expect(typeof response).toBe('string');
+          expect(response).toContain('"email":"twishabansal@google.com"');
+          expect(response).not.toContain('row1');
+          expect(response).toContain('row2');
+          expect(response).not.toContain('row3');
+          expect(response).not.toContain('row4');
+          expect(response).not.toContain('row5');
+          expect(response).not.toContain('row6');
+        });
+
+        it('should run tool with optional id provided', async () => {
+          const response = await searchRowsTool({
+            email: 'twishabansal@google.com',
+            id: 1,
+          });
+          expect(typeof response).toBe('string');
+          expect(response).toBe('null');
+        });
+
+        it('should run tool with optional id as null', async () => {
+          const response = await searchRowsTool({
+            email: 'twishabansal@google.com',
+            id: null,
+          });
+          expect(typeof response).toBe('string');
+          expect(response).toContain('"email":"twishabansal@google.com"');
+          expect(response).not.toContain('row1');
+          expect(response).toContain('row2');
+          expect(response).not.toContain('row3');
+          expect(response).not.toContain('row4');
+          expect(response).not.toContain('row5');
+          expect(response).not.toContain('row6');
+        });
+
+        it('should fail when a required param is missing', async () => {
+          await expect(searchRowsTool({id: 5, data: 'row5'})).rejects.toThrow(
+            /Argument validation failed for tool "search-rows":\s*- email: Required/,
           );
-        }
-      });
-    });
-
-    describe('Optional Params E2E Tests', () => {
-      let searchRowsTool: ReturnType<typeof ToolboxTool>;
-
-      beforeAll(async () => {
-        searchRowsTool = await commonToolboxClient.loadTool('search-rows');
-      });
-
-      it('should correctly identify required and optional parameters in the schema', () => {
-        const paramSchema = searchRowsTool.getParamSchema();
-        const {shape} = paramSchema;
-
-        // Required param 'email'
-        expect(shape.email.isOptional()).toBe(false);
-        expect(shape.email.isNullable()).toBe(false);
-        expect(shape.email._def.typeName).toBe('ZodString');
-
-        // Optional param 'data'
-        expect(shape.data.isOptional()).toBe(true);
-        expect(shape.data.isNullable()).toBe(true);
-        {
-          let inner: ZodTypeAny = shape.data as unknown as ZodTypeAny;
-          while (
-            inner?._def?.typeName === 'ZodOptional' ||
-            inner?._def?.typeName === 'ZodNullable' ||
-            inner?._def?.typeName === 'ZodDefault'
-          ) {
-            inner = inner._def.innerType;
-          }
-          expect(inner._def.typeName).toBe('ZodString');
-        }
-
-        // Optional param 'id'
-        expect(shape.id.isOptional()).toBe(true);
-        expect(shape.id.isNullable()).toBe(true);
-        {
-          let inner: ZodTypeAny = shape.id as unknown as ZodTypeAny;
-          while (
-            inner?._def?.typeName === 'ZodOptional' ||
-            inner?._def?.typeName === 'ZodNullable' ||
-            inner?._def?.typeName === 'ZodDefault'
-          ) {
-            inner = inner._def.innerType;
-          }
-          expect(inner._def.typeName).toBe('ZodNumber');
-        }
-      });
-
-      it('should run tool with optional params omitted', async () => {
-        const response = await searchRowsTool({
-          email: 'twishabansal@google.com',
         });
-        expect(typeof response).toBe('string');
-        expect(response).toContain('"email":"twishabansal@google.com"');
-        expect(response).not.toContain('row1');
-        expect(response).toContain('row2');
-        expect(response).not.toContain('row3');
-        expect(response).not.toContain('row4');
-        expect(response).not.toContain('row5');
-        expect(response).not.toContain('row6');
-      });
 
-      it('should run tool with optional data provided', async () => {
-        const response = await searchRowsTool({
-          email: 'twishabansal@google.com',
-          data: 'row3',
+        it('should fail when a required param is null', async () => {
+          await expect(
+            searchRowsTool({email: null, id: 5, data: 'row5'}),
+          ).rejects.toThrow(
+            /Argument validation failed for tool "search-rows":\s*- email: Expected string, received null/,
+          );
         });
-        expect(typeof response).toBe('string');
-        expect(response).toContain('"email":"twishabansal@google.com"');
-        expect(response).not.toContain('row1');
-        expect(response).not.toContain('row2');
-        expect(response).toContain('row3');
-        expect(response).not.toContain('row4');
-        expect(response).not.toContain('row5');
-        expect(response).not.toContain('row6');
-      });
 
-      it('should run tool with optional data as null', async () => {
-        const response = await searchRowsTool({
-          email: 'twishabansal@google.com',
-          data: null,
+        it('should run tool with all default params', async () => {
+          const response = await searchRowsTool({
+            email: 'twishabansal@google.com',
+            id: 0,
+            data: 'row2',
+          });
+          expect(typeof response).toBe('string');
+          expect(response).toContain('"email":"twishabansal@google.com"');
+          expect(response).not.toContain('row1');
+          expect(response).toContain('row2');
+          expect(response).not.toContain('row3');
+          expect(response).not.toContain('row4');
+          expect(response).not.toContain('row5');
+          expect(response).not.toContain('row6');
         });
-        expect(typeof response).toBe('string');
-        expect(response).toContain('"email":"twishabansal@google.com"');
-        expect(response).not.toContain('row1');
-        expect(response).toContain('row2');
-        expect(response).not.toContain('row3');
-        expect(response).not.toContain('row4');
-        expect(response).not.toContain('row5');
-        expect(response).not.toContain('row6');
-      });
 
-      it('should run tool with optional id provided', async () => {
-        const response = await searchRowsTool({
-          email: 'twishabansal@google.com',
-          id: 1,
+        it('should run tool with all valid params', async () => {
+          const response = await searchRowsTool({
+            email: 'twishabansal@google.com',
+            id: 3,
+            data: 'row3',
+          });
+          expect(typeof response).toBe('string');
+          expect(response).toContain('"email":"twishabansal@google.com"');
+          expect(response).not.toContain('row1');
+          expect(response).not.toContain('row2');
+          expect(response).toContain('row3');
+          expect(response).not.toContain('row4');
+          expect(response).not.toContain('row5');
+          expect(response).not.toContain('row6');
         });
-        expect(typeof response).toBe('string');
-        expect(response).toBe('null');
-      });
 
-      it('should run tool with optional id as null', async () => {
-        const response = await searchRowsTool({
-          email: 'twishabansal@google.com',
-          id: null,
+        it('should return null when called with a different email', async () => {
+          const response = await searchRowsTool({
+            email: 'anubhavdhawan@google.com',
+            id: 3,
+            data: 'row3',
+          });
+          expect(typeof response).toBe('string');
+          expect(response).toBe('null');
         });
-        expect(typeof response).toBe('string');
-        expect(response).toContain('"email":"twishabansal@google.com"');
-        expect(response).not.toContain('row1');
-        expect(response).toContain('row2');
-        expect(response).not.toContain('row3');
-        expect(response).not.toContain('row4');
-        expect(response).not.toContain('row5');
-        expect(response).not.toContain('row6');
-      });
 
-      it('should fail when a required param is missing', async () => {
-        await expect(searchRowsTool({id: 5, data: 'row5'})).rejects.toThrow(
-          /Argument validation failed for tool "search-rows":\s*- email: Required/,
-        );
-      });
-
-      it('should fail when a required param is null', async () => {
-        await expect(
-          searchRowsTool({email: null, id: 5, data: 'row5'}),
-        ).rejects.toThrow(
-          /Argument validation failed for tool "search-rows":\s*- email: Expected string, received null/,
-        );
-      });
-
-      it('should run tool with all default params', async () => {
-        const response = await searchRowsTool({
-          email: 'twishabansal@google.com',
-          id: 0,
-          data: 'row2',
+        it('should return null when called with different data', async () => {
+          const response = await searchRowsTool({
+            email: 'twishabansal@google.com',
+            id: 3,
+            data: 'row4',
+          });
+          expect(typeof response).toBe('string');
+          expect(response).toBe('null');
         });
-        expect(typeof response).toBe('string');
-        expect(response).toContain('"email":"twishabansal@google.com"');
-        expect(response).not.toContain('row1');
-        expect(response).toContain('row2');
-        expect(response).not.toContain('row3');
-        expect(response).not.toContain('row4');
-        expect(response).not.toContain('row5');
-        expect(response).not.toContain('row6');
-      });
 
-      it('should run tool with all valid params', async () => {
-        const response = await searchRowsTool({
-          email: 'twishabansal@google.com',
-          id: 3,
-          data: 'row3',
+        it('should return null when called with a different id', async () => {
+          const response = await searchRowsTool({
+            email: 'twishabansal@google.com',
+            id: 4,
+            data: 'row3',
+          });
+          expect(typeof response).toBe('string');
+          expect(response).toBe('null');
         });
-        expect(typeof response).toBe('string');
-        expect(response).toContain('"email":"twishabansal@google.com"');
-        expect(response).not.toContain('row1');
-        expect(response).not.toContain('row2');
-        expect(response).toContain('row3');
-        expect(response).not.toContain('row4');
-        expect(response).not.toContain('row5');
-        expect(response).not.toContain('row6');
       });
+      describe('Map/Object Params E2E Tests', () => {
+        let processDataTool: ReturnType<typeof ToolboxTool>;
 
-      it('should return null when called with a different email', async () => {
-        const response = await searchRowsTool({
-          email: 'anubhavdhawan@google.com',
-          id: 3,
-          data: 'row3',
+        beforeAll(async () => {
+          processDataTool = await commonToolboxClient.loadTool('process-data');
         });
-        expect(typeof response).toBe('string');
-        expect(response).toBe('null');
-      });
 
-      it('should return null when called with different data', async () => {
-        const response = await searchRowsTool({
-          email: 'twishabansal@google.com',
-          id: 3,
-          data: 'row4',
+        it('should correctly identify map/object parameters in the schema', () => {
+          const paramSchema = processDataTool.getParamSchema();
+          const baseArgs = {
+            execution_context: {env: 'prod'},
+            user_scores: {user1: 100},
+          };
+
+          // Test required untyped map (dict[str, Any])
+          expect(paramSchema.safeParse(baseArgs).success).toBe(true);
+          const argsWithoutExec = {...baseArgs};
+          delete (argsWithoutExec as Partial<typeof argsWithoutExec>)
+            .execution_context;
+          expect(paramSchema.safeParse(argsWithoutExec).success).toBe(false);
+
+          // Test required typed map (dict[str, int])
+          expect(
+            paramSchema.safeParse({
+              ...baseArgs,
+              user_scores: {user1: 'not-a-number'},
+            }).success,
+          ).toBe(false);
+
+          // Test optional typed map (dict[str, bool])
+          expect(
+            paramSchema.safeParse({
+              ...baseArgs,
+              feature_flags: {new_feature: true},
+            }).success,
+          ).toBe(true);
+          expect(
+            paramSchema.safeParse({...baseArgs, feature_flags: null}).success,
+          ).toBe(true);
+          expect(paramSchema.safeParse(baseArgs).success).toBe(true); // Omitted
         });
-        expect(typeof response).toBe('string');
-        expect(response).toBe('null');
-      });
 
-      it('should return null when called with a different id', async () => {
-        const response = await searchRowsTool({
-          email: 'twishabansal@google.com',
-          id: 4,
-          data: 'row3',
-        });
-        expect(typeof response).toBe('string');
-        expect(response).toBe('null');
-      });
-    });
-    describe('Map/Object Params E2E Tests', () => {
-      let processDataTool: ReturnType<typeof ToolboxTool>;
-
-      beforeAll(async () => {
-        processDataTool = await commonToolboxClient.loadTool('process-data');
-      });
-
-      it('should correctly identify map/object parameters in the schema', () => {
-        const paramSchema = processDataTool.getParamSchema();
-        const baseArgs = {
-          execution_context: {env: 'prod'},
-          user_scores: {user1: 100},
-        };
-
-        // Test required untyped map (dict[str, Any])
-        expect(paramSchema.safeParse(baseArgs).success).toBe(true);
-        const argsWithoutExec = {...baseArgs};
-        delete (argsWithoutExec as Partial<typeof argsWithoutExec>)
-          .execution_context;
-        expect(paramSchema.safeParse(argsWithoutExec).success).toBe(false);
-
-        // Test required typed map (dict[str, int])
-        expect(
-          paramSchema.safeParse({
-            ...baseArgs,
-            user_scores: {user1: 'not-a-number'},
-          }).success,
-        ).toBe(false);
-
-        // Test optional typed map (dict[str, bool])
-        expect(
-          paramSchema.safeParse({
-            ...baseArgs,
+        it('should run tool with valid map parameters', async () => {
+          const response = await processDataTool({
+            execution_context: {env: 'prod', id: 1234, user: 1234.5},
+            user_scores: {user1: 100, user2: 200},
             feature_flags: {new_feature: true},
-          }).success,
-        ).toBe(true);
-        expect(
-          paramSchema.safeParse({...baseArgs, feature_flags: null}).success,
-        ).toBe(true);
-        expect(paramSchema.safeParse(baseArgs).success).toBe(true); // Omitted
-      });
-
-      it('should run tool with valid map parameters', async () => {
-        const response = await processDataTool({
-          execution_context: {env: 'prod', id: 1234, user: 1234.5},
-          user_scores: {user1: 100, user2: 200},
-          feature_flags: {new_feature: true},
+          });
+          expect(typeof response).toBe('string');
+          expect(response).toContain(
+            '"execution_context":{"env":"prod","id":1234,"user":1234.5}',
+          );
+          expect(response).toContain('"user_scores":{"user1":100,"user2":200}');
+          expect(response).toContain('"feature_flags":{"new_feature":true}');
         });
-        expect(typeof response).toBe('string');
-        expect(response).toContain(
-          '"execution_context":{"env":"prod","id":1234,"user":1234.5}',
-        );
-        expect(response).toContain('"user_scores":{"user1":100,"user2":200}');
-        expect(response).toContain('"feature_flags":{"new_feature":true}');
-      });
 
-      it('should run tool with optional map param omitted', async () => {
-        const response = await processDataTool({
-          execution_context: {env: 'dev'},
-          user_scores: {user3: 300},
+        it('should run tool with optional map param omitted', async () => {
+          const response = await processDataTool({
+            execution_context: {env: 'dev'},
+            user_scores: {user3: 300},
+          });
+          expect(typeof response).toBe('string');
+          expect(response).toContain('"execution_context":{"env":"dev"}');
+          expect(response).toContain('"user_scores":{"user3":300}');
+          expect(response).toContain('"feature_flags":null');
         });
-        expect(typeof response).toBe('string');
-        expect(response).toContain('"execution_context":{"env":"dev"}');
-        expect(response).toContain('"user_scores":{"user3":300}');
-        expect(response).toContain('"feature_flags":null');
-      });
 
-      it('should fail when a map parameter has the wrong value type', async () => {
-        await expect(
-          processDataTool({
-            execution_context: {env: 'staging'},
-            user_scores: {user4: 'not-an-integer'},
-          }),
-        ).rejects.toThrow(
-          /user_scores\.user4: Expected number, received string/,
-        );
+        it('should fail when a map parameter has the wrong value type', async () => {
+          await expect(
+            processDataTool({
+              execution_context: {env: 'staging'},
+              user_scores: {user4: 'not-an-integer'},
+            }),
+          ).rejects.toThrow(
+            /user_scores\.user4: Expected number, received string/,
+          );
+        });
       });
+    },
+  );
+
+  describe(`Protocol Configuration E2E Tests against ${testBaseUrl}`, () => {
+    it('should default to the correct protocol when none is specified', async () => {
+      const client = new ToolboxClient(testBaseUrl);
+
+      const tool = await client.loadTool('get-n-rows');
+      const response = await tool({num_rows: '1'});
+      expect(typeof response).toBe('string');
+      expect(response).toContain('row1');
     });
-  },
-);
+
+    if (testBaseUrl === TOOLBOX_SERVER_URL_STABLE) {
+      it('should fallback to an older protocol against a server that does not support the draft version', async () => {
+        const session = axios.create();
+        const postSpy = jest.spyOn(session, 'post');
+
+        const client = new ToolboxClient(
+          testBaseUrl,
+          session,
+          undefined,
+          Protocol.MCP_DRAFT_2026_v1,
+        );
+
+        const tool = await client.loadTool('get-n-rows');
+        const response = await tool({num_rows: '1'});
+        expect(typeof response).toBe('string');
+        expect(response).toContain('row1');
+
+        expect(postSpy).toHaveBeenCalledTimes(5);
+
+        // Call 1: Draft tools/list (fails)
+        const call1 = postSpy.mock.calls[0];
+        expect(call1[0]).toBe(`${TOOLBOX_SERVER_URL_STABLE}/mcp/`);
+        expect((call1[1] as Record<string, unknown>).method).toBe('tools/list');
+        expect(call1[2]?.headers?.['MCP-Protocol-Version']).toBe(
+          Protocol.MCP_DRAFT_2026_v1,
+        );
+
+        // Call 2: Stateful Initialize (succeeds)
+        const call2 = postSpy.mock.calls[1];
+        expect(call2[0]).toBe(`${TOOLBOX_SERVER_URL_STABLE}/mcp/`);
+        expect((call2[1] as Record<string, unknown>).method).toBe('initialize');
+        expect(call2[2]?.headers?.['MCP-Protocol-Version']).toBe(
+          Protocol.MCP_v20251125,
+        );
+
+        // Call 3: Stateful Initialized Notification (succeeds)
+        const call3 = postSpy.mock.calls[2];
+        expect(call3[0]).toBe(`${TOOLBOX_SERVER_URL_STABLE}/mcp/`);
+        expect((call3[1] as Record<string, unknown>).method).toBe(
+          'notifications/initialized',
+        );
+        expect(call3[2]?.headers?.['MCP-Protocol-Version']).toBe(
+          Protocol.MCP_v20251125,
+        );
+
+        // Call 4: Stateful tools/list (succeeds)
+        const call4 = postSpy.mock.calls[3];
+        expect(call4[0]).toBe(`${TOOLBOX_SERVER_URL_STABLE}/mcp/`);
+        expect((call4[1] as Record<string, unknown>).method).toBe('tools/list');
+        expect(call4[2]?.headers?.['MCP-Protocol-Version']).toBe(
+          Protocol.MCP_v20251125,
+        );
+
+        // Call 5: Stateful tools/call (succeeds)
+        const call5 = postSpy.mock.calls[4];
+        expect(call5[0]).toBe(`${TOOLBOX_SERVER_URL_STABLE}/mcp/`);
+        expect((call5[1] as Record<string, unknown>).method).toBe('tools/call');
+        expect(call5[2]?.headers?.['MCP-Protocol-Version']).toBe(
+          Protocol.MCP_v20251125,
+        );
+      });
+    } else if (testBaseUrl === TOOLBOX_SERVER_URL_DRAFT) {
+      it('should successfully connect using the draft version without fallback', async () => {
+        const session = axios.create();
+        const postSpy = jest.spyOn(session, 'post');
+
+        const client = new ToolboxClient(
+          testBaseUrl,
+          session,
+          undefined,
+          Protocol.MCP_DRAFT_2026_v1,
+        );
+
+        const tool = await client.loadTool('get-n-rows');
+        const response = await tool({num_rows: '1'});
+        expect(typeof response).toBe('string');
+        expect(response).toContain('row1');
+        expect(client.protocolVersion).toBe(Protocol.MCP_DRAFT_2026_v1);
+
+        expect(postSpy).toHaveBeenCalledTimes(2);
+
+        // Call 1: Draft tools/list (succeeds)
+        const call1 = postSpy.mock.calls[0];
+        expect(call1[0]).toBe(`${TOOLBOX_SERVER_URL_DRAFT}/mcp/`);
+        expect((call1[1] as Record<string, unknown>).method).toBe('tools/list');
+        expect(call1[2]?.headers?.['MCP-Protocol-Version']).toBe(
+          Protocol.MCP_DRAFT_2026_v1,
+        );
+
+        // Call 2: Draft tools/call (succeeds)
+        const call2 = postSpy.mock.calls[1];
+        expect(call2[0]).toBe(`${TOOLBOX_SERVER_URL_DRAFT}/mcp/`);
+        expect((call2[1] as Record<string, unknown>).method).toBe('tools/call');
+        expect(call2[2]?.headers?.['MCP-Protocol-Version']).toBe(
+          Protocol.MCP_DRAFT_2026_v1,
+        );
+      });
+    }
+
+    it('should correctly negotiate Protocol.MCP_LATEST', async () => {
+      const client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP_LATEST,
+      );
+
+      const tool = await client.loadTool('get-n-rows');
+      const response = await tool({num_rows: '1'});
+      expect(typeof response).toBe('string');
+      expect(response).toContain('row1');
+
+      expect(client.protocolVersion).toBe(Protocol.MCP_LATEST);
+    });
+
+    it('should correctly negotiate with a custom list [Protocol.MCP_v20241105, Protocol.MCP_v20250326, Protocol.MCP_LATEST, Protocol.MCP_DRAFT]', async () => {
+      const client = new ToolboxClient(testBaseUrl, undefined, undefined, [
+        Protocol.MCP_v20241105,
+        Protocol.MCP_v20250326,
+        Protocol.MCP_LATEST,
+        Protocol.MCP_DRAFT,
+      ]);
+
+      const tool = await client.loadTool('get-n-rows');
+      const response = await tool({num_rows: '1'});
+      expect(typeof response).toBe('string');
+      expect(response).toContain('row1');
+
+      if (testBaseUrl === TOOLBOX_SERVER_URL_DRAFT) {
+        expect(client.protocolVersion).toBe(Protocol.MCP_DRAFT);
+      } else {
+        expect(client.protocolVersion).toBe(Protocol.MCP_LATEST);
+      }
+    });
+  });
+});

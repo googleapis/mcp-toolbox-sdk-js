@@ -17,7 +17,7 @@ import {ITransport} from '../src/toolbox_core/transport.types.js';
 import {
   ZodManifest,
   Protocol,
-  MCP_LATEST,
+  getSupportedMcpVersions,
 } from '../src/toolbox_core/protocol.js';
 import type {ToolboxClient as ToolboxClientType} from '../src/toolbox_core/client.js';
 import {ToolboxClient} from '../src/toolbox_core/client.js';
@@ -25,10 +25,14 @@ import {McpHttpTransportV20241105} from '../src/toolbox_core/mcp/v20241105/mcp.j
 import {McpHttpTransportV20250326} from '../src/toolbox_core/mcp/v20250326/mcp.js';
 import {McpHttpTransportV20250618} from '../src/toolbox_core/mcp/v20250618/mcp.js';
 import {McpHttpTransportV20251125} from '../src/toolbox_core/mcp/v20251125/mcp.js';
+import {McpHttpTransportV20260618} from '../src/toolbox_core/mcp/v20260618/mcp.js';
+import {ProtocolNegotiationError} from '../src/toolbox_core/errorUtils.js';
 
 // --- Mock Transport Implementation ---
 class MockTransport implements ITransport {
   readonly baseUrl: string;
+  protocolVersion = Protocol.MCP;
+  supportedProtocols?: Protocol[];
   toolGet: jest.MockedFunction<ITransport['toolGet']>;
   toolsList: jest.MockedFunction<ITransport['toolsList']>;
   toolInvoke: jest.MockedFunction<ITransport['toolInvoke']>;
@@ -73,6 +77,27 @@ jest.mock('../src/toolbox_core/mcp/v20251125/mcp', () => {
   };
 });
 
+// Mock the McpHttpTransportV20260618 module
+jest.mock('../src/toolbox_core/mcp/v20260618/mcp', () => {
+  return {
+    __esModule: true,
+    McpHttpTransportV20260618: jest.fn(),
+  };
+});
+
+// Mock the protocol module
+jest.mock('../src/toolbox_core/protocol', () => {
+  const original = jest.requireActual(
+    '../src/toolbox_core/protocol',
+  ) as unknown as Record<string, unknown>;
+  return {
+    ...original,
+    getSupportedMcpVersions: jest.fn(() =>
+      (original.getSupportedMcpVersions as () => Protocol[])(),
+    ),
+  };
+});
+
 describe('ToolboxClient', () => {
   const testBaseUrl = 'https://api.example.com';
   let mockTransport: MockTransport;
@@ -95,6 +120,9 @@ describe('ToolboxClient', () => {
     (McpHttpTransportV20251125 as unknown as jest.Mock).mockImplementation(
       () => mockTransport,
     );
+    (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+      () => mockTransport,
+    );
   });
 
   afterEach(async () => {
@@ -104,10 +132,10 @@ describe('ToolboxClient', () => {
   describe('Initialization', () => {
     it('should initialize with the correct base URL (default MCP)', () => {
       client = new ToolboxClient(testBaseUrl);
-      expect(McpHttpTransportV20250618).toHaveBeenCalledWith(
+      expect(McpHttpTransportV20251125).toHaveBeenCalledWith(
         testBaseUrl,
         undefined,
-        Protocol.MCP_v20250618,
+        Protocol.MCP_v20251125,
         undefined,
         undefined,
       );
@@ -118,38 +146,29 @@ describe('ToolboxClient', () => {
         get: jest.fn(),
       } as unknown as import('axios').AxiosInstance;
       client = new ToolboxClient(testBaseUrl, mockSession);
-      expect(McpHttpTransportV20250618).toHaveBeenCalledWith(
+      expect(McpHttpTransportV20251125).toHaveBeenCalledWith(
         testBaseUrl,
         mockSession,
-        Protocol.MCP_v20250618,
+        Protocol.MCP_v20251125,
         undefined,
         undefined,
       );
     });
 
     it('should initialize with MCP transport (explicit) when specified', () => {
-      const consoleSpy = jest
-        .spyOn(console, 'warn')
-        .mockImplementation(() => {});
       client = new ToolboxClient(
         testBaseUrl,
         undefined,
         undefined,
         Protocol.MCP,
       );
-      expect(McpHttpTransportV20250618).toHaveBeenCalledWith(
+      expect(McpHttpTransportV20251125).toHaveBeenCalledWith(
         testBaseUrl,
         undefined,
-        Protocol.MCP_v20250618,
+        Protocol.MCP_v20251125,
         undefined,
         undefined,
       );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining(
-          `A newer version of MCP: ${MCP_LATEST} is available`,
-        ),
-      );
-      consoleSpy.mockRestore();
     });
 
     it('should initialize with MCP v20241105 transport when specified', () => {
@@ -184,6 +203,22 @@ describe('ToolboxClient', () => {
       );
     });
 
+    it('should initialize with MCP v20250618 transport when specified', () => {
+      client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP_v20250618,
+      );
+      expect(McpHttpTransportV20250618).toHaveBeenCalledWith(
+        testBaseUrl,
+        undefined,
+        Protocol.MCP_v20250618,
+        undefined,
+        undefined,
+      );
+    });
+
     it('should initialize with MCP v20251125 transport when specified', () => {
       client = new ToolboxClient(
         testBaseUrl,
@@ -200,6 +235,38 @@ describe('ToolboxClient', () => {
       );
     });
 
+    it('should initialize with MCP DRAFT 2026 v1 transport when specified', () => {
+      client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP_DRAFT_2026_v1,
+      );
+      expect(McpHttpTransportV20260618).toHaveBeenCalledWith(
+        testBaseUrl,
+        undefined,
+        Protocol.MCP_DRAFT_2026_v1,
+        undefined,
+        undefined,
+      );
+    });
+
+    it('should initialize with MCP DRAFT alias transport when specified', () => {
+      client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP_DRAFT,
+      );
+      expect(McpHttpTransportV20260618).toHaveBeenCalledWith(
+        testBaseUrl,
+        undefined,
+        Protocol.MCP_DRAFT,
+        undefined,
+        undefined,
+      );
+    });
+
     it('should throw error for unsupported protocol', () => {
       expect(() => {
         new ToolboxClient(
@@ -208,7 +275,33 @@ describe('ToolboxClient', () => {
           undefined,
           'unknown-protocol' as Protocol,
         );
-      }).toThrow('Unsupported protocol version: unknown-protocol');
+      }).toThrow(/Invalid protocol version 'unknown-protocol'/);
+    });
+
+    it('should throw error for empty protocol array', () => {
+      expect(() => {
+        new ToolboxClient(testBaseUrl, undefined, undefined, []);
+      }).toThrow('Protocol array cannot be empty');
+    });
+
+    it('should throw error if any protocol in array is unsupported', () => {
+      expect(() => {
+        new ToolboxClient(testBaseUrl, undefined, undefined, [
+          '2025-11-25',
+          'unknown-protocol' as Protocol,
+        ]);
+      }).toThrow(/Invalid protocol version 'unknown-protocol'/);
+    });
+
+    it('should pass supportedProtocols to transport', () => {
+      client = new ToolboxClient(testBaseUrl, undefined, undefined, [
+        '2025-11-25',
+        'DRAFT-2026-v1',
+      ]);
+      expect(mockTransport.supportedProtocols).toEqual([
+        'DRAFT-2026-v1',
+        '2025-11-25',
+      ]);
     });
 
     it('should pass client name and version to transport', () => {
@@ -506,14 +599,35 @@ describe('ToolboxClient', () => {
   describe('Insecure Protocol Warnings', () => {
     let consoleSpy: jest.SpiedFunction<typeof console.warn>;
     const httpUrl = 'http://api.example.com';
+    let httpTransport: MockTransport;
+    let httpsTransport: MockTransport;
 
     beforeEach(() => {
       consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      // We need to ensure the transport has the HTTP URL for these tests
-      const httpTransport = new MockTransport(httpUrl);
-      // We mock the implementation for the default MCP version used by ToolboxClient
+      httpTransport = new MockTransport(httpUrl);
+      httpsTransport = new MockTransport(testBaseUrl);
+
+      const mockImpl = (url: unknown) => {
+        if (typeof url !== 'string') {
+          throw new Error('Expected url to be string');
+        }
+        return url.startsWith('https:') ? httpsTransport : httpTransport;
+      };
+
+      (McpHttpTransportV20241105 as unknown as jest.Mock).mockImplementation(
+        mockImpl,
+      );
+      (McpHttpTransportV20250326 as unknown as jest.Mock).mockImplementation(
+        mockImpl,
+      );
       (McpHttpTransportV20250618 as unknown as jest.Mock).mockImplementation(
-        () => httpTransport,
+        mockImpl,
+      );
+      (McpHttpTransportV20251125 as unknown as jest.Mock).mockImplementation(
+        mockImpl,
+      );
+      (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+        mockImpl,
       );
     });
 
@@ -527,7 +641,6 @@ describe('ToolboxClient', () => {
         expect.stringContaining('This connection is using HTTP'),
       );
     });
-
     it('should NOT warn when initializing with HTTPS and client headers', () => {
       new ToolboxClient(testBaseUrl, undefined, {'X-Test': 'val'});
       expect(consoleSpy).not.toHaveBeenCalledWith(
@@ -536,7 +649,6 @@ describe('ToolboxClient', () => {
     });
 
     it('should warn in loadTool with HTTP and auth tokens', async () => {
-      const httpTransport = new MockTransport(httpUrl);
       httpTransport.toolGet.mockResolvedValue({
         serverVersion: '1.0.0',
         tools: {
@@ -547,9 +659,6 @@ describe('ToolboxClient', () => {
           },
         },
       });
-      (McpHttpTransportV20250618 as unknown as jest.Mock).mockImplementation(
-        () => httpTransport,
-      );
 
       client = new ToolboxClient(httpUrl);
       await client.loadTool('testTool', {auth: () => 'token'});
@@ -557,10 +666,7 @@ describe('ToolboxClient', () => {
         expect.stringContaining('This connection is using HTTP'),
       );
     });
-
     it('should NOT warn in loadTool with HTTPS and auth tokens', async () => {
-      // Re-setup mock with HTTPS url
-      const httpsTransport = new MockTransport(testBaseUrl);
       httpsTransport.toolGet.mockResolvedValue({
         serverVersion: '1.0.0',
         tools: {
@@ -571,9 +677,6 @@ describe('ToolboxClient', () => {
           },
         },
       });
-      (McpHttpTransportV20250618 as unknown as jest.Mock).mockImplementation(
-        () => httpsTransport,
-      );
 
       client = new ToolboxClient(testBaseUrl);
       await client.loadTool('testTool', {auth: () => 'token'});
@@ -583,7 +686,6 @@ describe('ToolboxClient', () => {
     });
 
     it('should warn in loadToolset with HTTP and auth tokens', async () => {
-      const httpTransport = new MockTransport(httpUrl);
       httpTransport.toolsList.mockResolvedValue({
         serverVersion: '1.0.0',
         tools: {
@@ -594,15 +696,245 @@ describe('ToolboxClient', () => {
           },
         },
       });
-      (McpHttpTransportV20250618 as unknown as jest.Mock).mockImplementation(
-        () => httpTransport,
-      );
 
       client = new ToolboxClient(httpUrl);
       await client.loadToolset('set', {auth: () => 'token'});
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('This connection is using HTTP'),
       );
+    });
+  });
+
+  describe('Protocol Fallback', () => {
+    it('should fall back to supported version in loadTool when transport throws ProtocolNegotiationError', async () => {
+      const draftTransport = new MockTransport(testBaseUrl);
+      draftTransport.protocolVersion = Protocol.MCP_DRAFT;
+      const fallbackTransport = new MockTransport(testBaseUrl);
+      fallbackTransport.protocolVersion = Protocol.MCP_v20251125;
+
+      draftTransport.toolGet.mockRejectedValueOnce(
+        new ProtocolNegotiationError(Protocol.MCP_v20251125),
+      );
+
+      fallbackTransport.toolGet.mockResolvedValueOnce({
+        serverVersion: '1.0.0',
+        tools: {
+          testTool: {
+            description: 'desc',
+            parameters: [],
+          },
+        },
+      });
+
+      (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+        () => {
+          return draftTransport;
+        },
+      );
+      (McpHttpTransportV20251125 as unknown as jest.Mock).mockImplementation(
+        () => {
+          return fallbackTransport;
+        },
+      );
+
+      client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP_DRAFT,
+      );
+
+      const tool = await client.loadTool('testTool');
+      expect(tool.getName()).toBe('testTool');
+      expect(draftTransport.toolGet).toHaveBeenCalledTimes(1);
+      expect(fallbackTransport.toolGet).toHaveBeenCalledTimes(1);
+      expect(McpHttpTransportV20251125).toHaveBeenCalledTimes(1);
+    });
+
+    it('should fall back to supported version in loadToolset when transport throws ProtocolNegotiationError', async () => {
+      const draftTransport = new MockTransport(testBaseUrl);
+      draftTransport.protocolVersion = Protocol.MCP_DRAFT;
+      const fallbackTransport = new MockTransport(testBaseUrl);
+      fallbackTransport.protocolVersion = Protocol.MCP_v20251125;
+
+      draftTransport.toolsList.mockRejectedValueOnce(
+        new ProtocolNegotiationError(Protocol.MCP_v20251125),
+      );
+
+      fallbackTransport.toolsList.mockResolvedValueOnce({
+        serverVersion: '1.0.0',
+        tools: {
+          testTool: {
+            description: 'desc',
+            parameters: [],
+          },
+        },
+      });
+
+      (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+        () => {
+          return draftTransport;
+        },
+      );
+      (McpHttpTransportV20251125 as unknown as jest.Mock).mockImplementation(
+        () => {
+          return fallbackTransport;
+        },
+      );
+
+      client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP_DRAFT,
+      );
+
+      const tools = await client.loadToolset('set');
+      expect(tools.length).toBe(1);
+      expect(tools[0].getName()).toBe('testTool');
+      expect(draftTransport.toolsList).toHaveBeenCalledTimes(1);
+      expect(fallbackTransport.toolsList).toHaveBeenCalledTimes(1);
+      expect(McpHttpTransportV20251125).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Fallback Logic', () => {
+    let mockTransport1: MockTransport;
+    let mockTransport2: MockTransport;
+
+    beforeEach(() => {
+      mockTransport1 = new MockTransport(testBaseUrl);
+      mockTransport2 = new MockTransport(testBaseUrl);
+    });
+
+    it('should fallback when ProtocolNegotiationError is thrown (The Cascading Fallback Test)', async () => {
+      // Setup first transport to throw error with fallback version
+      mockTransport1.toolsList.mockRejectedValueOnce(
+        new ProtocolNegotiationError(Protocol.MCP_v20241105),
+      );
+      // Setup second transport to succeed
+      mockTransport2.toolsList.mockResolvedValueOnce({
+        serverVersion: '1.0.0',
+        tools: {testTool: {description: 'test', parameters: []}},
+      });
+      mockTransport2.protocolVersion = Protocol.MCP_v20241105;
+
+      // The client uses the Latest/Draft by default initially.
+      (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+        () => mockTransport1,
+      );
+      (McpHttpTransportV20241105 as unknown as jest.Mock).mockImplementation(
+        () => mockTransport2,
+      );
+
+      const client = new ToolboxClient(testBaseUrl, null, null, [
+        Protocol.MCP_DRAFT,
+        Protocol.MCP_v20241105,
+      ]);
+
+      const tools = await client.loadToolset('test');
+
+      expect(mockTransport1.toolsList).toHaveBeenCalledTimes(1);
+      expect(mockTransport2.toolsList).toHaveBeenCalledTimes(1);
+      expect(tools.length).toBe(1);
+      expect(client.protocolVersion).toBe(Protocol.MCP_v20241105);
+    });
+
+    it('should handle multi-step cascading fallbacks across three transport versions (Draft -> 20251125 -> 20241105)', async () => {
+      const mockTransport1 = new MockTransport(testBaseUrl);
+      mockTransport1.protocolVersion = Protocol.MCP_DRAFT;
+      const mockTransport2 = new MockTransport(testBaseUrl);
+      mockTransport2.protocolVersion = Protocol.MCP_v20251125;
+      const mockTransport3 = new MockTransport(testBaseUrl);
+
+      mockTransport1.toolsList.mockRejectedValueOnce(
+        new ProtocolNegotiationError(Protocol.MCP_v20251125),
+      );
+      mockTransport2.toolsList.mockRejectedValueOnce(
+        new ProtocolNegotiationError(Protocol.MCP_v20241105),
+      );
+      mockTransport3.toolsList.mockResolvedValueOnce({
+        serverVersion: '1.0.0',
+        tools: {testTool: {description: 'test', parameters: []}},
+      });
+      mockTransport3.protocolVersion = Protocol.MCP_v20241105;
+
+      (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+        () => mockTransport1,
+      );
+      (McpHttpTransportV20251125 as unknown as jest.Mock).mockImplementation(
+        () => mockTransport2,
+      );
+      (McpHttpTransportV20241105 as unknown as jest.Mock).mockImplementation(
+        () => mockTransport3,
+      );
+
+      const client = new ToolboxClient(testBaseUrl, null, null, [
+        Protocol.MCP_DRAFT,
+        Protocol.MCP_v20251125,
+        Protocol.MCP_v20241105,
+      ]);
+
+      const tools = await client.loadToolset('test');
+
+      expect(mockTransport1.toolsList).toHaveBeenCalledTimes(1);
+      expect(mockTransport2.toolsList).toHaveBeenCalledTimes(1);
+      expect(mockTransport3.toolsList).toHaveBeenCalledTimes(1);
+      expect(tools.length).toBe(1);
+      expect(client.protocolVersion).toBe(Protocol.MCP_v20241105);
+    });
+
+    it('should throw an error if server returns unsupported old version (The Strict Constraint Test)', async () => {
+      mockTransport1.toolsList.mockRejectedValueOnce(
+        new ProtocolNegotiationError(Protocol.MCP_v20241105),
+      );
+
+      (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+        () => mockTransport1,
+      );
+
+      // Client only supports Draft and 20251125, but server threw 20241105
+      const client = new ToolboxClient(testBaseUrl, null, null, [
+        Protocol.MCP_DRAFT,
+        Protocol.MCP_v20251125,
+      ]);
+
+      await expect(client.loadToolset('test')).rejects.toThrow(
+        'No mutually supported protocol version',
+      );
+    });
+
+    it('should throw ProtocolNegotiationError if fallback version is equal to current transport version (infinite loop guard)', async () => {
+      mockTransport1.protocolVersion = Protocol.MCP_DRAFT;
+      mockTransport1.toolsList.mockRejectedValueOnce(
+        new ProtocolNegotiationError(Protocol.MCP_DRAFT),
+      );
+
+      (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+        () => mockTransport1,
+      );
+
+      const client = new ToolboxClient(
+        testBaseUrl,
+        null,
+        null,
+        Protocol.MCP_DRAFT,
+      );
+
+      await expect(client.loadToolset('test')).rejects.toThrow(
+        ProtocolNegotiationError,
+      );
+      expect(mockTransport1.toolsList).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw an error if transport creation hits default block with unsupported protocol version', () => {
+      (getSupportedMcpVersions as jest.Mock).mockReturnValueOnce([
+        '9999-01-01' as Protocol,
+      ]);
+
+      expect(() => {
+        new ToolboxClient(testBaseUrl, null, null, '9999-01-01' as Protocol);
+      }).toThrow('Unsupported MCP protocol version: 9999-01-01');
     });
   });
 });

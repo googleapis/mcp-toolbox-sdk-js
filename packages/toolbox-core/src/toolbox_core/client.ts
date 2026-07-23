@@ -21,12 +21,13 @@ import {
   ZodManifestSchema,
   Protocol,
   getSupportedMcpVersions,
-  MCP_LATEST,
 } from './protocol.js';
 import {McpHttpTransportV20241105} from './mcp/v20241105/mcp.js';
 import {McpHttpTransportV20250618} from './mcp/v20250618/mcp.js';
 import {McpHttpTransportV20250326} from './mcp/v20250326/mcp.js';
 import {McpHttpTransportV20251125} from './mcp/v20251125/mcp.js';
+import {McpHttpTransportV20260618} from './mcp/v20260618/mcp.js';
+import {ProtocolNegotiationError} from './errorUtils.js';
 import {
   BoundParams,
   identifyAuthRequirements,
@@ -49,7 +50,16 @@ export type ClientHeadersConfig = Record<string, ClientHeaderProvider>;
 class ToolboxClient {
   #transport: ITransport;
   #clientHeaders: ClientHeadersConfig;
+  #session: AxiosInstance | undefined;
+  #baseUrl: string;
+  #supportedProtocols: string[];
 
+  /**
+   * The negotiated protocol version currently in use.
+   */
+  get protocolVersion(): Protocol {
+    return this.#transport.protocolVersion as Protocol;
+  }
   /**
    * Initializes the ToolboxClient.
    * @param {string} url - The base URL for the Toolbox service API (e.g., "http://localhost:5000").
@@ -64,62 +74,131 @@ class ToolboxClient {
     url: string,
     session?: AxiosInstance | null,
     clientHeaders?: ClientHeadersConfig | null,
-    protocol: Protocol = Protocol.MCP,
+    protocol: Protocol | Protocol[] | string[] | string = Protocol.MCP,
     clientName?: string,
     clientVersion?: string,
   ) {
+    this.#baseUrl = url;
     this.#clientHeaders = clientHeaders || {};
+    this.#session = session || undefined;
     warnIfHttpAndHeaders(url, this.#clientHeaders);
-    if (!getSupportedMcpVersions().includes(protocol)) {
-      throw new Error(`Unsupported protocol version: ${protocol}`);
-    }
 
-    if (protocol !== MCP_LATEST) {
-      console.warn(
-        `A newer version of MCP: ${MCP_LATEST} is available. Please use the latest version ${MCP_LATEST} to use the latest features.`,
+    let initialProtocol: Protocol;
+    if (Array.isArray(protocol)) {
+      if (protocol.length === 0) {
+        throw new Error('Protocol array cannot be empty');
+      }
+
+      const globalSupported = getSupportedMcpVersions();
+
+      for (const p of protocol) {
+        if (!globalSupported.includes(p as Protocol)) {
+          throw new Error(
+            `Invalid protocol version '${p}'. Must be one of: ${globalSupported.join(', ')}`,
+          );
+        }
+      }
+
+      const requestedSet = new Set<string>(protocol);
+      const sorted = globalSupported.filter(globalVer =>
+        requestedSet.has(globalVer),
       );
+
+      if (sorted.length === 0) {
+        throw new Error('None of the provided protocols are supported');
+      }
+
+      this.#supportedProtocols = sorted;
+      initialProtocol = sorted[0] as Protocol; // Start with the highest requested version
+    } else {
+      initialProtocol = protocol as Protocol;
+      const globalSupported = getSupportedMcpVersions();
+      if (!globalSupported.includes(initialProtocol)) {
+        throw new Error(`Invalid protocol version '${initialProtocol}'`);
+      }
+      this.#supportedProtocols = globalSupported;
     }
 
+    this.#transport = this.#createTransportWithProtocols(
+      url,
+      session || undefined,
+      initialProtocol,
+      clientName,
+      clientVersion,
+    );
+  }
+
+  #createTransport(
+    url: string,
+    session: AxiosInstance | undefined,
+    protocol: Protocol,
+    clientName?: string,
+    clientVersion?: string,
+  ): ITransport {
     switch (protocol) {
       case Protocol.MCP_v20241105:
-        this.#transport = new McpHttpTransportV20241105(
+        return new McpHttpTransportV20241105(
           url,
-          session || undefined,
+          session,
           protocol,
           clientName,
           clientVersion,
         );
-        break;
       case Protocol.MCP_v20250326:
-        this.#transport = new McpHttpTransportV20250326(
+        return new McpHttpTransportV20250326(
           url,
-          session || undefined,
+          session,
           protocol,
           clientName,
           clientVersion,
         );
-        break;
       case Protocol.MCP_v20250618:
-        this.#transport = new McpHttpTransportV20250618(
+        return new McpHttpTransportV20250618(
           url,
-          session || undefined,
+          session,
           protocol,
           clientName,
           clientVersion,
         );
-        break;
       case Protocol.MCP_v20251125:
-        this.#transport = new McpHttpTransportV20251125(
+        return new McpHttpTransportV20251125(
           url,
-          session || undefined,
+          session,
           protocol,
           clientName,
           clientVersion,
         );
-        break;
+      case Protocol.MCP_DRAFT_2026_v1:
+        return new McpHttpTransportV20260618(
+          url,
+          session,
+          protocol,
+          clientName,
+          clientVersion,
+        );
       default:
         throw new Error(`Unsupported MCP protocol version: ${protocol}`);
     }
+  }
+
+  #createTransportWithProtocols(
+    url: string,
+    session: AxiosInstance | undefined,
+    protocol: Protocol,
+    clientName?: string,
+    clientVersion?: string,
+  ): ITransport {
+    const transport = this.#createTransport(
+      url,
+      session,
+      protocol,
+      clientName,
+      clientVersion,
+    );
+    if (this.#supportedProtocols) {
+      transport.supportedProtocols = this.#supportedProtocols;
+    }
+    return transport;
   }
 
   /**
@@ -193,6 +272,49 @@ class ToolboxClient {
     return {tool, usedAuthKeys, usedBoundKeys};
   }
 
+  async #executeWithFallback<T>(action: () => Promise<T>): Promise<T> {
+    while (true) {
+      try {
+        return await action();
+      } catch (e: unknown) {
+        if (e instanceof ProtocolNegotiationError) {
+          const serverVersion = e.fallbackVersion as string;
+          let mutuallySupported: string[] | null = null;
+
+          if (this.#supportedProtocols.includes(serverVersion as Protocol)) {
+            mutuallySupported = [serverVersion];
+          } else {
+            const allVersions = getSupportedMcpVersions();
+            if (allVersions.includes(serverVersion as Protocol)) {
+              const idx = allVersions.indexOf(serverVersion as Protocol);
+              const serverSupported = allVersions.slice(idx);
+              mutuallySupported = this.#supportedProtocols.filter(v =>
+                serverSupported.includes(v as Protocol),
+              );
+            }
+          }
+
+          if (!mutuallySupported || mutuallySupported.length === 0) {
+            throw new Error('No mutually supported protocol version');
+          }
+
+          const fallbackProtocol = mutuallySupported[0] as Protocol;
+          if (fallbackProtocol === this.#transport.protocolVersion) {
+            throw e;
+          }
+
+          this.#transport = this.#createTransportWithProtocols(
+            this.#baseUrl,
+            this.#session,
+            fallbackProtocol,
+          );
+        } else {
+          throw e;
+        }
+      }
+    }
+  }
+
   /**
    * Asynchronously loads a tool from the server.
    * Retrieves the schema for the specified tool from the Toolbox server and
@@ -214,7 +336,9 @@ class ToolboxClient {
   ): Promise<ToolboxTool> {
     warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
     const headers = await this.#resolveClientHeaders();
-    const manifest = await this.#transport.toolGet(name, headers);
+    const manifest = await this.#executeWithFallback(() =>
+      this.#transport.toolGet(name, headers),
+    );
 
     if (
       manifest.tools &&
@@ -285,7 +409,9 @@ class ToolboxClient {
     const toolsetName = name || '';
     const headers = await this.#resolveClientHeaders();
 
-    const manifest = await this.#transport.toolsList(toolsetName, headers);
+    const manifest = await this.#executeWithFallback(() =>
+      this.#transport.toolsList(toolsetName, headers),
+    );
     const tools: ToolboxTool[] = [];
 
     const overallUsedAuthKeys: Set<string> = new Set();

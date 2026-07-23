@@ -16,14 +16,80 @@ import {AxiosError} from 'axios';
 import {McpHttpTransportBase} from '../transportBase.js';
 import * as types from './types.js';
 
-import {ZodManifest} from '../../protocol.js';
-import {logApiError} from '../../errorUtils.js';
+import {
+  ZodManifest,
+  Protocol,
+  getSupportedMcpVersions,
+} from '../../protocol.js';
+import {logApiError, ProtocolNegotiationError} from '../../errorUtils.js';
 import {warnIfHttpAndHeaders} from '../../utils.js';
 
 import {v4 as uuidv4} from 'uuid';
 import {VERSION} from '../../version.js';
 
 export class McpHttpTransportV20251125 extends McpHttpTransportBase {
+  #checkProtocolNegotiationError(errVal: unknown): void {
+    if (!errVal) return;
+
+    // Check for unsupported protocol version error code (-32022 or -32004)
+    if (
+      typeof errVal === 'object' &&
+      errVal !== null &&
+      'code' in errVal &&
+      ((errVal as Record<string, unknown>).code === -32022 ||
+        (errVal as Record<string, unknown>).code === -32004)
+    ) {
+      const serverSupported = ((
+        (errVal as Record<string, unknown>).data as Record<string, unknown>
+      )?.supported || []) as string[];
+      const clientSupported =
+        this.supportedProtocols || getSupportedMcpVersions();
+      const mutuallySupported = clientSupported.filter(v =>
+        serverSupported.includes(v),
+      );
+
+      if (mutuallySupported.length > 0) {
+        throw new ProtocolNegotiationError(mutuallySupported[0] as Protocol);
+      } else {
+        throw new Error(
+          `No mutually supported protocol version. Client supports: ${clientSupported.join(
+            ', ',
+          )}, Server supports: ${serverSupported.join(', ')}`,
+        );
+      }
+    }
+
+    // Check for legacy fallback (string or object message matching)
+    const errMsg =
+      typeof errVal === 'string'
+        ? errVal.toLowerCase()
+        : typeof errVal === 'object' && errVal !== null && 'message' in errVal
+          ? String((errVal as Record<string, unknown>).message).toLowerCase()
+          : '';
+
+    const isLegacyError =
+      errMsg.includes('invalid protocol version') ||
+      errMsg.includes('unsupported protocol version');
+
+    if (isLegacyError) {
+      // Cascading Fallback
+      const clientSupported =
+        this.supportedProtocols || getSupportedMcpVersions();
+      const currentIdx = clientSupported.indexOf(
+        this._protocolVersion as Protocol,
+      );
+      if (currentIdx !== -1 && currentIdx + 1 < clientSupported.length) {
+        throw new ProtocolNegotiationError(
+          clientSupported[currentIdx + 1] as Protocol,
+        );
+      } else {
+        throw new Error(
+          "Server threw 'invalid protocol version' but no fallback versions remain in the user's supported protocols array.",
+        );
+      }
+    }
+  }
+
   async #sendRequest<T>(
     url: string,
     request: types.MCPRequest<T> | types.MCPNotification,
@@ -51,7 +117,7 @@ export class McpHttpTransportV20251125 extends McpHttpTransportBase {
       };
     }
 
-    // Inject Protocol Version into headers (v2025-06-18 specific)
+    // Inject Protocol Version into headers as required by MCP spec
     const reqHeaders = {...(headers || {})};
     reqHeaders['MCP-Protocol-Version'] = this._protocolVersion;
 
@@ -77,7 +143,10 @@ export class McpHttpTransportV20251125 extends McpHttpTransportBase {
 
       const jsonResp = response.data;
 
-      if (jsonResp.error) {
+      if (jsonResp && typeof jsonResp === 'object' && jsonResp.error) {
+        const errVal = jsonResp.error;
+        this.#checkProtocolNegotiationError(errVal);
+
         const errResult = types.JSONRPCErrorSchema.safeParse(jsonResp);
         let message = `MCP request failed: ${JSON.stringify(jsonResp.error)}`;
         let code = 'MCP_ERROR';
@@ -108,7 +177,21 @@ export class McpHttpTransportV20251125 extends McpHttpTransportBase {
       }
 
       return null;
-    } catch (error) {
+    } catch (error: unknown) {
+      if (error instanceof ProtocolNegotiationError) {
+        throw error;
+      }
+      if (error && typeof error === 'object' && 'isAxiosError' in error) {
+        const jsonResp = (error as AxiosError).response?.data;
+        if (jsonResp) {
+          if (typeof jsonResp === 'object' && 'error' in jsonResp) {
+            const errVal = (jsonResp as Record<string, unknown>).error;
+            this.#checkProtocolNegotiationError(errVal);
+          } else if (typeof jsonResp === 'string') {
+            this.#checkProtocolNegotiationError(jsonResp);
+          }
+        }
+      }
       logApiError(`Error posting data to ${url}:`, error);
       throw error;
     }
@@ -142,11 +225,7 @@ export class McpHttpTransportV20251125 extends McpHttpTransportBase {
     this._serverVersion = result.serverInfo.version;
 
     if (result.protocolVersion !== this._protocolVersion) {
-      const error = new Error(
-        `MCP version mismatch: client does not support server version ${result.protocolVersion}`,
-      );
-      logApiError('MCP Initialization Error', error);
-      throw error;
+      throw new ProtocolNegotiationError(result.protocolVersion as Protocol);
     }
 
     if (!result.capabilities.tools) {

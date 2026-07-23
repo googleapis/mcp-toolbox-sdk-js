@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v1.0.0...adk-v1.1.0) (2026-07-23)
+
+
+### Features
+
+* **core:** support 2026 Stateless MCP, array-based auto-negotiation, and HTTP transport routing ([#412](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/412)) ([fd2ba6e](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/fd2ba6e81e7e68d9ae5d6dfe8b8a0234042059b6))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @toolbox-sdk/core bumped from ^1.0.0 to ^1.1.0
+
 ## [1.0.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v0.3.0...adk-v1.0.0) (2026-07-01)
 
 

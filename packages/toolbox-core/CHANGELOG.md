@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v1.0.1...core-v1.1.0) (2026-07-23)
+
+
+### Features
+
+* **core:** support 2026 Stateless MCP, array-based auto-negotiation, and HTTP transport routing ([#412](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/412)) ([fd2ba6e](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/fd2ba6e81e7e68d9ae5d6dfe8b8a0234042059b6))
+
 ## [1.0.1](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v1.0.0...core-v1.0.1) (2026-07-01)
 
 

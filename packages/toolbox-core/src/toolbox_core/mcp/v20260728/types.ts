@@ -67,7 +67,27 @@ export const ToolSchema = BaseMetadataSchema.extend({
 
 export type Tool = z.infer<typeof ToolSchema>;
 
-export const ListToolsResultSchema = z.object({
+export const ImplementationSchema = z.object({
+  name: z.string(),
+  version: z.string(),
+});
+export type Implementation = z.infer<typeof ImplementationSchema>;
+
+export const ServerInfoSchema = ImplementationSchema;
+export type ServerInfo = Implementation;
+
+export const MCPResultMetaSchema = z.object({
+  'io.modelcontextprotocol/serverInfo': ServerInfoSchema.optional().nullable(),
+});
+export type MCPResultMeta = z.infer<typeof MCPResultMetaSchema>;
+
+export const MCPResultSchema = z.object({
+  resultType: z.string().default('complete'),
+  _meta: MCPResultMetaSchema.optional().nullable(),
+});
+export type MCPResult = z.infer<typeof MCPResultSchema>;
+
+export const ListToolsResultSchema = MCPResultSchema.extend({
   tools: z.array(ToolSchema),
 });
 export type ListToolsResult = z.infer<typeof ListToolsResultSchema>;
@@ -78,7 +98,7 @@ export const TextContentSchema = z.object({
 });
 export type TextContent = z.infer<typeof TextContentSchema>;
 
-export const CallToolResultSchema = z.object({
+export const CallToolResultSchema = MCPResultSchema.extend({
   content: z.array(TextContentSchema),
   isError: z.boolean().default(false).optional(),
 });
@@ -88,7 +108,7 @@ export type CallToolResult = z.infer<typeof CallToolResultSchema>;
 export type MCPRequest<T> = {
   method: string;
   params?: Record<string, unknown> | unknown | null;
-  getResultModel: () => z.ZodType<T>;
+  getResultModel: () => z.ZodType<T, z.ZodTypeDef, unknown>;
 };
 
 export type MCPNotification = {

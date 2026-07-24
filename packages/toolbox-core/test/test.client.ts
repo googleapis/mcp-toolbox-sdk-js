@@ -25,7 +25,7 @@ import {McpHttpTransportV20241105} from '../src/toolbox_core/mcp/v20241105/mcp.j
 import {McpHttpTransportV20250326} from '../src/toolbox_core/mcp/v20250326/mcp.js';
 import {McpHttpTransportV20250618} from '../src/toolbox_core/mcp/v20250618/mcp.js';
 import {McpHttpTransportV20251125} from '../src/toolbox_core/mcp/v20251125/mcp.js';
-import {McpHttpTransportV20260618} from '../src/toolbox_core/mcp/v20260618/mcp.js';
+import {McpHttpTransportV20260728} from '../src/toolbox_core/mcp/v20260728/mcp.js';
 import {ProtocolNegotiationError} from '../src/toolbox_core/errorUtils.js';
 
 // --- Mock Transport Implementation ---
@@ -77,11 +77,11 @@ jest.mock('../src/toolbox_core/mcp/v20251125/mcp', () => {
   };
 });
 
-// Mock the McpHttpTransportV20260618 module
-jest.mock('../src/toolbox_core/mcp/v20260618/mcp', () => {
+// Mock the McpHttpTransportV20260728 module
+jest.mock('../src/toolbox_core/mcp/v20260728/mcp', () => {
   return {
     __esModule: true,
-    McpHttpTransportV20260618: jest.fn(),
+    McpHttpTransportV20260728: jest.fn(),
   };
 });
 
@@ -120,7 +120,7 @@ describe('ToolboxClient', () => {
     (McpHttpTransportV20251125 as unknown as jest.Mock).mockImplementation(
       () => mockTransport,
     );
-    (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+    (McpHttpTransportV20260728 as unknown as jest.Mock).mockImplementation(
       () => mockTransport,
     );
   });
@@ -132,10 +132,10 @@ describe('ToolboxClient', () => {
   describe('Initialization', () => {
     it('should initialize with the correct base URL (default MCP)', () => {
       client = new ToolboxClient(testBaseUrl);
-      expect(McpHttpTransportV20251125).toHaveBeenCalledWith(
+      expect(McpHttpTransportV20260728).toHaveBeenCalledWith(
         testBaseUrl,
         undefined,
-        Protocol.MCP_v20251125,
+        Protocol.MCP_v20260728,
         undefined,
         undefined,
       );
@@ -146,10 +146,10 @@ describe('ToolboxClient', () => {
         get: jest.fn(),
       } as unknown as import('axios').AxiosInstance;
       client = new ToolboxClient(testBaseUrl, mockSession);
-      expect(McpHttpTransportV20251125).toHaveBeenCalledWith(
+      expect(McpHttpTransportV20260728).toHaveBeenCalledWith(
         testBaseUrl,
         mockSession,
-        Protocol.MCP_v20251125,
+        Protocol.MCP_v20260728,
         undefined,
         undefined,
       );
@@ -162,10 +162,10 @@ describe('ToolboxClient', () => {
         undefined,
         Protocol.MCP,
       );
-      expect(McpHttpTransportV20251125).toHaveBeenCalledWith(
+      expect(McpHttpTransportV20260728).toHaveBeenCalledWith(
         testBaseUrl,
         undefined,
-        Protocol.MCP_v20251125,
+        Protocol.MCP_v20260728,
         undefined,
         undefined,
       );
@@ -235,6 +235,22 @@ describe('ToolboxClient', () => {
       );
     });
 
+    it('should initialize with MCP v20260728 transport when specified', () => {
+      client = new ToolboxClient(
+        testBaseUrl,
+        undefined,
+        undefined,
+        Protocol.MCP_v20260728,
+      );
+      expect(McpHttpTransportV20260728).toHaveBeenCalledWith(
+        testBaseUrl,
+        undefined,
+        Protocol.MCP_v20260728,
+        undefined,
+        undefined,
+      );
+    });
+
     it('should initialize with MCP DRAFT 2026 v1 transport when specified', () => {
       client = new ToolboxClient(
         testBaseUrl,
@@ -242,7 +258,7 @@ describe('ToolboxClient', () => {
         undefined,
         Protocol.MCP_DRAFT_2026_v1,
       );
-      expect(McpHttpTransportV20260618).toHaveBeenCalledWith(
+      expect(McpHttpTransportV20260728).toHaveBeenCalledWith(
         testBaseUrl,
         undefined,
         Protocol.MCP_DRAFT_2026_v1,
@@ -258,7 +274,7 @@ describe('ToolboxClient', () => {
         undefined,
         Protocol.MCP_DRAFT,
       );
-      expect(McpHttpTransportV20260618).toHaveBeenCalledWith(
+      expect(McpHttpTransportV20260728).toHaveBeenCalledWith(
         testBaseUrl,
         undefined,
         Protocol.MCP_DRAFT,
@@ -296,10 +312,10 @@ describe('ToolboxClient', () => {
     it('should pass supportedProtocols to transport', () => {
       client = new ToolboxClient(testBaseUrl, undefined, undefined, [
         '2025-11-25',
-        'DRAFT-2026-v1',
+        '2026-07-28',
       ]);
       expect(mockTransport.supportedProtocols).toEqual([
-        'DRAFT-2026-v1',
+        '2026-07-28',
         '2025-11-25',
       ]);
     });
@@ -626,7 +642,7 @@ describe('ToolboxClient', () => {
       (McpHttpTransportV20251125 as unknown as jest.Mock).mockImplementation(
         mockImpl,
       );
-      (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+      (McpHttpTransportV20260728 as unknown as jest.Mock).mockImplementation(
         mockImpl,
       );
     });
@@ -726,7 +742,7 @@ describe('ToolboxClient', () => {
         },
       });
 
-      (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+      (McpHttpTransportV20260728 as unknown as jest.Mock).mockImplementation(
         () => {
           return draftTransport;
         },
@@ -771,7 +787,7 @@ describe('ToolboxClient', () => {
         },
       });
 
-      (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+      (McpHttpTransportV20260728 as unknown as jest.Mock).mockImplementation(
         () => {
           return draftTransport;
         },
@@ -820,7 +836,7 @@ describe('ToolboxClient', () => {
       mockTransport2.protocolVersion = Protocol.MCP_v20241105;
 
       // The client uses the Latest/Draft by default initially.
-      (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+      (McpHttpTransportV20260728 as unknown as jest.Mock).mockImplementation(
         () => mockTransport1,
       );
       (McpHttpTransportV20241105 as unknown as jest.Mock).mockImplementation(
@@ -859,7 +875,7 @@ describe('ToolboxClient', () => {
       });
       mockTransport3.protocolVersion = Protocol.MCP_v20241105;
 
-      (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+      (McpHttpTransportV20260728 as unknown as jest.Mock).mockImplementation(
         () => mockTransport1,
       );
       (McpHttpTransportV20251125 as unknown as jest.Mock).mockImplementation(
@@ -889,7 +905,7 @@ describe('ToolboxClient', () => {
         new ProtocolNegotiationError(Protocol.MCP_v20241105),
       );
 
-      (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+      (McpHttpTransportV20260728 as unknown as jest.Mock).mockImplementation(
         () => mockTransport1,
       );
 
@@ -910,7 +926,7 @@ describe('ToolboxClient', () => {
         new ProtocolNegotiationError(Protocol.MCP_DRAFT),
       );
 
-      (McpHttpTransportV20260618 as unknown as jest.Mock).mockImplementation(
+      (McpHttpTransportV20260728 as unknown as jest.Mock).mockImplementation(
         () => mockTransport1,
       );
 

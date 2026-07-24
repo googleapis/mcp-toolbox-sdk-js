@@ -29,7 +29,7 @@ import {VERSION} from '../../version.js';
 
 import {ProtocolNegotiationError} from '../../errorUtils.js';
 
-export class McpHttpTransportV20260618 extends McpHttpTransportBase {
+export class McpHttpTransportV20260728 extends McpHttpTransportBase {
   #getMeta() {
     return {
       'io.modelcontextprotocol/protocolVersion': this._protocolVersion,

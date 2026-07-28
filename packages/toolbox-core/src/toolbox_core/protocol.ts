@@ -37,6 +37,22 @@ export function getSupportedMcpVersions(): Protocol[] {
   ];
 }
 
+export function isVersionAtLeast(
+  currentVersion: string,
+  minVersion: string,
+): boolean {
+  const supported = getSupportedMcpVersions();
+  const currentIndex = supported.indexOf(currentVersion as Protocol);
+  if (currentIndex === -1) {
+    throw new Error(`Unrecognized protocol version: '${currentVersion}'`);
+  }
+  const minIndex = supported.indexOf(minVersion as Protocol);
+  if (minIndex === -1) {
+    throw new Error(`Unrecognized target protocol version: '${minVersion}'`);
+  }
+  return currentIndex <= minIndex;
+}
+
 // Type Definitions
 interface StringType {
   type: 'string';

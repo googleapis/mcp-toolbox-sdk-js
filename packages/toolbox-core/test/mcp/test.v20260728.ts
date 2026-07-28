@@ -18,6 +18,7 @@ import axios, {AxiosInstance, AxiosError} from 'axios';
 
 import {Protocol} from '../../src/toolbox_core/protocol.js';
 import {ProtocolNegotiationError} from '../../src/toolbox_core/errorUtils.js';
+import * as types from '../../src/toolbox_core/mcp/v20260728/types.js';
 
 jest.mock('axios', () => {
   const actual = jest.requireActual('axios') as {
@@ -808,6 +809,70 @@ describe('McpHttpTransportV20260728', () => {
       );
 
       expect(consoleWarnSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('spec compliance and metadata tests (_meta serverInfo)', () => {
+    it('should extract serverVersion dynamically from _meta serverInfo in toolsList', async () => {
+      const mockResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '1',
+          result: {
+            resultType: 'complete',
+            tools: [
+              {
+                name: 'sample_tool',
+                description: 'Sample',
+                inputSchema: {type: 'object'},
+              },
+            ],
+            _meta: {
+              'io.modelcontextprotocol/serverInfo': {
+                name: 'ToolboxServer',
+                version: '2.5.0',
+              },
+            },
+          },
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(mockResponse);
+
+      const manifest = await transport.toolsList();
+      expect(manifest.serverVersion).toBe('2.5.0');
+      expect(manifest.tools).toHaveProperty('sample_tool');
+    });
+
+    it('should fallback serverVersion to 0.0.0 if _meta or serverInfo is missing', async () => {
+      const mockResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '1',
+          result: {
+            resultType: 'complete',
+            tools: [],
+          },
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(mockResponse);
+
+      const manifest = await transport.toolsList();
+      expect(manifest.serverVersion).toBe('0.0.0');
+    });
+
+    it('should parse resultType correctly and default to complete', () => {
+      const parsedDefault = types.ListToolsResultSchema.parse({tools: []});
+      expect(parsedDefault.resultType).toBe('complete');
+
+      const parsedCustom = types.ListToolsResultSchema.parse({
+        tools: [],
+        resultType: 'input_required',
+      });
+      expect(parsedCustom.resultType).toBe('input_required');
     });
   });
 });

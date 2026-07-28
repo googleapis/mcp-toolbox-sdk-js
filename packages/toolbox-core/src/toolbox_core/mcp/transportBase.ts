@@ -64,7 +64,16 @@ export abstract class McpHttpTransportBase implements ITransport {
     clientName?: string,
     clientVersion?: string,
   ) {
-    this._mcpBaseUrl = `${baseUrl}/mcp/`;
+    const parsed = new URL(baseUrl);
+    let path = parsed.pathname;
+    if (path.endsWith('/mcp')) {
+      path += '/';
+    } else if (!path.includes('/mcp/')) {
+      path = path.replace(/\/+$/, '') + '/mcp/';
+    }
+    parsed.pathname = path;
+    this._mcpBaseUrl = parsed.toString();
+
     this._protocolVersion = protocol;
     this._clientName = clientName;
     this._clientVersion = clientVersion;
@@ -88,6 +97,15 @@ export abstract class McpHttpTransportBase implements ITransport {
 
   get baseUrl(): string {
     return this._mcpBaseUrl;
+  }
+
+  protected appendToolsetPath(toolsetName?: string): string {
+    if (!toolsetName) {
+      return this._mcpBaseUrl;
+    }
+    const parsed = new URL(this._mcpBaseUrl);
+    parsed.pathname = parsed.pathname.replace(/\/+$/, '') + '/' + toolsetName;
+    return parsed.toString();
   }
 
   protected convertToolSchema(toolData: unknown): {

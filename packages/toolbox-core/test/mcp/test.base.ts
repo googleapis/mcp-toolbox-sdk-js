@@ -161,6 +161,44 @@ describe('McpHttpTransportBase', () => {
       expect(transport.getClientName()).toBe('my-client');
       expect(transport.getClientVersion()).toBe('1.2.3');
     });
+
+    const urlTestCases = [
+      {input: 'http://api.com', expected: 'http://api.com/mcp/'},
+      {input: 'http://api.com/', expected: 'http://api.com/mcp/'},
+      {input: 'http://api.com/mcp', expected: 'http://api.com/mcp/'},
+      {input: 'http://api.com/mcp/', expected: 'http://api.com/mcp/'},
+      {
+        input: 'http://api.com?proj=xyz',
+        expected: 'http://api.com/mcp/?proj=xyz',
+      },
+      {
+        input: 'http://api.com/mcp?proj=xyz',
+        expected: 'http://api.com/mcp/?proj=xyz',
+      },
+      {
+        input: 'http://api.com/mcp/?proj=xyz',
+        expected: 'http://api.com/mcp/?proj=xyz',
+      },
+      {
+        input: 'http://api.com/v1/api?proj=xyz',
+        expected: 'http://api.com/v1/api/mcp/?proj=xyz',
+      },
+      {
+        input: 'http://api.com?proj=xyz&env=prod',
+        expected: 'http://api.com/mcp/?proj=xyz&env=prod',
+      },
+      {
+        input: 'http://localhost:5000/mcp/sse?project=my-project',
+        expected: 'http://localhost:5000/mcp/sse?project=my-project',
+      },
+    ];
+
+    urlTestCases.forEach(({input, expected}) => {
+      it(`should construct base URL correctly for ${input}`, () => {
+        const transport = new TestMcpTransport(input);
+        expect(transport.baseUrl).toBe(expected);
+      });
+    });
   });
 
   describe('ensureInitialized', () => {

@@ -816,5 +816,18 @@ testBaseUrls.forEach(testBaseUrl => {
         }
       }
     });
+
+    it('should support URL parameter binding natively when query parameters are in base URL', async () => {
+      const urlWithParams = `${testBaseUrl}?num_rows=2`;
+      const client = new ToolboxClient(urlWithParams);
+
+      const tool = await client.loadTool('get-n-rows');
+      // num_rows is filtered from schema and injected by server via URL query param
+      const response = await tool();
+      expect(typeof response).toBe('string');
+      expect(response).toContain('row1');
+      expect(response).toContain('row2');
+      expect(response).not.toContain('row3');
+    });
   });
 });

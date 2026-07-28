@@ -20,6 +20,7 @@ import {
   TypeSchema,
   ZodManifest,
   Protocol,
+  isVersionAtLeast,
 } from '../protocol.js';
 
 interface JsonSchema {
@@ -36,6 +37,8 @@ interface ToolDefinition {
   description?: string;
   inputSchema?: JsonSchema;
   _meta?: {
+    'com.google.cloud/authParam'?: Record<string, string[]>;
+    'com.google.cloud/authInvoke'?: string[];
     'toolbox/authParam'?: Record<string, string[]>;
     'toolbox/authInvoke'?: string[];
   };
@@ -97,18 +100,41 @@ export abstract class McpHttpTransportBase implements ITransport {
     let invokeAuth: string[] = [];
 
     if (data._meta && typeof data._meta === 'object') {
-      const meta = data._meta;
-      if (
-        meta['toolbox/authParam'] &&
-        typeof meta['toolbox/authParam'] === 'object'
-      ) {
-        paramAuth = meta['toolbox/authParam'];
-      }
-      if (
-        meta['toolbox/authInvoke'] &&
-        Array.isArray(meta['toolbox/authInvoke'])
-      ) {
-        invokeAuth = meta['toolbox/authInvoke'];
+      const meta = data._meta as Record<string, unknown>;
+      const is2026OrNewer = isVersionAtLeast(
+        this._protocolVersion,
+        Protocol.MCP_v20260728,
+      );
+
+      if (is2026OrNewer) {
+        if (
+          meta['com.google.cloud/authParam'] &&
+          typeof meta['com.google.cloud/authParam'] === 'object'
+        ) {
+          paramAuth = meta['com.google.cloud/authParam'] as Record<
+            string,
+            string[]
+          >;
+        }
+        if (
+          meta['com.google.cloud/authInvoke'] &&
+          Array.isArray(meta['com.google.cloud/authInvoke'])
+        ) {
+          invokeAuth = meta['com.google.cloud/authInvoke'] as string[];
+        }
+      } else {
+        if (
+          meta['toolbox/authParam'] &&
+          typeof meta['toolbox/authParam'] === 'object'
+        ) {
+          paramAuth = meta['toolbox/authParam'] as Record<string, string[]>;
+        }
+        if (
+          meta['toolbox/authInvoke'] &&
+          Array.isArray(meta['toolbox/authInvoke'])
+        ) {
+          invokeAuth = meta['toolbox/authInvoke'] as string[];
+        }
       }
     }
 

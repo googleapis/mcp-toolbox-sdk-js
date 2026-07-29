@@ -44,6 +44,8 @@ jobs:
         run: npm install --package-lock-only --ignore-scripts
 
       - name: Commit and Push changes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Check if package-lock.json changed
           if git diff --quiet package-lock.json; then
@@ -58,4 +60,5 @@ jobs:
           # Commit and push
           git add package-lock.json
           git commit -m "chore: update package-lock.json"
-          git push origin HEAD:${GITHUB_HEAD_REF}
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "HEAD:${GITHUB_HEAD_REF}"

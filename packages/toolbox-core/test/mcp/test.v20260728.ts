@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {McpHttpTransportV20260618} from '../../src/toolbox_core/mcp/v20260618/mcp.js';
+import {McpHttpTransportV20260728} from '../../src/toolbox_core/mcp/v20260728/mcp.js';
 import {jest} from '@jest/globals';
 import axios, {AxiosInstance, AxiosError} from 'axios';
 
 import {Protocol} from '../../src/toolbox_core/protocol.js';
 import {ProtocolNegotiationError} from '../../src/toolbox_core/errorUtils.js';
+import * as types from '../../src/toolbox_core/mcp/v20260728/types.js';
 
 jest.mock('axios', () => {
   const actual = jest.requireActual('axios') as {
@@ -34,10 +35,10 @@ jest.mock('axios', () => {
 });
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-describe('McpHttpTransportV20260618', () => {
+describe('McpHttpTransportV20260728', () => {
   const testBaseUrl = 'http://test.loc';
   let mockSession: jest.Mocked<AxiosInstance>;
-  let transport: McpHttpTransportV20260618;
+  let transport: McpHttpTransportV20260728;
   let consoleWarnSpy: ReturnType<typeof jest.spyOn>;
 
   beforeEach(() => {
@@ -52,7 +53,7 @@ describe('McpHttpTransportV20260618', () => {
     } as unknown as jest.Mocked<AxiosInstance>;
 
     mockedAxios.create.mockReturnValue(mockSession);
-    transport = new McpHttpTransportV20260618(
+    transport = new McpHttpTransportV20260728(
       testBaseUrl,
       mockSession,
       Protocol.MCP_DRAFT_2026_v1,
@@ -90,13 +91,13 @@ describe('McpHttpTransportV20260618', () => {
           method: 'tools/list',
           params: {
             _meta: expect.objectContaining({
-              'io.modelcontextprotocol/protocolVersion': 'DRAFT-2026-v1',
+              'io.modelcontextprotocol/protocolVersion': '2026-07-28',
             }),
           },
         }),
         expect.objectContaining({
           headers: expect.objectContaining({
-            'MCP-Protocol-Version': 'DRAFT-2026-v1',
+            'MCP-Protocol-Version': '2026-07-28',
           }),
         }),
       );
@@ -136,7 +137,7 @@ describe('McpHttpTransportV20260618', () => {
         expect.any(Object),
         expect.objectContaining({
           headers: expect.objectContaining({
-            'MCP-Protocol-Version': 'DRAFT-2026-v1',
+            'MCP-Protocol-Version': '2026-07-28',
             'Mcp-Method': 'tools/list',
           }),
         }),
@@ -245,13 +246,13 @@ describe('McpHttpTransportV20260618', () => {
             name: 'testTool',
             arguments: {arg: 'val'},
             _meta: expect.objectContaining({
-              'io.modelcontextprotocol/protocolVersion': 'DRAFT-2026-v1',
+              'io.modelcontextprotocol/protocolVersion': '2026-07-28',
             }),
           },
         }),
         expect.objectContaining({
           headers: expect.objectContaining({
-            'MCP-Protocol-Version': 'DRAFT-2026-v1',
+            'MCP-Protocol-Version': '2026-07-28',
             'Mcp-Method': 'tools/call',
             'Mcp-Name': 'testTool',
           }),
@@ -713,7 +714,7 @@ describe('McpHttpTransportV20260618', () => {
     });
 
     it('should throw Error if server returns invalid protocol version but no fallback remains', async () => {
-      const oldestTransport = new McpHttpTransportV20260618(
+      const oldestTransport = new McpHttpTransportV20260728(
         testBaseUrl,
         mockSession,
         Protocol.MCP_v20241105,
@@ -793,7 +794,7 @@ describe('McpHttpTransportV20260618', () => {
         status: 200,
       };
       // Create HTTPS transport
-      const httpsTransport = new McpHttpTransportV20260618(
+      const httpsTransport = new McpHttpTransportV20260728(
         'https://secure.test.loc',
         mockSession,
         Protocol.MCP_DRAFT_2026_v1,
@@ -808,6 +809,70 @@ describe('McpHttpTransportV20260618', () => {
       );
 
       expect(consoleWarnSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('spec compliance and metadata tests (_meta serverInfo)', () => {
+    it('should extract serverVersion dynamically from _meta serverInfo in toolsList', async () => {
+      const mockResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '1',
+          result: {
+            resultType: 'complete',
+            tools: [
+              {
+                name: 'sample_tool',
+                description: 'Sample',
+                inputSchema: {type: 'object'},
+              },
+            ],
+            _meta: {
+              'io.modelcontextprotocol/serverInfo': {
+                name: 'ToolboxServer',
+                version: '2.5.0',
+              },
+            },
+          },
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(mockResponse);
+
+      const manifest = await transport.toolsList();
+      expect(manifest.serverVersion).toBe('2.5.0');
+      expect(manifest.tools).toHaveProperty('sample_tool');
+    });
+
+    it('should fallback serverVersion to 0.0.0 if _meta or serverInfo is missing', async () => {
+      const mockResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '1',
+          result: {
+            resultType: 'complete',
+            tools: [],
+          },
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(mockResponse);
+
+      const manifest = await transport.toolsList();
+      expect(manifest.serverVersion).toBe('0.0.0');
+    });
+
+    it('should parse resultType correctly and default to complete', () => {
+      const parsedDefault = types.ListToolsResultSchema.parse({tools: []});
+      expect(parsedDefault.resultType).toBe('complete');
+
+      const parsedCustom = types.ListToolsResultSchema.parse({
+        tools: [],
+        resultType: 'input_required',
+      });
+      expect(parsedCustom.resultType).toBe('input_required');
     });
   });
 });

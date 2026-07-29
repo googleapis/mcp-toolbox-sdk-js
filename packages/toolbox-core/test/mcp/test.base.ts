@@ -161,6 +161,44 @@ describe('McpHttpTransportBase', () => {
       expect(transport.getClientName()).toBe('my-client');
       expect(transport.getClientVersion()).toBe('1.2.3');
     });
+
+    const urlTestCases = [
+      {input: 'http://api.com', expected: 'http://api.com/mcp/'},
+      {input: 'http://api.com/', expected: 'http://api.com/mcp/'},
+      {input: 'http://api.com/mcp', expected: 'http://api.com/mcp/'},
+      {input: 'http://api.com/mcp/', expected: 'http://api.com/mcp/'},
+      {
+        input: 'http://api.com?proj=xyz',
+        expected: 'http://api.com/mcp/?proj=xyz',
+      },
+      {
+        input: 'http://api.com/mcp?proj=xyz',
+        expected: 'http://api.com/mcp/?proj=xyz',
+      },
+      {
+        input: 'http://api.com/mcp/?proj=xyz',
+        expected: 'http://api.com/mcp/?proj=xyz',
+      },
+      {
+        input: 'http://api.com/v1/api?proj=xyz',
+        expected: 'http://api.com/v1/api/mcp/?proj=xyz',
+      },
+      {
+        input: 'http://api.com?proj=xyz&env=prod',
+        expected: 'http://api.com/mcp/?proj=xyz&env=prod',
+      },
+      {
+        input: 'http://localhost:5000/mcp/sse?project=my-project',
+        expected: 'http://localhost:5000/mcp/sse?project=my-project',
+      },
+    ];
+
+    urlTestCases.forEach(({input, expected}) => {
+      it(`should construct base URL correctly for ${input}`, () => {
+        const transport = new TestMcpTransport(input);
+        expect(transport.baseUrl).toBe(expected);
+      });
+    });
   });
 
   describe('ensureInitialized', () => {
@@ -295,7 +333,9 @@ describe('McpHttpTransportBase', () => {
       );
     });
 
-    it('should handle tool with auth metadata', () => {
+    it('should handle tool with legacy toolbox auth metadata on pre-2026 version', () => {
+      (transport as unknown as {_protocolVersion: string})._protocolVersion =
+        Protocol.MCP_v20251125;
       const toolData = {
         name: 'authTool',
         description: 'Auth required',
@@ -316,6 +356,56 @@ describe('McpHttpTransportBase', () => {
       expect(result.authRequired).toEqual(['scope:read']);
       const param = result.parameters.find(p => p.name === 'secureParam');
       expect(param?.authSources).toEqual(['scope:admin']);
+    });
+
+    it('should handle tool with 2026+ com.google.cloud auth metadata', () => {
+      (transport as unknown as {_protocolVersion: string})._protocolVersion =
+        Protocol.MCP_v20260728;
+      const toolData = {
+        name: 'authTool2026',
+        description: 'Auth required 2026',
+        inputSchema: {
+          properties: {
+            secureParam: {type: 'string'},
+          },
+        },
+        _meta: {
+          'com.google.cloud/authInvoke': ['scope:read'],
+          'com.google.cloud/authParam': {
+            secureParam: ['scope:admin'],
+          },
+        },
+      };
+
+      const result = transport.testConvertToolSchema(toolData);
+      expect(result.authRequired).toEqual(['scope:read']);
+      const param = result.parameters.find(p => p.name === 'secureParam');
+      expect(param?.authSources).toEqual(['scope:admin']);
+    });
+
+    it('should ignore legacy toolbox auth metadata on 2026+ version', () => {
+      (transport as unknown as {_protocolVersion: string})._protocolVersion =
+        Protocol.MCP_v20260728;
+      const toolData = {
+        name: 'authToolLegacyOn2026',
+        description: 'Legacy auth params on 2026 version',
+        inputSchema: {
+          properties: {
+            secureParam: {type: 'string'},
+          },
+        },
+        _meta: {
+          'toolbox/authInvoke': ['scope:legacy'],
+          'toolbox/authParam': {
+            secureParam: ['scope:legacy'],
+          },
+        },
+      };
+
+      const result = transport.testConvertToolSchema(toolData);
+      expect(result.authRequired).toBeUndefined();
+      const param = result.parameters.find(p => p.name === 'secureParam');
+      expect(param?.authSources).toBeUndefined();
     });
 
     it('should handle minimal tool definition (defaults)', () => {

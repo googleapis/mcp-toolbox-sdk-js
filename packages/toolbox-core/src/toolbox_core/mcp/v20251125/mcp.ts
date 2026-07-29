@@ -249,7 +249,7 @@ export class McpHttpTransportV20251125 extends McpHttpTransportBase {
     headers?: Record<string, string>,
   ): Promise<ZodManifest> {
     await this.ensureInitialized(headers);
-    const url = `${this._mcpBaseUrl}${toolsetName || ''}`;
+    const url = this.appendToolsetPath(toolsetName);
 
     const result = await this.#sendRequest(
       url,

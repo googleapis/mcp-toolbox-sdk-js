@@ -9,7 +9,7 @@
 * **core:** support 2026 Stateless MCP, array-based auto-negotiation, and HTTP transport routing ([#412](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/412)) ([fd2ba6e](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/fd2ba6e81e7e68d9ae5d6dfe8b8a0234042059b6))
 * **core:** support response _meta serverInfo and resultType in draft protocol ([#421](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/421)) ([9934997](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/99349974db4ecd13b37891c7652185d5cf9328fa))
 
-### Fixes
+### Bug Fixes
 
 * **core:** preserve query parameters in connection URLs for toolset binding ([#420](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/420)) ([0f62ea3](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/0f62ea3fe67e30ee5dad8ad6afe999493443b662))
 

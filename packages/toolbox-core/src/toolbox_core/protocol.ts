@@ -15,25 +15,42 @@
 import {z, ZodRawShape, ZodTypeAny, ZodObject} from 'zod';
 
 export enum Protocol {
-  MCP_DRAFT_2026_v1 = 'DRAFT-2026-v1',
   MCP_v20241105 = '2024-11-05',
   MCP_v20250326 = '2025-03-26',
   MCP_v20250618 = '2025-06-18',
   MCP_v20251125 = '2025-11-25',
-  MCP = MCP_v20251125,
-  MCP_LATEST = MCP_v20251125,
-  MCP_DRAFT = MCP_DRAFT_2026_v1,
+  MCP_v20260728 = '2026-07-28',
+  MCP_DRAFT_2026_v1 = MCP_v20260728,
+  MCP = MCP_v20260728,
+  MCP_LATEST = MCP_v20260728,
+  MCP_DRAFT = MCP_v20260728,
 }
 
 export const MCP_LATEST = Protocol.MCP_LATEST;
 export function getSupportedMcpVersions(): Protocol[] {
   return [
-    Protocol.MCP_DRAFT,
+    Protocol.MCP_v20260728,
     Protocol.MCP_v20251125,
     Protocol.MCP_v20250618,
     Protocol.MCP_v20250326,
     Protocol.MCP_v20241105,
   ];
+}
+
+export function isVersionAtLeast(
+  currentVersion: string,
+  minVersion: string,
+): boolean {
+  const supported = getSupportedMcpVersions();
+  const currentIndex = supported.indexOf(currentVersion as Protocol);
+  if (currentIndex === -1) {
+    throw new Error(`Unrecognized protocol version: '${currentVersion}'`);
+  }
+  const minIndex = supported.indexOf(minVersion as Protocol);
+  if (minIndex === -1) {
+    throw new Error(`Unrecognized target protocol version: '${minVersion}'`);
+  }
+  return currentIndex <= minIndex;
 }
 
 // Type Definitions

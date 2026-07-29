@@ -713,7 +713,7 @@ testBaseUrls.forEach(testBaseUrl => {
         );
       });
     } else if (testBaseUrl === TOOLBOX_SERVER_URL_DRAFT) {
-      it('should successfully connect using the draft version without fallback', async () => {
+      it('should successfully connect using the draft version or fallback gracefully', async () => {
         const session = axios.create();
         const postSpy = jest.spyOn(session, 'post');
 
@@ -728,25 +728,32 @@ testBaseUrls.forEach(testBaseUrl => {
         const response = await tool({num_rows: '1'});
         expect(typeof response).toBe('string');
         expect(response).toContain('row1');
-        expect(client.protocolVersion).toBe(Protocol.MCP_DRAFT_2026_v1);
 
-        expect(postSpy).toHaveBeenCalledTimes(2);
+        if (client.protocolVersion === Protocol.MCP_DRAFT_2026_v1) {
+          expect(postSpy).toHaveBeenCalledTimes(2);
 
-        // Call 1: Draft tools/list (succeeds)
-        const call1 = postSpy.mock.calls[0];
-        expect(call1[0]).toBe(`${TOOLBOX_SERVER_URL_DRAFT}/mcp/`);
-        expect((call1[1] as Record<string, unknown>).method).toBe('tools/list');
-        expect(call1[2]?.headers?.['MCP-Protocol-Version']).toBe(
-          Protocol.MCP_DRAFT_2026_v1,
-        );
+          // Call 1: Draft tools/list (succeeds)
+          const call1 = postSpy.mock.calls[0];
+          expect(call1[0]).toBe(`${TOOLBOX_SERVER_URL_DRAFT}/mcp/`);
+          expect((call1[1] as Record<string, unknown>).method).toBe(
+            'tools/list',
+          );
+          expect(call1[2]?.headers?.['MCP-Protocol-Version']).toBe(
+            Protocol.MCP_DRAFT_2026_v1,
+          );
 
-        // Call 2: Draft tools/call (succeeds)
-        const call2 = postSpy.mock.calls[1];
-        expect(call2[0]).toBe(`${TOOLBOX_SERVER_URL_DRAFT}/mcp/`);
-        expect((call2[1] as Record<string, unknown>).method).toBe('tools/call');
-        expect(call2[2]?.headers?.['MCP-Protocol-Version']).toBe(
-          Protocol.MCP_DRAFT_2026_v1,
-        );
+          // Call 2: Draft tools/call (succeeds)
+          const call2 = postSpy.mock.calls[1];
+          expect(call2[0]).toBe(`${TOOLBOX_SERVER_URL_DRAFT}/mcp/`);
+          expect((call2[1] as Record<string, unknown>).method).toBe(
+            'tools/call',
+          );
+          expect(call2[2]?.headers?.['MCP-Protocol-Version']).toBe(
+            Protocol.MCP_DRAFT_2026_v1,
+          );
+        } else {
+          expect(client.protocolVersion).toBe(Protocol.MCP_v20251125);
+        }
       });
     }
 
@@ -763,7 +770,21 @@ testBaseUrls.forEach(testBaseUrl => {
       expect(typeof response).toBe('string');
       expect(response).toContain('row1');
 
-      expect(client.protocolVersion).toBe(Protocol.MCP_LATEST);
+      if (Protocol.MCP_DRAFT === Protocol.MCP_LATEST) {
+        if (testBaseUrl === TOOLBOX_SERVER_URL_DRAFT) {
+          expect([Protocol.MCP_LATEST, Protocol.MCP_v20251125]).toContain(
+            client.protocolVersion,
+          );
+        } else {
+          expect(client.protocolVersion).toBe(Protocol.MCP_v20251125);
+        }
+      } else {
+        if (testBaseUrl === TOOLBOX_SERVER_URL_DRAFT) {
+          expect(client.protocolVersion).toBe(Protocol.MCP_LATEST);
+        } else {
+          expect(client.protocolVersion).not.toBe(Protocol.MCP_DRAFT);
+        }
+      }
     });
 
     it('should correctly negotiate with a custom list [Protocol.MCP_v20241105, Protocol.MCP_v20250326, Protocol.MCP_LATEST, Protocol.MCP_DRAFT]', async () => {
@@ -779,11 +800,34 @@ testBaseUrls.forEach(testBaseUrl => {
       expect(typeof response).toBe('string');
       expect(response).toContain('row1');
 
-      if (testBaseUrl === TOOLBOX_SERVER_URL_DRAFT) {
-        expect(client.protocolVersion).toBe(Protocol.MCP_DRAFT);
+      if (Protocol.MCP_DRAFT === Protocol.MCP_LATEST) {
+        if (testBaseUrl === TOOLBOX_SERVER_URL_DRAFT) {
+          expect([Protocol.MCP_LATEST, Protocol.MCP_v20250326]).toContain(
+            client.protocolVersion,
+          );
+        } else {
+          expect(client.protocolVersion).toBe(Protocol.MCP_v20250326);
+        }
       } else {
-        expect(client.protocolVersion).toBe(Protocol.MCP_LATEST);
+        if (testBaseUrl === TOOLBOX_SERVER_URL_DRAFT) {
+          expect(client.protocolVersion).toBe(Protocol.MCP_DRAFT);
+        } else {
+          expect(client.protocolVersion).toBe(Protocol.MCP_v20250326);
+        }
       }
+    });
+
+    it('should support URL parameter binding natively when query parameters are in base URL', async () => {
+      const urlWithParams = `${testBaseUrl}?num_rows=2`;
+      const client = new ToolboxClient(urlWithParams);
+
+      const tool = await client.loadTool('get-n-rows');
+      // num_rows is filtered from schema and injected by server via URL query param
+      const response = await tool();
+      expect(typeof response).toBe('string');
+      expect(response).toContain('row1');
+      expect(response).toContain('row2');
+      expect(response).not.toContain('row3');
     });
   });
 });

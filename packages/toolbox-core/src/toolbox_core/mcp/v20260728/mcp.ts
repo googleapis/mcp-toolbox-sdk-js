@@ -29,14 +29,15 @@ import {VERSION} from '../../version.js';
 
 import {ProtocolNegotiationError} from '../../errorUtils.js';
 
-export class McpHttpTransportV20260618 extends McpHttpTransportBase {
+export class McpHttpTransportV20260728 extends McpHttpTransportBase {
   #getMeta() {
+    const clientInfo: types.Implementation = {
+      name: this._clientName || 'toolbox-core-js',
+      version: this._clientVersion || VERSION,
+    };
     return {
       'io.modelcontextprotocol/protocolVersion': this._protocolVersion,
-      'io.modelcontextprotocol/clientInfo': {
-        name: this._clientName || 'toolbox-core-js',
-        version: this._clientVersion || VERSION,
-      },
+      'io.modelcontextprotocol/clientInfo': clientInfo,
       'io.modelcontextprotocol/clientCapabilities': {},
     };
   }
@@ -232,16 +233,14 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
     // Stateless MCP does not use an initialize handshake.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _headers?: Record<string, string>,
-  ): Promise<void> {
-    this._serverVersion = 'unknown';
-  }
+  ): Promise<void> {}
 
   async toolsList(
     toolsetName?: string,
     headers?: Record<string, string>,
   ): Promise<ZodManifest> {
     await this.ensureInitialized(headers);
-    const url = `${this._mcpBaseUrl}${toolsetName || ''}`;
+    const url = this.appendToolsetPath(toolsetName);
 
     const result = await this.#sendRequest(
       url,
@@ -269,8 +268,11 @@ export class McpHttpTransportV20260618 extends McpHttpTransportBase {
       toolsMap[tool.name] = this.convertToolSchema(tool);
     }
 
+    const serverVersion =
+      result._meta?.['io.modelcontextprotocol/serverInfo']?.version ?? '0.0.0';
+
     return {
-      serverVersion: this._serverVersion ?? 'unknown',
+      serverVersion,
       tools: toolsMap as unknown as ZodManifest['tools'],
     };
   }

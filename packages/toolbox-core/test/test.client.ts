@@ -256,12 +256,12 @@ describe('ToolboxClient', () => {
         testBaseUrl,
         undefined,
         undefined,
-        Protocol.MCP_DRAFT_2026_v1,
+        Protocol.MCP_v20260728,
       );
       expect(McpHttpTransportV20260728).toHaveBeenCalledWith(
         testBaseUrl,
         undefined,
-        Protocol.MCP_DRAFT_2026_v1,
+        Protocol.MCP_v20260728,
         undefined,
         undefined,
       );

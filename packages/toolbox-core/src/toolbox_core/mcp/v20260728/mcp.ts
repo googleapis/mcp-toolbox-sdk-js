@@ -21,13 +21,27 @@ import {
   Protocol,
   getSupportedMcpVersions,
 } from '../../protocol.js';
-import {logApiError, ProtocolNegotiationError} from '../../errorUtils.js';
+import {logApiError} from '../../errorUtils.js';
 import {warnIfHttpAndHeaders} from '../../utils.js';
 
 import {v4 as uuidv4} from 'uuid';
 import {VERSION} from '../../version.js';
 
-export class McpHttpTransportV20250618 extends McpHttpTransportBase {
+import {ProtocolNegotiationError} from '../../errorUtils.js';
+
+export class McpHttpTransportV20260728 extends McpHttpTransportBase {
+  #getMeta() {
+    const clientInfo: types.Implementation = {
+      name: this._clientName || 'toolbox-core-js',
+      version: this._clientVersion || VERSION,
+    };
+    return {
+      'io.modelcontextprotocol/protocolVersion': this._protocolVersion,
+      'io.modelcontextprotocol/clientInfo': clientInfo,
+      'io.modelcontextprotocol/clientCapabilities': {},
+    };
+  }
+
   #checkProtocolNegotiationError(errVal: unknown): void {
     if (!errVal) return;
 
@@ -121,6 +135,23 @@ export class McpHttpTransportV20250618 extends McpHttpTransportBase {
     const reqHeaders = {...(headers || {})};
     reqHeaders['MCP-Protocol-Version'] = this._protocolVersion;
 
+    // Inject SEP-2243 routing headers
+    reqHeaders['Mcp-Method'] = method;
+    if (typeof params === 'object' && params !== null) {
+      if (
+        (method === 'tools/call' || method === 'prompts/get') &&
+        'name' in params
+      ) {
+        reqHeaders['Mcp-Name'] = String(
+          (params as Record<string, unknown>).name,
+        );
+      } else if (method === 'resources/read' && 'uri' in params) {
+        reqHeaders['Mcp-Name'] = String(
+          (params as Record<string, unknown>).uri,
+        );
+      }
+    }
+
     try {
       const response = await this._session.post(url, payload, {
         headers: reqHeaders,
@@ -177,12 +208,12 @@ export class McpHttpTransportV20250618 extends McpHttpTransportBase {
       }
 
       return null;
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof ProtocolNegotiationError) {
         throw error;
       }
-      if (error && typeof error === 'object' && 'isAxiosError' in error) {
-        const jsonResp = (error as AxiosError).response?.data;
+      if (error instanceof AxiosError) {
+        const jsonResp = error.response?.data;
         if (jsonResp) {
           if (typeof jsonResp === 'object' && 'error' in jsonResp) {
             const errVal = (jsonResp as Record<string, unknown>).error;
@@ -198,51 +229,11 @@ export class McpHttpTransportV20250618 extends McpHttpTransportBase {
   }
 
   protected async initializeSession(
-    headers?: Record<string, string>,
-  ): Promise<void> {
-    const params: types.InitializeRequestParams = {
-      protocolVersion: this._protocolVersion,
-      capabilities: {},
-      clientInfo: {
-        name: this._clientName || 'toolbox-core-js',
-        version: this._clientVersion || VERSION,
-      },
-    };
-
-    const result = await this.#sendRequest(
-      this._mcpBaseUrl,
-      types.InitializeRequest,
-      params,
-      headers,
-    );
-
-    if (!result) {
-      const error = new Error('Initialization failed: No response');
-      logApiError('MCP Initialization Error', error);
-      throw error;
-    }
-
-    this._serverVersion = result.serverInfo.version;
-
-    if (result.protocolVersion !== this._protocolVersion) {
-      throw new ProtocolNegotiationError(result.protocolVersion as Protocol);
-    }
-
-    if (!result.capabilities.tools) {
-      const error = new Error(
-        "Server does not support the 'tools' capability.",
-      );
-      logApiError('MCP Initialization Error', error);
-      throw error;
-    }
-
-    await this.#sendRequest(
-      this._mcpBaseUrl,
-      types.InitializedNotification,
-      {},
-      headers,
-    );
-  }
+    // Required to match McpHttpTransportBase signature, but unused because
+    // Stateless MCP does not use an initialize handshake.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _headers?: Record<string, string>,
+  ): Promise<void> {}
 
   async toolsList(
     toolsetName?: string,
@@ -254,19 +245,13 @@ export class McpHttpTransportV20250618 extends McpHttpTransportBase {
     const result = await this.#sendRequest(
       url,
       types.ListToolsRequest,
-      {},
+      {_meta: this.#getMeta()},
       headers,
     );
 
     if (!result) {
       const error = new Error('Failed to list tools: No response from server.');
       logApiError(`Error listing tools from ${url}`, error);
-      throw error;
-    }
-
-    if (this._serverVersion === null) {
-      const error = new Error('Server version not available.');
-      logApiError('Error listing tools', error);
       throw error;
     }
 
@@ -283,9 +268,15 @@ export class McpHttpTransportV20250618 extends McpHttpTransportBase {
       toolsMap[tool.name] = this.convertToolSchema(tool);
     }
 
+    const version =
+      result._meta?.['io.modelcontextprotocol/serverInfo']?.version;
+    if (version) {
+      this._serverVersion = version;
+    }
+
     return {
-      serverVersion: this._serverVersion,
-      tools: toolsMap as unknown as ZodManifest['tools'], // Cast to verify structure compliance or rely on structural typing
+      serverVersion: this._serverVersion || '',
+      tools: toolsMap as unknown as ZodManifest['tools'],
     };
   }
 
@@ -315,13 +306,16 @@ export class McpHttpTransportV20250618 extends McpHttpTransportBase {
   ): Promise<string> {
     await this.ensureInitialized(headers);
 
-    if (Object.keys(headers).length > 0) {
+    if (headers && Object.keys(headers).length > 0) {
       warnIfHttpAndHeaders(this._mcpBaseUrl, headers);
     }
 
-    const params: types.CallToolRequestParams = {
+    const params: types.CallToolRequestParams & {
+      _meta?: Record<string, unknown>;
+    } = {
       name: toolName,
       arguments: arguments_,
+      _meta: this.#getMeta(),
     };
 
     const result = await this.#sendRequest(

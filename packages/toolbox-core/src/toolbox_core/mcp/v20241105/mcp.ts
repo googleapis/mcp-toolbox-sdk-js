@@ -16,8 +16,8 @@ import {AxiosError} from 'axios';
 import {McpHttpTransportBase} from '../transportBase.js';
 import * as types from './types.js';
 
-import {ZodManifest} from '../../protocol.js';
-import {logApiError} from '../../errorUtils.js';
+import {ZodManifest, Protocol} from '../../protocol.js';
+import {logApiError, ProtocolNegotiationError} from '../../errorUtils.js';
 import {warnIfHttpAndHeaders} from '../../utils.js';
 
 import {v4 as uuidv4} from 'uuid';
@@ -136,11 +136,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
     this._serverVersion = result.serverInfo.version;
 
     if (result.protocolVersion !== this._protocolVersion) {
-      const error = new Error(
-        `MCP version mismatch: client does not support server version ${result.protocolVersion}`,
-      );
-      logApiError('MCP Initialization Error', error);
-      throw error;
+      throw new ProtocolNegotiationError(result.protocolVersion as Protocol);
     }
 
     if (!result.capabilities.tools) {
@@ -164,7 +160,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
     headers?: Record<string, string>,
   ): Promise<ZodManifest> {
     await this.ensureInitialized(headers);
-    const url = `${this._mcpBaseUrl}${toolsetName || ''}`;
+    const url = this.appendToolsetPath(toolsetName);
 
     const result = await this.#sendRequest(
       url,

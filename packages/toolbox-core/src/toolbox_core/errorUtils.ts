@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import {isAxiosError} from 'axios';
+import {Protocol} from './protocol.js';
 
 /**
  * Logs a standardized error message to the console, differentiating between
@@ -39,4 +40,14 @@ export function logApiError(baseMessage: string, error: unknown): void {
     loggableDetails = error; // Fallback for non-Error types or unknown errors
   }
   console.error(baseMessage, loggableDetails);
+}
+
+export class ProtocolNegotiationError extends Error {
+  fallbackVersion: Protocol;
+
+  constructor(fallbackVersion: Protocol) {
+    super(`Server requires protocol fallback to ${fallbackVersion}`);
+    this.name = 'ProtocolNegotiationError';
+    this.fallbackVersion = fallbackVersion;
+  }
 }

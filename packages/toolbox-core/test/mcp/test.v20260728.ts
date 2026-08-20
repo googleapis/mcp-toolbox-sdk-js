@@ -56,7 +56,7 @@ describe('McpHttpTransportV20260728', () => {
     transport = new McpHttpTransportV20260728(
       testBaseUrl,
       mockSession,
-      Protocol.MCP_DRAFT_2026_v1,
+      Protocol.MCP_v20260728,
     );
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
@@ -797,7 +797,7 @@ describe('McpHttpTransportV20260728', () => {
       const httpsTransport = new McpHttpTransportV20260728(
         'https://secure.test.loc',
         mockSession,
-        Protocol.MCP_DRAFT_2026_v1,
+        Protocol.MCP_v20260728,
       );
 
       mockSession.post.mockResolvedValueOnce(invokeResponse);
@@ -845,7 +845,7 @@ describe('McpHttpTransportV20260728', () => {
       expect(manifest.tools).toHaveProperty('sample_tool');
     });
 
-    it('should fallback serverVersion to 0.0.0 if _meta or serverInfo is missing', async () => {
+    it('should set serverVersion to empty string if _meta or serverInfo is missing', async () => {
       const mockResponse = {
         data: {
           jsonrpc: '2.0',
@@ -861,7 +861,7 @@ describe('McpHttpTransportV20260728', () => {
       mockSession.post.mockResolvedValueOnce(mockResponse);
 
       const manifest = await transport.toolsList();
-      expect(manifest.serverVersion).toBe('0.0.0');
+      expect(manifest.serverVersion).toBe('');
     });
 
     it('should parse resultType correctly and default to complete', () => {

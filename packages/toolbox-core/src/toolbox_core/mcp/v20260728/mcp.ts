@@ -268,11 +268,14 @@ export class McpHttpTransportV20260728 extends McpHttpTransportBase {
       toolsMap[tool.name] = this.convertToolSchema(tool);
     }
 
-    const serverVersion =
-      result._meta?.['io.modelcontextprotocol/serverInfo']?.version ?? '0.0.0';
+    const version =
+      result._meta?.['io.modelcontextprotocol/serverInfo']?.version;
+    if (version) {
+      this._serverVersion = version;
+    }
 
     return {
-      serverVersion,
+      serverVersion: this._serverVersion || '',
       tools: toolsMap as unknown as ZodManifest['tools'],
     };
   }

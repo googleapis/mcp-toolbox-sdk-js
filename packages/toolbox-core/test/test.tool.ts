@@ -164,6 +164,7 @@ describe('ToolboxTool', () => {
     it('should throw a generic error if paramSchema.parse throws a non-ZodError', async () => {
       const customError = new Error('A non-Zod parsing error occurred!');
       const failingSchema = {
+        shape: {},
         parse: jest.fn().mockImplementation(() => {
           throw customError;
         }),
@@ -213,8 +214,10 @@ describe('ToolboxTool', () => {
         toolDescription,
         basicParamSchema,
       );
+      // Asserts our wrapper text and the offending param, not zod's own
+      // message wording, which differs between zod v3 and v4.
       await expect(currentTool()).rejects.toThrow(
-        'Argument validation failed for tool "myTestTool":\n - query: Required',
+        /^Argument validation failed for tool "myTestTool":\n - query: /,
       );
       expect(mockTransport.toolInvoke).not.toHaveBeenCalled();
     });

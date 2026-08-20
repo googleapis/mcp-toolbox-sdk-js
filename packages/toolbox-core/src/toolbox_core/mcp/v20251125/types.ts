@@ -21,21 +21,21 @@ export const JSONRPCRequestSchema = z.object({
   jsonrpc: z.literal('2.0').default('2.0'),
   id: z.union([z.string(), z.number()]).optional(), // Default handled in usage, or logic
   method: z.string(),
-  params: z.record(z.unknown()).optional().nullable(),
+  params: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 export type JSONRPCRequest = z.infer<typeof JSONRPCRequestSchema>;
 
 export const JSONRPCNotificationSchema = z.object({
   jsonrpc: z.literal('2.0').default('2.0'),
   method: z.string(),
-  params: z.record(z.unknown()).optional().nullable(),
+  params: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 export type JSONRPCNotification = z.infer<typeof JSONRPCNotificationSchema>;
 
 export const JSONRPCResponseSchema = z.object({
   jsonrpc: z.literal('2.0'),
   id: z.union([z.string(), z.number()]),
-  result: z.record(z.unknown()),
+  result: z.record(z.string(), z.unknown()),
 });
 export type JSONRPCResponse = z.infer<typeof JSONRPCResponseSchema>;
 
@@ -78,8 +78,8 @@ export type InitializeRequestParams = z.infer<
 >;
 
 export const ServerCapabilitiesSchema = z.object({
-  prompts: z.record(z.unknown()).optional().nullable(),
-  tools: z.record(z.unknown()).optional().nullable(),
+  prompts: z.record(z.string(), z.unknown()).optional().nullable(),
+  tools: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 export type ServerCapabilities = z.infer<typeof ServerCapabilitiesSchema>;
 
@@ -93,7 +93,7 @@ export type InitializeResult = z.infer<typeof InitializeResultSchema>;
 
 export const ToolSchema = BaseMetadataSchema.extend({
   description: z.string().optional().nullable(),
-  inputSchema: z.record(z.unknown()),
+  inputSchema: z.record(z.string(), z.unknown()),
 });
 
 export type Tool = z.infer<typeof ToolSchema>;
@@ -147,7 +147,7 @@ export const ListToolsRequest: MCPRequest<ListToolsResult> = {
 
 export const CallToolRequestParamsSchema = z.object({
   name: z.string(),
-  arguments: z.record(z.unknown()),
+  arguments: z.record(z.string(), z.unknown()),
 });
 export type CallToolRequestParams = z.infer<typeof CallToolRequestParamsSchema>;
 

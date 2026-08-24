@@ -370,29 +370,19 @@ testBaseUrls.forEach(testBaseUrl => {
       });
 
       it('should fail when a tool with a param requiring auth is run with insufficient auth claims', async () => {
-        expect.assertions(3);
-
         const tool = await commonToolboxClient.loadTool(
           'get-row-by-content-auth',
           {
             'my-test-auth': authToken1Getter,
           },
         );
-        try {
-          await tool.runAsync({args: {}, toolContext: mockContext});
-        } catch (error) {
-          expect(error).toBeInstanceOf(AxiosError);
-          const axiosError = error as AxiosError;
-          expect(axiosError.response?.data).toEqual(
-            expect.objectContaining({
-              error: expect.objectContaining({
-                message: expect.stringContaining(
-                  'provided parameters were invalid',
-                ),
-              }),
-            }),
-          );
-        }
+        const response = await tool.runAsync({
+          args: {},
+          toolContext: mockContext,
+        });
+        expect(response).toContain(
+          'provided parameters were invalid: error parsing authenticated parameter "data": no field named row_data in claims',
+        );
       });
     });
   });

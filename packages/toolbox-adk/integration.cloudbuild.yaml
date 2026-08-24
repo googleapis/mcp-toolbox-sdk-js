@@ -36,6 +36,26 @@ steps:
       - '-c'
       - npm run test:unit -w @toolbox-sdk/adk
 
+  # zod v4 is installed alongside v3 under the `zod4` alias. The runtime suite
+  # swaps it in via jest moduleNameMapper; the typecheck swaps the declarations
+  # in via tsconfig paths. Both are needed, because the alias does not redirect
+  # TypeScript.
+  - id: Run unit tests against zod v4
+    name: 'node:${_VERSION}'
+    entrypoint: /bin/bash
+    waitFor: ['Build toolbox-core']
+    args:
+      - '-c'
+      - npm run test:unit:zod4 -w @toolbox-sdk/adk
+
+  - id: Typecheck against zod v4
+    name: 'node:${_VERSION}'
+    entrypoint: /bin/bash
+    waitFor: ['Build toolbox-core']
+    args:
+      - '-c'
+      - npm run typecheck:zod4 -w @toolbox-sdk/adk
+
   - id: Run integration tests
     name: 'node:${_VERSION}'
     entrypoint: /bin/bash
@@ -53,5 +73,5 @@ options:
   logging: CLOUD_LOGGING_ONLY
 substitutions:
   _VERSION: '22.16.0'
-  _TOOLBOX_VERSION: '1.6.0'
+  _TOOLBOX_VERSION: '1.9.0'
   _TOOLBOX_MANIFEST_VERSION: '34'

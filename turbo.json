@@ -15,6 +15,12 @@
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"]
     },
+    "test:unit:zod4": {
+      "dependsOn": ["^build"]
+    },
+    "typecheck:zod4": {
+      "dependsOn": ["^build"]
+    },
     "test:e2e": {
       "dependsOn": ["^build"]
     },

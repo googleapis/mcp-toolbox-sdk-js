@@ -20,7 +20,7 @@ import {ZodManifest, Protocol} from '../../protocol.js';
 import {logApiError, ProtocolNegotiationError} from '../../errorUtils.js';
 import {warnIfHttpAndHeaders} from '../../utils.js';
 
-import {v4 as uuidv4} from 'uuid';
+import {randomUUID} from 'node:crypto';
 import {VERSION} from '../../version.js';
 
 export class McpHttpTransportV20241105 extends McpHttpTransportBase {
@@ -45,7 +45,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
     } else {
       payload = {
         jsonrpc: '2.0',
-        id: uuidv4(),
+        id: randomUUID(),
         method,
         params: params as Record<string, unknown>,
       };

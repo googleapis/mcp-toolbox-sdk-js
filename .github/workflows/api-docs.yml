@@ -17,11 +17,19 @@ name: "API Reference Deployment"
 on:
   push:
     branches: [ 'main' ]
-    tags: [ '**' ]
+    # Only real release tags. Matching '**' also caught release-please-*, which
+    # built nothing but still consumed a slot in the concurrency queue.
+    tags: [ 'core-v*', 'adk-v*' ]
   workflow_dispatch:
 
+# Keyed per ref, so a release-tag run is never queued behind anything and can
+# never be evicted: GitHub holds only one pending run per group, so a third
+# push to a shared group cancels the second before it ever starts. Runs may now
+# overlap, which is safe because the deploy step retries the gh-pages push.
+# Pushes to main still share one group; evicting a superseded "dev" build there
+# is harmless, since the newer run rebuilds from newer main.
 concurrency:
-  group: api-docs-deploy
+  group: api-docs-deploy-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -68,8 +76,8 @@ jobs:
           # Route the git ref to the package(s) and version to build.
           # A per-package tag builds that one package; pushes to main (and manual
           # dispatch) build both as "dev". JS release tags are hyphenated
-          # (core-vX.Y.Z, adk-vX.Y.Z); release-please-* and any other tag are
-          # skipped.
+          # (core-vX.Y.Z, adk-vX.Y.Z); the trigger filter admits only those, and
+          # the catch-all below stays as a backstop for anything unexpected.
           REF="${GITHUB_REF}"
           case "$REF" in
             refs/tags/core-v*) echo "packages=core"     >> "$GITHUB_OUTPUT"; echo "version=${REF#refs/tags/core-}" >> "$GITHUB_OUTPUT" ;;
@@ -108,11 +116,47 @@ jobs:
           chmod +x scripts/generate-root.sh
           ./scripts/generate-root.sh "$BASE_URL"
 
+      # Additive publish: each run only writes its own <package>/<version>/
+      # subtree over a fresh checkout of gh-pages, so a run that loses the push
+      # race can simply rebuild on top of the winner and push again. CNAME and
+      # .nojekyll live on the branch and are preserved by the clone.
       - name: Deploy to gh-pages
         if: steps.resolve.outputs.packages != ''
-        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs-site/public
-          keep_files: true 
-          cname: ${{ github.repository == 'googleapis/mcp-toolbox-sdk-js' && 'js.mcp-toolbox.dev' || '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          WORK="$(mktemp -d)"
+          git clone --depth 1 --branch gh-pages --single-branch \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$WORK"
+          cd "$WORK"
+
+          for attempt in 1 2 3 4 5; do
+            # Re-apply the build onto the current tip rather than rebasing, so a
+            # concurrent deploy of a different subtree merges cleanly by
+            # construction and can never raise a conflict.
+            git fetch --depth 1 origin gh-pages
+            git reset --hard FETCH_HEAD
+            cp -R "${GITHUB_WORKSPACE}/docs-site/public/." .
+            git add -A
+
+            if git diff --cached --quiet; then
+              echo "No documentation changes for ${GITHUB_REF_NAME}; nothing to deploy."
+              exit 0
+            fi
+
+            git commit -m "docs(api): deploy ${GITHUB_REF_NAME}"
+            if git push origin gh-pages; then
+              echo "Deployed ${GITHUB_REF_NAME} to gh-pages on attempt ${attempt}."
+              exit 0
+            fi
+
+            echo "Push rejected (attempt ${attempt}/5); another deploy landed first. Retrying."
+            sleep $(( attempt * 5 ))
+          done
+
+          echo "::error::Could not push docs to gh-pages after 5 attempts."
+          exit 1

@@ -204,7 +204,8 @@ function buildZodShapeFromParam(param: ParameterSchema): ZodTypeAny {
 export function createZodSchemaFromParams(
   params: ParameterSchema[],
 ): ZodObject<ZodRawShape> {
-  const shape: ZodRawShape = {};
+  // Built as a mutable record because zod v4 declares ZodRawShape readonly.
+  const shape: Record<string, ZodTypeAny> = {};
   for (const param of params) {
     shape[param.name] = buildZodShapeFromParam(param);
   }

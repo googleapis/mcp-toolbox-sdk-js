@@ -1,0 +1,10 @@
+{
+    "extends": "./tsconfig.test.json",
+    "compilerOptions": {
+      "noEmit": true,
+      "baseUrl": ".",
+      "paths": {
+        "zod": ["../../node_modules/zod4/index.d.ts"]
+      }
+    }
+}

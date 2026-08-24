@@ -17,6 +17,21 @@ import {Type} from '@google/genai';
 import {z, ZodObject, ZodRawShape, ZodTypeAny} from 'zod';
 
 /**
+ * Detects an integer constraint on a Zod number.
+ *
+ * Reads both check shapes: zod v3 tags them `{kind: 'int'}`, v4 uses
+ * `{format: 'safeint'}`. Missing the v4 shape degrades `.int()` to a plain
+ * number rather than throwing, so this must stay tolerant of both.
+ */
+function hasIntegerCheck(zodType: ZodTypeAny): boolean {
+  const checks = (zodType as {_def?: {checks?: unknown[]}})._def?.checks ?? [];
+  return checks.some(check => {
+    const c = check as {kind?: string; format?: string};
+    return c?.kind === 'int' || c?.format === 'safeint';
+  });
+}
+
+/**
  * Safely determines the JSON Schema type enum from a Zod type object.
  *
  * @param zodType The Zod type instance to inspect.
@@ -25,7 +40,7 @@ import {z, ZodObject, ZodRawShape, ZodTypeAny} from 'zod';
 function getJsonSchemaTypeFromZod(zodType: ZodTypeAny): Type {
   // Handle optional and nullable types by recursively unwrapping them
   if (zodType instanceof z.ZodOptional || zodType instanceof z.ZodNullable) {
-    return getJsonSchemaTypeFromZod(zodType.unwrap());
+    return getJsonSchemaTypeFromZod(zodType.unwrap() as ZodTypeAny);
   }
 
   // Handle specific base types
@@ -38,8 +53,7 @@ function getJsonSchemaTypeFromZod(zodType: ZodTypeAny): Type {
   }
 
   if (zodType instanceof z.ZodNumber) {
-    const isInteger = zodType._def.checks.some(check => check.kind === 'int');
-    return isInteger ? Type.INTEGER : Type.NUMBER;
+    return hasIntegerCheck(zodType) ? Type.INTEGER : Type.NUMBER;
   }
 
   if (zodType instanceof z.ZodBoolean) {
@@ -79,7 +93,14 @@ export function ConvertZodToFunctionDeclaration(
     };
   }
 
-  for (const [key, zodType] of Object.entries(zodSchema.shape)) {
+  // zod v4 types ZodObject.shape as a map of the internal $ZodType, which does
+  // not expose the classic instance methods; the runtime values are the same.
+  const shapeEntries = Object.entries(zodSchema.shape) as [
+    string,
+    ZodTypeAny,
+  ][];
+
+  for (const [key, zodType] of shapeEntries) {
     properties[key] = {
       type: getJsonSchemaTypeFromZod(zodType),
       description: zodType.description || '',

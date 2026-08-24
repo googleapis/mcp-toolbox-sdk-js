@@ -24,12 +24,21 @@ import {
 // HELPER FUNCTIONS
 
 const getErrorMessages = (error: ZodError): string[] => {
-  return error.errors.map(e => {
+  return error.issues.map(e => {
     if (e.path.length > 0) {
       return `${e.path.join('.')}: ${e.message}`;
     }
     return e.message;
   });
+};
+
+// Zod reworded every built-in message in v4, so assertions about zod's own
+// validation failures match on the stable issue code instead of message text.
+// Messages are still asserted where the schema supplies a custom one.
+const getErrorCodes = (error: ZodError): string[] => {
+  return error.issues.map(e =>
+    e.path.length > 0 ? `${e.path.join('.')}: ${e.code}` : e.code,
+  );
 };
 
 const expectParseSuccess = (schema: ZodTypeAny, data: unknown) => {
@@ -40,13 +49,16 @@ const expectParseSuccess = (schema: ZodTypeAny, data: unknown) => {
 const expectParseFailure = (
   schema: ZodTypeAny,
   data: unknown,
-  errorMessageCheck: (errors: string[]) => void,
+  errorMessageCheck: (errors: string[], codes: string[]) => void,
 ) => {
   const result = schema.safeParse(data);
   expect(result.success).toBe(false);
 
   if (!result.success) {
-    errorMessageCheck(getErrorMessages(result.error));
+    errorMessageCheck(
+      getErrorMessages(result.error),
+      getErrorCodes(result.error),
+    );
   } else {
     fail(
       `Parsing was expected to fail for ${JSON.stringify(data)} but succeeded.`,
@@ -210,11 +222,10 @@ describe('ZodParameterSchema', () => {
 
   it('should invalidate if type is missing', () => {
     const data = {name: 'testParam', description: 'A param'}; // type is missing
-    expectParseFailure(ZodParameterSchema, data, errors => {
-      expect(errors).toEqual(
-        expect.arrayContaining([
-          expect.stringMatching(/type: Invalid discriminator value./i),
-        ]),
+    expectParseFailure(ZodParameterSchema, data, (_errors, codes) => {
+      // v3 reports invalid_union_discriminator, v4 folds it into invalid_union.
+      expect(codes).toEqual(
+        expect.arrayContaining([expect.stringMatching(/^type: invalid_union/)]),
       );
     });
   });
@@ -229,11 +240,13 @@ describe('ZodParameterSchema', () => {
       },
     };
     const schema = createZodSchemaFromParams([data as ParameterSchema]);
-    expectParseFailure(schema, {typedMap: {key1: 'not-a-number'}}, errors => {
-      expect(errors).toContain(
-        'typedMap.key1: Expected number, received string',
-      );
-    });
+    expectParseFailure(
+      schema,
+      {typedMap: {key1: 'not-a-number'}},
+      (_errors, codes) => {
+        expect(codes).toContain('typedMap.key1: invalid_type');
+      },
+    );
   });
 });
 
@@ -319,11 +332,12 @@ describe('ZodManifestSchema', () => {
 
   it('should invalidate a manifest schema with an empty tool name', () => {
     const data = {serverVersion: '1.0.0', tools: {'': validTool}};
-    expectParseFailure(ZodManifestSchema, data, errors => {
-      expect(errors).toEqual(
-        expect.arrayContaining([
-          expect.stringMatching(/Tool name cannot be empty/i),
-        ]),
+    expectParseFailure(ZodManifestSchema, data, (_errors, codes) => {
+      // v3 surfaces the key schema's custom message (too_small); v4 replaces
+      // it with a generic invalid_key. Both reject the empty tool name at the
+      // same path, which is the behaviour worth pinning.
+      expect(codes).toEqual(
+        expect.arrayContaining([expect.stringMatching(/^tools\.: /)]),
       );
     });
   });
@@ -347,10 +361,8 @@ describe('createZodObjectSchemaFromParameters', () => {
     const schema = createZodSchemaFromParams(params);
 
     expectParseSuccess(schema, {});
-    expectParseFailure(schema, {anyKey: 'anyValue'}, errors => {
-      expect(
-        errors.some(e => /Unrecognized key\(s\) in object: 'anyKey'/.test(e)),
-      ).toBe(true);
+    expectParseFailure(schema, {anyKey: 'anyValue'}, (_errors, codes) => {
+      expect(codes).toContain('unrecognized_keys');
     });
   });
 
@@ -371,11 +383,12 @@ describe('createZodObjectSchemaFromParameters', () => {
     expectParseFailure(
       schema,
       {username: 'john_doe', age: '30', isActive: true},
-      errors =>
-        expect(errors).toContain('age: Expected number, received string'),
+      (_errors, codes) => expect(codes).toContain('age: invalid_type'),
     );
-    expectParseFailure(schema, {username: 'john_doe', isActive: true}, errors =>
-      expect(errors).toContain('age: Required'),
+    expectParseFailure(
+      schema,
+      {username: 'john_doe', isActive: true},
+      (_errors, codes) => expect(codes).toContain('age: invalid_type'),
     );
   });
 
@@ -395,9 +408,13 @@ describe('createZodObjectSchemaFromParameters', () => {
 
     expectParseSuccess(schema, {tags: ['news', 'tech'], id: 1});
 
-    expectParseFailure(schema, {tags: ['news', 123], id: 1}, errors => {
-      expect(errors).toContain('tags.1: Expected string, received number');
-    });
+    expectParseFailure(
+      schema,
+      {tags: ['news', 123], id: 1},
+      (_errors, codes) => {
+        expect(codes).toContain('tags.1: invalid_type');
+      },
+    );
   });
 
   it('should create a Zod object schema with a nested array parameter', () => {
@@ -431,10 +448,8 @@ describe('createZodObjectSchemaFromParameters', () => {
           [3.0, 4.5],
         ],
       },
-      errors => {
-        expect(errors).toContain(
-          'matrix.0.1: Expected number, received string',
-        );
+      (_errors, codes) => {
+        expect(codes).toContain('matrix.0.1: invalid_type');
       },
     );
   });
@@ -471,10 +486,8 @@ describe('createZodObjectSchemaFromParameters', () => {
         metadata: {isTest: true, id: 'abc-123'},
         scores: {player1: '100'},
       },
-      errors => {
-        expect(errors).toContain(
-          'scores.player1: Expected number, received string',
-        );
+      (_errors, codes) => {
+        expect(codes).toContain('scores.player1: invalid_type');
       },
     );
   });
@@ -492,9 +505,13 @@ describe('createZodObjectSchemaFromParameters', () => {
     expectParseSuccess(schema, {
       metadata: {isTest: true, id: 'abc-123', score: 99.5},
     });
-    expectParseFailure(schema, {metadata: 'not-an-object'}, errors => {
-      expect(errors).toContain('metadata: Expected object, received string');
-    });
+    expectParseFailure(
+      schema,
+      {metadata: 'not-an-object'},
+      (_errors, codes) => {
+        expect(codes).toContain('metadata: invalid_type');
+      },
+    );
   });
 
   it('should handle object parameters with additionalProperties set to false', () => {
@@ -511,11 +528,13 @@ describe('createZodObjectSchemaFromParameters', () => {
     expectParseSuccess(schema, {
       strictObject: {},
     });
-    expectParseFailure(schema, {strictObject: 'not-an-object'}, errors => {
-      expect(errors).toContain(
-        'strictObject: Expected object, received string',
-      );
-    });
+    expectParseFailure(
+      schema,
+      {strictObject: 'not-an-object'},
+      (_errors, codes) => {
+        expect(codes).toContain('strictObject: invalid_type');
+      },
+    );
   });
 
   it('should throw an error when creating schema from parameter with unknown type', () => {
@@ -572,8 +591,8 @@ describe('createZodObjectSchemaFromParameters', () => {
     const schema = createZodSchemaFromParams(params);
 
     it('should fail if a required parameter is missing', () => {
-      expectParseFailure(schema, {optionalParam: 'value'}, errors => {
-        expect(errors).toContain('requiredParam: Required');
+      expectParseFailure(schema, {optionalParam: 'value'}, (_errors, codes) => {
+        expect(codes).toContain('requiredParam: invalid_type');
       });
     });
 

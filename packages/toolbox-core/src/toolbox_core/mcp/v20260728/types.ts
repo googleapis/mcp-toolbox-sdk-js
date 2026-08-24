@@ -108,11 +108,13 @@ export type CallToolResult = z.infer<typeof CallToolResultSchema>;
 export type MCPRequest<T> = {
   method: string;
   params?: Record<string, unknown> | unknown | null;
-  // Structural rather than z.ZodType<...>: this schema's resultType has a
-  // .default(), so its input and output types differ, and the type parameter
-  // that expresses that moved between zod v3 and v4 (v3 took a ZodTypeDef in
-  // slot two, v4 removed it and put the input type there). Only .parse() is
-  // used, so the narrower contract avoids the incompatibility entirely.
+  // Structural rather than the z.ZodType<T> the other protocol versions use:
+  // resultType carries a bare .default(), so input and output types diverge,
+  // and the parameter expressing that swapped places between zod majors (v3
+  // slot two is ZodTypeDef, v4 uses it for the input type) — no one spelling
+  // fits both. Only .parse() is called, so the narrower contract sidesteps it.
+  // Elsewhere the sole result default is .default(false).optional(), where the
+  // .optional() keeps input and output aligned and z.ZodType<T> still works.
   getResultModel: () => {parse: (data: unknown) => T};
 };
 

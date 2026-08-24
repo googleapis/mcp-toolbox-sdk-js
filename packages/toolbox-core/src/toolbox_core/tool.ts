@@ -92,8 +92,14 @@ export function ToolboxTool(
   clientHeaders: ClientHeadersConfig = {},
 ): ToolboxTool {
   const boundKeys = Object.keys(boundParams);
+  // Params bound at load time are already excluded from paramSchema by the
+  // client, so only omit keys the schema actually has. zod v3 ignored absent
+  // mask keys; v4 throws on them.
+  const schemaKeys = new Set(Object.keys(paramSchema.shape));
   const userParamSchema = paramSchema.omit(
-    Object.fromEntries(boundKeys.map(k => [k, true])),
+    Object.fromEntries(
+      boundKeys.filter(k => schemaKeys.has(k)).map(k => [k, true]),
+    ),
   );
 
   const callable = async function (
@@ -129,7 +135,7 @@ export function ToolboxTool(
       validatedUserArgs = userParamSchema.parse(callArguments);
     } catch (error) {
       if (error instanceof ZodError) {
-        const errorMessages = error.errors.map(
+        const errorMessages = error.issues.map(
           e => `${e.path.join('.') || 'payload'}: ${e.message}`,
         );
         throw new Error(

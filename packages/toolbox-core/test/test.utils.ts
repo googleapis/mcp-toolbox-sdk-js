@@ -16,6 +16,7 @@ import {
   resolveValue,
   identifyAuthRequirements,
   warnIfHttpAndHeaders,
+  validateUnusedRequirements,
 } from '../src/toolbox_core/utils';
 
 describe('resolveValue', () => {
@@ -254,5 +255,77 @@ describe('warnIfHttpAndHeaders', () => {
       Authorization: 'Bearer token',
     });
     expect(consoleSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe('validateUnusedRequirements', () => {
+  it('should not throw if all provided auth, bound, and secure keys are used', () => {
+    expect(() =>
+      validateUnusedRequirements(
+        new Set(['auth1']),
+        new Set(['param1']),
+        new Set(['auth1']),
+        new Set(['param1']),
+        'my_tool',
+        false,
+        undefined,
+        new Set(['sec1']),
+        new Set(['sec1']),
+      ),
+    ).not.toThrow();
+  });
+
+  it('should throw for unused secure parameters in tool validation', () => {
+    expect(() =>
+      validateUnusedRequirements(
+        new Set(),
+        new Set(),
+        new Set(),
+        new Set(),
+        'my_tool',
+        false,
+        undefined,
+        new Set(['sec1', 'sec2']),
+        new Set(['sec1']),
+      ),
+    ).toThrow(
+      "Validation failed for tool 'my_tool': unused secure parameters: sec2.",
+    );
+  });
+
+  it('should throw for unused secure parameters in toolset validation', () => {
+    expect(() =>
+      validateUnusedRequirements(
+        new Set(),
+        new Set(),
+        new Set(),
+        new Set(),
+        'my_toolset',
+        true,
+        undefined,
+        new Set(['sec1']),
+        new Set(),
+      ),
+    ).toThrow(
+      "Validation failed for toolset 'my_toolset': unused secure parameters could not be applied to any tool: sec1.",
+    );
+  });
+
+  it('should format multiple unused requirement types with semicolons', () => {
+    expect(() =>
+      validateUnusedRequirements(
+        new Set(['auth1']),
+        new Set(['bound1']),
+        new Set(),
+        new Set(),
+        'my_tool',
+        false,
+        undefined,
+        new Set(['sec1']),
+        new Set(),
+      ),
+    ).toThrow(
+      "Validation failed for tool 'my_tool': unused auth tokens: auth1; unused bound parameters: bound1; unused secure parameters: sec1.",
+    );
   });
 });

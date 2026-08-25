@@ -17,26 +17,14 @@ name: "API Reference Deployment"
 on:
   push:
     branches: [ 'main' ]
-    # Drop the release-please-* tag that release-please pushes alongside each
-    # release: it resolves to no package and skips every build step, so it is
-    # pure queue and runner overhead. Denylisting it beats listing core-v*/adk-v*
-    # explicitly -- a new package's tags then publish without anyone remembering
-    # to edit this filter. Branch pushes are unaffected: a push is matched
-    # against `branches` or `tags-ignore` by ref type, never both.
+    # release-please pushes this alongside each release; it builds nothing and
+    # only costs a queue slot.
     tags-ignore: [ 'release-please-*' ]
   workflow_dispatch:
 
-# One group, so only one job writes to gh-pages at a time. Two reasons: the
-# deploy action pushes without retrying, and runs share more than their own
-# <pkg>/<version>/ tree -- generate-root.sh rewrites the site root on every tag
-# push, and <pkg>/releases.releases and <pkg>/latest/ are rewritten by both a
-# tag run and every main "dev" run. Serializing keeps that last-writer-wins
-# ordering deterministic.
-#
-# queue: max is what makes sharing a group safe. The default (`single`) holds
-# only one pending run, so a third push cancels the second before it starts --
-# that is how core/adk v1.1.0 were silently dropped. `max` queues up to 100 in
-# FIFO order instead. Requires cancel-in-progress: false.
+# One group: runs share the site root and each package's releases/latest files,
+# and the deploy action pushes without retrying. queue: max holds 100 pending
+# runs; the default of 1 is what silently dropped core/adk v1.1.0.
 concurrency:
   group: api-docs-deploy
   cancel-in-progress: false
@@ -86,9 +74,8 @@ jobs:
           # Route the git ref to the package(s) and version to build.
           # A per-package tag builds that one package; pushes to main (and manual
           # dispatch) build both as "dev". JS release tags are hyphenated
-          # (core-vX.Y.Z, adk-vX.Y.Z). The trigger only filters out
-          # release-please-*, so any other tag still reaches this step; the
-          # refs/tags/* catch-all resolves it to no package and skips the build.
+          # (core-vX.Y.Z, adk-vX.Y.Z); any other tag resolves to no package and
+          # skips the build.
           REF="${GITHUB_REF}"
           case "$REF" in
             refs/tags/core-v*) echo "packages=core"     >> "$GITHUB_OUTPUT"; echo "version=${REF#refs/tags/core-}" >> "$GITHUB_OUTPUT" ;;

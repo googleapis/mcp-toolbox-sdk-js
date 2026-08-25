@@ -60,6 +60,8 @@ const createMockCoreTool: any = () => {
     addAuthTokenGetter: jest.fn(() => createMockCoreTool()),
     bindParams: jest.fn(() => createMockCoreTool()),
     bindParam: jest.fn(() => createMockCoreTool()),
+    bindSecureParams: jest.fn(() => createMockCoreTool()),
+    bindSecureParam: jest.fn(() => createMockCoreTool()),
   });
 };
 
@@ -161,6 +163,34 @@ describe('ToolboxTool', () => {
     const newAdkTool = adkTool.bindParam('api_key', '123');
 
     expect(mockCoreTool.bindParam).toHaveBeenCalledWith('api_key', '123');
+    expect(newAdkTool).toBeInstanceOf(ToolboxTool);
+    expect(newAdkTool).not.toBe(adkTool);
+    expect(newAdkTool.getCoreTool()).toBe(newMockCoreTool);
+  });
+
+  it('should return a new ToolboxTool wrapper on bindSecureParams', () => {
+    const mockSecParams = {secret_key: 'sec-123'};
+    const newMockCoreTool = createMockCoreTool();
+    mockCoreTool.bindSecureParams.mockReturnValue(newMockCoreTool);
+
+    const newAdkTool = adkTool.bindSecureParams(mockSecParams);
+
+    expect(mockCoreTool.bindSecureParams).toHaveBeenCalledWith(mockSecParams);
+    expect(newAdkTool).toBeInstanceOf(ToolboxTool);
+    expect(newAdkTool).not.toBe(adkTool);
+    expect(newAdkTool.getCoreTool()).toBe(newMockCoreTool);
+  });
+
+  it('should return a new ToolboxTool wrapper on bindSecureParam', () => {
+    const newMockCoreTool = createMockCoreTool();
+    mockCoreTool.bindSecureParam.mockReturnValue(newMockCoreTool);
+
+    const newAdkTool = adkTool.bindSecureParam('secret_key', 'sec-123');
+
+    expect(mockCoreTool.bindSecureParam).toHaveBeenCalledWith(
+      'secret_key',
+      'sec-123',
+    );
     expect(newAdkTool).toBeInstanceOf(ToolboxTool);
     expect(newAdkTool).not.toBe(adkTool);
     expect(newAdkTool.getCoreTool()).toBe(newMockCoreTool);

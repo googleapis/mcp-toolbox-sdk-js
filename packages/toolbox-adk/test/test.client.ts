@@ -46,6 +46,7 @@ const mockLoadTool =
       name: string,
       authTokenGetters: AuthTokenGetters | null,
       boundParams: BoundParams | null,
+      secureParams?: BoundParams | null,
     ) => Promise<CoreTool>
   >();
 
@@ -56,6 +57,7 @@ const mockLoadToolset =
       authTokenGetters: AuthTokenGetters | null,
       boundParams: BoundParams | null,
       strict: boolean,
+      secureParams?: BoundParams | null,
     ) => Promise<CoreTool[]>
   >();
 
@@ -119,7 +121,12 @@ describe('ToolboxClient', () => {
     const adkTool = await client.loadTool('my-tool', mockAuth, mockParams);
 
     expect(mockLoadTool).toHaveBeenCalledTimes(1);
-    expect(mockLoadTool).toHaveBeenCalledWith('my-tool', mockAuth, mockParams);
+    expect(mockLoadTool).toHaveBeenCalledWith(
+      'my-tool',
+      mockAuth,
+      mockParams,
+      {},
+    );
 
     expect(MockToolboxTool).toHaveBeenCalledTimes(1);
     expect(MockToolboxTool).toHaveBeenCalledWith(fakeCoreTool);
@@ -133,7 +140,33 @@ describe('ToolboxClient', () => {
 
     await client.loadTool('my-tool');
 
-    expect(mockLoadTool).toHaveBeenCalledWith('my-tool', {}, {});
+    expect(mockLoadTool).toHaveBeenCalledWith('my-tool', {}, {}, {});
+  });
+
+  it('should call coreClient.loadTool with secureParams', async () => {
+    const fakeCoreTool = {toolName: 'fake'} as CoreTool;
+    mockLoadTool.mockResolvedValue(fakeCoreTool);
+
+    const client = new ToolboxClient('http://test.url');
+    const mockAuth: AuthTokenGetters = {google: async () => 'token'};
+    const mockParams: BoundParams = {api_key: '123'};
+    const mockSecParams: BoundParams = {db_pass: 'sec456'};
+
+    const adkTool = await client.loadTool(
+      'my-tool',
+      mockAuth,
+      mockParams,
+      mockSecParams,
+    );
+
+    expect(mockLoadTool).toHaveBeenCalledWith(
+      'my-tool',
+      mockAuth,
+      mockParams,
+      mockSecParams,
+    );
+    expect(MockToolboxTool).toHaveBeenCalledWith(fakeCoreTool);
+    expect(adkTool).toBe(MockToolboxTool.mock.instances[0]);
   });
 
   it('should call coreClient.loadToolset and wrap all results', async () => {
@@ -159,6 +192,7 @@ describe('ToolboxClient', () => {
       mockAuth,
       mockParams,
       true,
+      {},
     );
 
     // Check that the wrapper constructor was called for EACH tool
@@ -171,12 +205,30 @@ describe('ToolboxClient', () => {
     expect(adkTools[1]).toBe(MockToolboxTool.mock.instances[1]);
   });
 
+  it('should call coreClient.loadToolset with secureParams', async () => {
+    const fakeCoreTool1 = {toolName: 'fake1'} as CoreTool;
+    mockLoadToolset.mockResolvedValue([fakeCoreTool1]);
+
+    const client = new ToolboxClient('http://test.url');
+    const mockSecParams: BoundParams = {db_pass: 'sec456'};
+
+    await client.loadToolset('my-set', {}, {}, false, mockSecParams);
+
+    expect(mockLoadToolset).toHaveBeenCalledWith(
+      'my-set',
+      {},
+      {},
+      false,
+      mockSecParams,
+    );
+  });
+
   it('should call coreClient.loadToolset with default parameters', async () => {
     mockLoadToolset.mockResolvedValue([]);
     const client = new ToolboxClient('http://test.url');
 
     await client.loadToolset();
 
-    expect(mockLoadToolset).toHaveBeenCalledWith(undefined, {}, {}, false);
+    expect(mockLoadToolset).toHaveBeenCalledWith(undefined, {}, {}, false, {});
   });
 });

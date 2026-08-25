@@ -131,6 +131,29 @@ export class ToolboxTool extends BaseTool {
   }
 
   /**
+   * Creates a new `ToolboxTool` with bound secure parameters.
+   *
+   * @param paramsToBind A map of secure parameter names to values or getters.
+   * @returns A new `ToolboxTool` instance.
+   */
+  bindSecureParams(paramsToBind: BoundParams): ToolboxTool {
+    const newCoreTool = this.coreTool.bindSecureParams(paramsToBind);
+    return new ToolboxTool(newCoreTool);
+  }
+
+  /**
+   * Creates a new `ToolboxTool` with a single bound secure parameter.
+   *
+   * @param paramName The name of the secure parameter to bind.
+   * @param paramValue The value or getter to bind.
+   * @returns A new `ToolboxTool` instance.
+   */
+  bindSecureParam(paramName: string, paramValue: BoundValue): ToolboxTool {
+    const newCoreTool = this.coreTool.bindSecureParam(paramName, paramValue);
+    return new ToolboxTool(newCoreTool);
+  }
+
+  /**
    * Gets the underlying `CoreTool` object.
    * @returns The wrapped `CoreTool` instance.
    */

@@ -695,6 +695,14 @@ describe('McpHttpTransportV20250618', () => {
       expect(result).toBe('Result output');
     });
 
+    it('should reject non-empty secureArguments', async () => {
+      await expect(
+        transport.toolInvoke('testTool', {arg: 'val'}, {}, {secret: 'val'}),
+      ).rejects.toThrow(
+        "Secure parameters are not supported in MCP protocol version '2025-06-18'. Please use protocol version '2026-07-28' or newer.",
+      );
+    });
+
     it('should handle JSON-RPC errors', async () => {
       const errorSpy = jest
         .spyOn(console, 'error')

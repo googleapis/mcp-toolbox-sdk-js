@@ -141,8 +141,11 @@ export const ZodParameterSchema: z.ZodType<ParameterSchema> =
 export const ZodToolSchema = z.object({
   description: z.string().min(1, 'Tool description cannot be empty'),
   parameters: z.array(ZodParameterSchema),
+  secure_parameters: z.array(ZodParameterSchema).optional(),
   authRequired: z.array(z.string()).optional(),
 });
+
+export type ToolSchema = z.infer<typeof ZodToolSchema>;
 
 export const ZodManifestSchema = z.object({
   serverVersion: z.string().min(1, 'Server version cannot be empty'),

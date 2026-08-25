@@ -147,6 +147,7 @@ testBaseUrls.forEach(testBaseUrl => {
           'get-n-rows',
           'search-rows',
           'process-data',
+          'my-secure-tool',
         ]);
         expect(loadedToolNames).toEqual(expectedDefaultTools);
       });
@@ -383,6 +384,72 @@ testBaseUrls.forEach(testBaseUrl => {
         expect(response).toContain(
           'provided parameters were invalid: error parsing authenticated parameter "data": no field named row_data in claims',
         );
+      });
+    });
+
+    describe('Secure Parameters E2E Tests', () => {
+      it('should successfully load an ADK tool with secure parameters and run it', async () => {
+        const secureTool = await commonToolboxClient.loadTool(
+          'my-secure-tool',
+          {},
+          {},
+          {name: 'Alice'},
+        );
+        const response = await secureTool.runAsync({
+          args: {id: 1},
+          toolContext: mockContext,
+        });
+        expect(typeof response).toBe('string');
+        expect(response).toContain('Alice');
+      });
+
+      it('should successfully load an ADK toolset with secure parameters and run it', async () => {
+        const loadedTools = await commonToolboxClient.loadToolset(
+          'my-secure-toolset',
+          {},
+          {},
+          false,
+          {name: 'Alice'},
+        );
+        expect(loadedTools).toHaveLength(1);
+
+        const secureTool = loadedTools.find(
+          tool => tool.name === 'my-secure-tool',
+        );
+        expect(secureTool).toBeDefined();
+        expect(secureTool!.getCoreTool().getSecureParams()).toHaveLength(0);
+        expect(secureTool!.getCoreTool().getBoundSecureParams()).toEqual({
+          name: 'Alice',
+        });
+
+        const response = await secureTool!.runAsync({
+          args: {id: 1},
+          toolContext: mockContext,
+        });
+        expect(typeof response).toBe('string');
+        expect(response).toContain('Alice');
+      });
+
+      it('should bind a secure parameter on ADK tool post-load and run it', async () => {
+        const secureTool = await commonToolboxClient.loadTool('my-secure-tool');
+        const boundTool = secureTool.bindSecureParam('name', 'Alice');
+        const response = await boundTool.runAsync({
+          args: {id: 1},
+          toolContext: mockContext,
+        });
+        expect(typeof response).toBe('string');
+        expect(response).toContain('Alice');
+      });
+
+      it('should maintain schema isolation in ADK tool declaration', async () => {
+        const secureTool = await commonToolboxClient.loadTool('my-secure-tool');
+        const declaration = secureTool._getDeclaration();
+        expect(declaration).toBeDefined();
+        expect(declaration!.parameters).toBeDefined();
+        const props = (declaration!.parameters as Record<string, unknown>)
+          .properties as Record<string, unknown>;
+        expect(props).toHaveProperty('id');
+        expect(props).not.toHaveProperty('name');
       });
     });
   });

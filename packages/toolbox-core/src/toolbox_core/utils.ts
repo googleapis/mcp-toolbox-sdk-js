@@ -89,3 +89,74 @@ export function warnIfHttpAndHeaders(
     );
   }
 }
+
+/**
+ * Validates that no provided authentication tokens, bound parameters, or secure parameters went unused.
+ * Throws an Error if any unused requirements are found, formatted appropriately
+ * for either a single tool or a full toolset.
+ */
+export function validateUnusedRequirements(
+  providedAuthKeys: Set<string>,
+  providedBoundKeys: Set<string>,
+  usedAuthKeys: Set<string>,
+  usedBoundKeys: Set<string>,
+  name: string,
+  isToolset = false,
+  targetType?: string,
+  providedSecureKeys?: Set<string>,
+  usedSecureKeys?: Set<string>,
+): void {
+  const unusedAuth = [...providedAuthKeys]
+    .filter(k => !usedAuthKeys.has(k))
+    .sort();
+  const unusedBound = [...providedBoundKeys]
+    .filter(k => !usedBoundKeys.has(k))
+    .sort();
+  const unusedSecure = [...(providedSecureKeys || new Set<string>())]
+    .filter(k => !(usedSecureKeys || new Set<string>()).has(k))
+    .sort();
+
+  if (
+    unusedAuth.length > 0 ||
+    unusedBound.length > 0 ||
+    unusedSecure.length > 0
+  ) {
+    const errorMessages: string[] = [];
+    if (unusedAuth.length > 0) {
+      if (isToolset) {
+        errorMessages.push(
+          `unused auth tokens could not be applied to any tool: ${unusedAuth.join(', ')}`,
+        );
+      } else {
+        errorMessages.push(`unused auth tokens: ${unusedAuth.join(', ')}`);
+      }
+    }
+    if (unusedBound.length > 0) {
+      if (isToolset) {
+        errorMessages.push(
+          `unused bound parameters could not be applied to any tool: ${unusedBound.join(', ')}`,
+        );
+      } else {
+        errorMessages.push(
+          `unused bound parameters: ${unusedBound.join(', ')}`,
+        );
+      }
+    }
+    if (unusedSecure.length > 0) {
+      if (isToolset) {
+        errorMessages.push(
+          `unused secure parameters could not be applied to any tool: ${unusedSecure.join(', ')}`,
+        );
+      } else {
+        errorMessages.push(
+          `unused secure parameters: ${unusedSecure.join(', ')}`,
+        );
+      }
+    }
+
+    const finalTargetType = targetType || (isToolset ? 'toolset' : 'tool');
+    throw new Error(
+      `Validation failed for ${finalTargetType} '${name}': ${errorMessages.join('; ')}.`,
+    );
+  }
+}

@@ -610,6 +610,127 @@ describe('ToolboxClient', () => {
         /Validation failed for tool '.*': unused auth tokens: unusedAuth/,
       );
     });
+
+    it('loadTool: should bind secure parameter and invoke correctly', async () => {
+      const secureManifest: ZodManifest = {
+        serverVersion: '1.0.0',
+        tools: {
+          secureTool: {
+            description: 'Tool with secure params',
+            parameters: [{name: 'p1', type: 'string', description: 'p1'}],
+            secure_parameters: [
+              {
+                name: 'apiKey',
+                type: 'string',
+                description: 'Secret Key',
+                required: true,
+              },
+            ],
+          },
+        },
+      };
+
+      mockTransport.toolGet.mockResolvedValue(secureManifest);
+      mockTransport.toolInvoke.mockResolvedValue('ok');
+
+      const tool = await client.loadTool(
+        'secureTool',
+        {},
+        {},
+        {apiKey: 'secret-key-123'},
+      );
+
+      expect(tool.secureParams).toHaveLength(0);
+      expect(tool.boundSecureParams).toEqual({apiKey: 'secret-key-123'});
+
+      await tool({p1: 'val'});
+
+      expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
+        'secureTool',
+        {p1: 'val'},
+        {},
+        {apiKey: 'secret-key-123'},
+      );
+    });
+
+    it('loadTool: should fail if unused secure parameter is provided', async () => {
+      await expect(
+        client.loadTool(toolName, {}, {}, {unusedSec: 'secret'}),
+      ).rejects.toThrow(
+        `Validation failed for tool '${toolName}': unused secure parameters: unusedSec.`,
+      );
+    });
+
+    it('loadToolset (non-strict): should bind secure parameters across toolset', async () => {
+      const toolsetManifest: ZodManifest = {
+        serverVersion: '1.0.0',
+        tools: {
+          tool1: {
+            description: 'T1',
+            parameters: [],
+            secure_parameters: [
+              {
+                name: 'apiKey',
+                type: 'string',
+                description: 'K1',
+                required: true,
+              },
+            ],
+          },
+          tool2: {
+            description: 'T2',
+            parameters: [],
+          },
+        },
+      };
+
+      mockTransport.toolsList.mockResolvedValue(toolsetManifest);
+      const tools = await client.loadToolset('set', {}, {}, false, {
+        apiKey: 'my-key',
+      });
+      expect(tools).toHaveLength(2);
+      expect(tools[0].boundSecureParams).toEqual({apiKey: 'my-key'});
+      expect(tools[1].boundSecureParams).toEqual({});
+    });
+
+    it('loadToolset (non-strict): should fail if secure parameter unused by ANY tool', async () => {
+      await expect(
+        client.loadToolset('set', {}, {}, false, {unusedSec: 'sec'}),
+      ).rejects.toThrow(
+        "Validation failed for toolset 'set': unused secure parameters could not be applied to any tool: unusedSec.",
+      );
+    });
+
+    it('loadToolset (strict): should fail if secure parameter is not used by all tools', async () => {
+      const toolsetManifest: ZodManifest = {
+        serverVersion: '1.0.0',
+        tools: {
+          tool1: {
+            description: 'T1',
+            parameters: [],
+            secure_parameters: [
+              {
+                name: 'apiKey',
+                type: 'string',
+                description: 'K1',
+                required: true,
+              },
+            ],
+          },
+          tool2: {
+            description: 'T2',
+            parameters: [],
+          },
+        },
+      };
+
+      mockTransport.toolsList.mockResolvedValue(toolsetManifest);
+      await expect(
+        client.loadToolset('set', {}, {}, true, {apiKey: 'my-key'}),
+      ).rejects.toThrow(
+        "Validation failed for tool 'tool2': unused secure parameters: apiKey.",
+      );
+    });
   });
 
   describe('Insecure Protocol Warnings', () => {

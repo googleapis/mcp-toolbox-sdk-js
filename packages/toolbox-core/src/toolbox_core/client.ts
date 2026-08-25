@@ -33,6 +33,7 @@ import {
   identifyAuthRequirements,
   resolveValue,
   warnIfHttpAndHeaders,
+  validateUnusedRequirements,
 } from './utils.js';
 import {AuthTokenGetters, RequiredAuthnParams} from './tool.js';
 
@@ -227,10 +228,12 @@ class ToolboxClient {
     toolSchema: ToolSchemaFromManifest,
     authTokenGetters: AuthTokenGetters = {},
     boundParams: BoundParams = {},
+    secureParams: BoundParams = {},
   ): {
     tool: ToolboxTool;
     usedAuthKeys: Set<string>;
     usedBoundKeys: Set<string>;
+    usedSecureKeys: Set<string>;
   } {
     const params: ParameterSchema[] = [];
     const authParams: RequiredAuthnParams = {};
@@ -245,6 +248,17 @@ class ToolboxClient {
         params.push(p);
       }
     }
+
+    const remainingSecureParams: ParameterSchema[] = [];
+    const currBoundSecureParams: BoundParams = {};
+    for (const sp of toolSchema.secure_parameters || []) {
+      if (secureParams && sp.name in secureParams) {
+        currBoundSecureParams[sp.name] = secureParams[sp.name];
+      } else {
+        remainingSecureParams.push(sp);
+      }
+    }
+    const usedSecureKeys = new Set(Object.keys(currBoundSecureParams));
 
     const [remainingAuthnParams, remainingAuthzTokens, usedAuthKeys] =
       identifyAuthRequirements(
@@ -265,11 +279,13 @@ class ToolboxClient {
       remainingAuthzTokens,
       currBoundParams,
       this.#clientHeaders,
+      remainingSecureParams,
+      currBoundSecureParams,
     );
 
     const usedBoundKeys = new Set(Object.keys(currBoundParams));
 
-    return {tool, usedAuthKeys, usedBoundKeys};
+    return {tool, usedAuthKeys, usedBoundKeys, usedSecureKeys};
   }
 
   async #executeWithFallback<T>(action: () => Promise<T>): Promise<T> {
@@ -324,6 +340,7 @@ class ToolboxClient {
    * @param {string} name - The unique name or identifier of the tool to load.
    * @param {AuthTokenGetters | null} [authTokenGetters] - Optional map of auth service names to token getters.
    * @param {BoundParams | null} [boundParams] - Optional parameters to pre-bind to the tool.
+   * @param {BoundParams | null} [secureParams] - Optional secure parameters to pre-bind to the tool.
    * @returns {Promise<ToolboxTool>} A promise that resolves
    * to a ToolboxTool function, ready for execution.
    * @throws {Error} If the tool is not found in the manifest, the manifest structure is invalid,
@@ -333,6 +350,7 @@ class ToolboxClient {
     name: string,
     authTokenGetters: AuthTokenGetters | null = {},
     boundParams: BoundParams | null = {},
+    secureParams: BoundParams | null = {},
   ): Promise<ToolboxTool> {
     warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
     const headers = await this.#resolveClientHeaders();
@@ -345,12 +363,14 @@ class ToolboxClient {
       Object.prototype.hasOwnProperty.call(manifest.tools, name)
     ) {
       const specificToolSchema = manifest.tools[name];
-      const {tool, usedAuthKeys, usedBoundKeys} = this.#createToolInstance(
-        name,
-        specificToolSchema,
-        authTokenGetters || undefined,
-        boundParams || {},
-      );
+      const {tool, usedAuthKeys, usedBoundKeys, usedSecureKeys} =
+        this.#createToolInstance(
+          name,
+          specificToolSchema,
+          authTokenGetters || undefined,
+          boundParams || {},
+          secureParams || {},
+        );
 
       const providedAuthKeys = new Set(
         authTokenGetters ? Object.keys(authTokenGetters) : [],
@@ -358,28 +378,22 @@ class ToolboxClient {
       const providedBoundKeys = new Set(
         boundParams ? Object.keys(boundParams) : [],
       );
-      const unusedAuth = [...providedAuthKeys].filter(
-        key => !usedAuthKeys.has(key),
-      );
-      const unusedBound = [...providedBoundKeys].filter(
-        key => !usedBoundKeys.has(key),
+      const providedSecureKeys = new Set(
+        secureParams ? Object.keys(secureParams) : [],
       );
 
-      const errorMessages: string[] = [];
-      if (unusedAuth.length > 0) {
-        errorMessages.push(`unused auth tokens: ${unusedAuth.join(', ')}`);
-      }
-      if (unusedBound.length > 0) {
-        errorMessages.push(
-          `unused bound parameters: ${unusedBound.join(', ')}`,
-        );
-      }
+      validateUnusedRequirements(
+        providedAuthKeys,
+        providedBoundKeys,
+        usedAuthKeys,
+        usedBoundKeys,
+        name,
+        false,
+        undefined,
+        providedSecureKeys,
+        usedSecureKeys,
+      );
 
-      if (errorMessages.length > 0) {
-        throw new Error(
-          `Validation failed for tool '${name}': ${errorMessages.join('; ')}.`,
-        );
-      }
       return tool;
     } else {
       throw new Error(
@@ -395,6 +409,7 @@ class ToolboxClient {
    * @param {AuthTokenGetters | null} [authTokenGetters] - Optional map of auth service names to token getters.
    * @param {BoundParams | null} [boundParams] - Optional parameters to pre-bind to the tools in the toolset.
    * @param {boolean} [strict=false] - If true, throws an error if any provided auth token or bound param is not used by at least one tool.
+   * @param {BoundParams | null} [secureParams] - Optional secure parameters to pre-bind to the tools in the toolset.
    * @returns {Promise<ToolboxTool[]>} A promise that resolves
    * to a list of ToolboxTool functions, ready for execution.
    * @throws {Error} If the manifest structure is invalid or if there's an error fetching data from the API.
@@ -404,6 +419,7 @@ class ToolboxClient {
     authTokenGetters: AuthTokenGetters | null = {},
     boundParams: BoundParams | null = {},
     strict = false,
+    secureParams: BoundParams | null = {},
   ): Promise<ToolboxTool[]> {
     warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
     const toolsetName = name || '';
@@ -416,72 +432,59 @@ class ToolboxClient {
 
     const overallUsedAuthKeys: Set<string> = new Set();
     const overallUsedBoundParams: Set<string> = new Set();
+    const overallUsedSecureParams: Set<string> = new Set();
     const providedAuthKeys = new Set(
       authTokenGetters ? Object.keys(authTokenGetters) : [],
     );
     const providedBoundKeys = new Set(
       boundParams ? Object.keys(boundParams) : [],
     );
+    const providedSecureKeys = new Set(
+      secureParams ? Object.keys(secureParams) : [],
+    );
 
     for (const [toolName, toolSchema] of Object.entries(manifest.tools)) {
-      const {tool, usedAuthKeys, usedBoundKeys} = this.#createToolInstance(
-        toolName,
-        toolSchema,
-        authTokenGetters || {},
-        boundParams || {},
-      );
+      const {tool, usedAuthKeys, usedBoundKeys, usedSecureKeys} =
+        this.#createToolInstance(
+          toolName,
+          toolSchema,
+          authTokenGetters || {},
+          boundParams || {},
+          secureParams || {},
+        );
       tools.push(tool);
 
       if (strict) {
-        const unusedAuth = [...providedAuthKeys].filter(
-          key => !usedAuthKeys.has(key),
+        validateUnusedRequirements(
+          providedAuthKeys,
+          providedBoundKeys,
+          usedAuthKeys,
+          usedBoundKeys,
+          toolName,
+          false,
+          undefined,
+          providedSecureKeys,
+          usedSecureKeys,
         );
-        const unusedBound = [...providedBoundKeys].filter(
-          key => !usedBoundKeys.has(key),
-        );
-        const errorMessages: string[] = [];
-        if (unusedAuth.length > 0) {
-          errorMessages.push(`unused auth tokens: ${unusedAuth.join(', ')}`);
-        }
-        if (unusedBound.length > 0) {
-          errorMessages.push(
-            `unused bound parameters: ${unusedBound.join(', ')}`,
-          );
-        }
-        if (errorMessages.length > 0) {
-          throw new Error(
-            `Validation failed for tool '${toolName}': ${errorMessages.join('; ')}.`,
-          );
-        }
       } else {
         usedAuthKeys.forEach(key => overallUsedAuthKeys.add(key));
         usedBoundKeys.forEach(key => overallUsedBoundParams.add(key));
+        usedSecureKeys.forEach(key => overallUsedSecureParams.add(key));
       }
     }
 
     if (!strict) {
-      const unusedAuth = [...providedAuthKeys].filter(
-        key => !overallUsedAuthKeys.has(key),
+      validateUnusedRequirements(
+        providedAuthKeys,
+        providedBoundKeys,
+        overallUsedAuthKeys,
+        overallUsedBoundParams,
+        name || 'default',
+        true,
+        undefined,
+        providedSecureKeys,
+        overallUsedSecureParams,
       );
-      const unusedBound = [...providedBoundKeys].filter(
-        key => !overallUsedBoundParams.has(key),
-      );
-      const errorMessages: string[] = [];
-      if (unusedAuth.length > 0) {
-        errorMessages.push(
-          `unused auth tokens could not be applied to any tool: ${unusedAuth.join(', ')}`,
-        );
-      }
-      if (unusedBound.length > 0) {
-        errorMessages.push(
-          `unused bound parameters could not be applied to any tool: ${unusedBound.join(', ')}`,
-        );
-      }
-      if (errorMessages.length > 0) {
-        throw new Error(
-          `Validation failed for toolset '${name || 'default'}': ${errorMessages.join('; ')}.`,
-        );
-      }
     }
 
     return tools;

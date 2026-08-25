@@ -36,6 +36,7 @@ interface JsonSchema {
 interface ToolDefinition {
   description?: string;
   inputSchema?: JsonSchema;
+  secureInputSchema?: JsonSchema;
   _meta?: {
     'com.google.cloud/authParam'?: Record<string, string[]>;
     'com.google.cloud/authInvoke'?: string[];
@@ -111,6 +112,7 @@ export abstract class McpHttpTransportBase implements ITransport {
   protected convertToolSchema(toolData: unknown): {
     description: string;
     parameters: ParameterSchema[];
+    secure_parameters?: ParameterSchema[];
     authRequired?: string[];
   } {
     const data = toolData as ToolDefinition;
@@ -156,10 +158,24 @@ export abstract class McpHttpTransportBase implements ITransport {
       }
     }
 
+    const parameters = this._convertParameters(data.inputSchema, paramAuth);
+    const secureParameters = this._convertParameters(data.secureInputSchema);
+
+    return {
+      description: data.description || '',
+      parameters,
+      secure_parameters: secureParameters,
+      authRequired: invokeAuth.length > 0 ? invokeAuth : undefined,
+    };
+  }
+
+  private _convertParameters(
+    inputSchema?: JsonSchema,
+    paramAuth?: Record<string, string[]> | null,
+  ): ParameterSchema[] {
     const parameters: ParameterSchema[] = [];
-    const inputSchema = data.inputSchema || {};
-    const properties = inputSchema.properties || {};
-    const required = new Set<string>(inputSchema.required || []);
+    const properties = inputSchema?.properties || {};
+    const required = new Set<string>(inputSchema?.required || []);
 
     for (const [name, schema] of Object.entries(properties) as [
       string,
@@ -167,26 +183,22 @@ export abstract class McpHttpTransportBase implements ITransport {
     ][]) {
       const typeSchema = this._convertTypeSchema(schema);
 
-      let authSources: string[] | undefined;
-      if (paramAuth && paramAuth[name]) {
-        authSources = paramAuth[name];
-      }
-
-      parameters.push({
+      const param: ParameterSchema = {
         name,
         description: schema.description || '',
         required: required.has(name),
-        authSources,
         default: schema.default,
         ...typeSchema,
-      } as ParameterSchema);
+      } as ParameterSchema;
+
+      if (paramAuth && paramAuth[name]) {
+        param.authSources = paramAuth[name];
+      }
+
+      parameters.push(param);
     }
 
-    return {
-      description: data.description || '',
-      parameters,
-      authRequired: invokeAuth.length > 0 ? invokeAuth : undefined,
-    };
+    return parameters;
   }
 
   private _convertTypeSchema(schemaData: unknown): TypeSchema {
@@ -297,5 +309,6 @@ export abstract class McpHttpTransportBase implements ITransport {
     toolName: string,
     arguments_: Record<string, unknown>,
     headers: Record<string, string>,
+    secureArguments?: Record<string, unknown>,
   ): Promise<string>;
 }

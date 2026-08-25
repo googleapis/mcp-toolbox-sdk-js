@@ -38,7 +38,9 @@ export class McpHttpTransportV20260728 extends McpHttpTransportBase {
     return {
       'io.modelcontextprotocol/protocolVersion': this._protocolVersion,
       'io.modelcontextprotocol/clientInfo': clientInfo,
-      'io.modelcontextprotocol/clientCapabilities': {},
+      'io.modelcontextprotocol/clientCapabilities': {
+        extensions: {'com.google.cloud/toolbox.v1': {}},
+      },
     };
   }
 
@@ -260,6 +262,7 @@ export class McpHttpTransportV20260728 extends McpHttpTransportBase {
       {
         description: string;
         parameters: import('../../protocol.js').ParameterSchema[];
+        secure_parameters?: import('../../protocol.js').ParameterSchema[];
         authRequired?: string[];
       }
     > = {};
@@ -303,6 +306,7 @@ export class McpHttpTransportV20260728 extends McpHttpTransportBase {
     toolName: string,
     arguments_: Record<string, unknown>,
     headers: Record<string, string>,
+    secureArguments?: Record<string, unknown>,
   ): Promise<string> {
     await this.ensureInitialized(headers);
 
@@ -315,6 +319,9 @@ export class McpHttpTransportV20260728 extends McpHttpTransportBase {
     } = {
       name: toolName,
       arguments: arguments_,
+      ...(secureArguments && Object.keys(secureArguments).length > 0
+        ? {secureArguments}
+        : {}),
       _meta: this.#getMeta(),
     };
 

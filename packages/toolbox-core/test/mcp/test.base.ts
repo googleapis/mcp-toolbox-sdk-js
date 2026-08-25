@@ -43,6 +43,7 @@ class TestMcpTransport extends McpHttpTransportBase {
         toolName: string,
         arguments_: Record<string, unknown>,
         headers: Record<string, string>,
+        secureArguments?: Record<string, unknown>,
       ) => Promise<string>
     >();
 
@@ -86,8 +87,9 @@ class TestMcpTransport extends McpHttpTransportBase {
     toolName: string,
     arguments_: Record<string, unknown>,
     headers: Record<string, string>,
+    secureArguments?: Record<string, unknown>,
   ): Promise<string> {
-    return this.toolInvokeMock(toolName, arguments_, headers);
+    return this.toolInvokeMock(toolName, arguments_, headers, secureArguments);
   }
 
   public testConvertToolSchema(toolData: Record<string, unknown>) {

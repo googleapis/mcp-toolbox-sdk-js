@@ -186,6 +186,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
       {
         description: string;
         parameters: import('../../protocol.js').ParameterSchema[];
+        secure_parameters?: import('../../protocol.js').ParameterSchema[];
         authRequired?: string[];
       }
     > = {};
@@ -223,7 +224,13 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
     toolName: string,
     arguments_: Record<string, unknown>,
     headers: Record<string, string>,
+    secureArguments?: Record<string, unknown>,
   ): Promise<string> {
+    if (secureArguments && Object.keys(secureArguments).length > 0) {
+      throw new Error(
+        `Secure parameters are not supported in MCP protocol version '${this._protocolVersion}'. Please use protocol version '2026-07-28' or newer.`,
+      );
+    }
     await this.ensureInitialized(headers);
 
     if (Object.keys(headers).length > 0) {

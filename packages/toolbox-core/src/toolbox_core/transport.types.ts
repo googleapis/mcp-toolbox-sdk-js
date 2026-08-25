@@ -59,5 +59,6 @@ export interface ITransport {
     toolName: string,
     arguments_: Record<string, unknown>,
     headers: Record<string, string>,
+    secureArguments?: Record<string, unknown>,
   ): Promise<string>;
 }

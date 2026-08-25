@@ -60,9 +60,23 @@ export const BaseMetadataSchema = z
   .passthrough();
 export type BaseMetadata = z.infer<typeof BaseMetadataSchema>;
 
+export const ClientCapabilitiesSchema = z
+  .object({
+    experimental: z.record(z.string(), z.unknown()).optional().nullable(),
+    roots: z.record(z.string(), z.unknown()).optional().nullable(),
+    sampling: z.record(z.string(), z.unknown()).optional().nullable(),
+    elicitation: z.record(z.string(), z.unknown()).optional().nullable(),
+    extensions: z
+      .record(z.string(), z.unknown())
+      .default({'com.google.cloud/toolbox.v1': {}}),
+  })
+  .passthrough();
+export type ClientCapabilities = z.infer<typeof ClientCapabilitiesSchema>;
+
 export const ToolSchema = BaseMetadataSchema.extend({
   description: z.string().optional().nullable(),
   inputSchema: z.record(z.string(), z.unknown()),
+  secureInputSchema: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 
 export type Tool = z.infer<typeof ToolSchema>;
@@ -134,6 +148,7 @@ export const ListToolsRequest: MCPRequest<ListToolsResult> = {
 export const CallToolRequestParamsSchema = z.object({
   name: z.string(),
   arguments: z.record(z.string(), z.unknown()),
+  secureArguments: z.record(z.string(), z.unknown()).optional(),
 });
 export type CallToolRequestParams = z.infer<typeof CallToolRequestParamsSchema>;
 

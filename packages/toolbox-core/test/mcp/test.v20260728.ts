@@ -92,6 +92,9 @@ describe('McpHttpTransportV20260728', () => {
           params: {
             _meta: expect.objectContaining({
               'io.modelcontextprotocol/protocolVersion': '2026-07-28',
+              'io.modelcontextprotocol/clientCapabilities': {
+                extensions: {'com.google.cloud/toolbox.v1': {}},
+              },
             }),
           },
         }),
@@ -102,9 +105,97 @@ describe('McpHttpTransportV20260728', () => {
         }),
       );
     });
+
+    it('should advertise com.google.cloud/toolbox.v1 extension capability', async () => {
+      const listResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '1',
+          result: {
+            tools: [],
+          },
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(listResponse);
+
+      await transport.toolsList();
+
+      expect(mockSession.post).toHaveBeenLastCalledWith(
+        `${testBaseUrl}/mcp/`,
+        expect.objectContaining({
+          params: expect.objectContaining({
+            _meta: expect.objectContaining({
+              'io.modelcontextprotocol/clientCapabilities': {
+                extensions: {'com.google.cloud/toolbox.v1': {}},
+              },
+            }),
+          }),
+        }),
+        expect.any(Object),
+      );
+    });
   });
 
   describe('toolsList', () => {
+    it('should parse secureInputSchema into secure_parameters', async () => {
+      const listResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '1',
+          result: {
+            tools: [
+              {
+                name: 'secureTool',
+                description: 'A secure tool',
+                inputSchema: {
+                  type: 'object',
+                  properties: {
+                    publicArg: {type: 'string', description: 'public'},
+                  },
+                  required: ['publicArg'],
+                },
+                secureInputSchema: {
+                  type: 'object',
+                  properties: {
+                    apiKey: {type: 'string', description: 'secret key'},
+                    count: {type: 'integer'},
+                  },
+                  required: ['apiKey'],
+                },
+              },
+            ],
+          },
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(listResponse);
+
+      const manifest = await transport.toolsList();
+      const tool = manifest.tools['secureTool'];
+      expect(tool).toBeDefined();
+      expect(tool.parameters).toHaveLength(1);
+      expect(tool.parameters[0].name).toBe('publicArg');
+      expect(tool.secure_parameters).toHaveLength(2);
+      expect(tool.secure_parameters).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: 'apiKey',
+            type: 'string',
+            description: 'secret key',
+            required: true,
+          }),
+          expect.objectContaining({
+            name: 'count',
+            type: 'integer',
+            description: '',
+            required: false,
+          }),
+        ]),
+      );
+    });
     it('should return converted tools', async () => {
       const listResponse = {
         data: {
@@ -259,6 +350,74 @@ describe('McpHttpTransportV20260728', () => {
         }),
       );
       expect(result).toBe('Result output');
+    });
+
+    it('should pass secureArguments in tools/call when provided', async () => {
+      const invokeResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '2',
+          result: {
+            content: [{type: 'text', text: 'Secure result'}],
+          },
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(invokeResponse);
+
+      const result = await transport.toolInvoke(
+        'secureTool',
+        {id: 123},
+        {},
+        {token: 'secret_token_val'},
+      );
+
+      expect(mockSession.post).toHaveBeenLastCalledWith(
+        `${testBaseUrl}/mcp/`,
+        expect.objectContaining({
+          method: 'tools/call',
+          params: expect.objectContaining({
+            name: 'secureTool',
+            arguments: {id: 123},
+            secureArguments: {token: 'secret_token_val'},
+          }),
+        }),
+        expect.any(Object),
+      );
+      expect(result).toBe('Secure result');
+    });
+
+    it('should omit secureArguments in tools/call when empty or undefined', async () => {
+      const invokeResponse = {
+        data: {
+          jsonrpc: '2.0',
+          id: '2',
+          result: {
+            content: [{type: 'text', text: 'Result'}],
+          },
+        },
+        status: 200,
+      };
+
+      mockSession.post.mockResolvedValueOnce(invokeResponse);
+
+      await transport.toolInvoke('testTool', {id: 123}, {}, {});
+
+      expect(mockSession.post).toHaveBeenLastCalledWith(
+        `${testBaseUrl}/mcp/`,
+        expect.objectContaining({
+          method: 'tools/call',
+          params: {
+            name: 'testTool',
+            arguments: {id: 123},
+            _meta: expect.objectContaining({
+              'io.modelcontextprotocol/protocolVersion': '2026-07-28',
+            }),
+          },
+        }),
+        expect.any(Object),
+      );
     });
 
     it('should handle JSON-RPC errors', async () => {

@@ -17,25 +17,30 @@ name: "API Reference Deployment"
 on:
   push:
     branches: [ 'main' ]
-    # Only real release tags. '**' also matched the release-please-* tag that
-    # release-please pushes alongside each release; that run built nothing but
-    # still contended for the concurrency slot below, and evicted the version
-    # tag's run. Branch pushes are unaffected -- a push is matched against
-    # `branches` or `tags` depending on its ref type, never both.
-    tags: [ 'core-v*', 'adk-v*' ]
+    # Drop the release-please-* tag that release-please pushes alongside each
+    # release: it resolves to no package and skips every build step, so it is
+    # pure queue and runner overhead. Denylisting it beats listing core-v*/adk-v*
+    # explicitly -- a new package's tags then publish without anyone remembering
+    # to edit this filter. Branch pushes are unaffected: a push is matched
+    # against `branches` or `tags-ignore` by ref type, never both.
+    tags-ignore: [ 'release-please-*' ]
   workflow_dispatch:
 
-# One group, so only one job writes to gh-pages at a time: the deploy action
-# does a plain `git push` with no retry, so concurrent runs would collide.
+# One group, so only one job writes to gh-pages at a time. Two reasons: the
+# deploy action pushes without retrying, and runs share more than their own
+# <pkg>/<version>/ tree -- generate-root.sh rewrites the site root on every tag
+# push, and <pkg>/releases.releases and <pkg>/latest/ are rewritten by both a
+# tag run and every main "dev" run. Serializing keeps that last-writer-wins
+# ordering deterministic.
 #
-# The cost of sharing a group is that GitHub keeps only one *pending* run per
-# group -- a third push cancels the second before it starts. A release now
-# produces two runs (the main merge commit and the version tag), and with two
-# the pending one always survives. Keep it that way: any new trigger that can
-# fire during a release puts release docs back at risk of being dropped.
+# queue: max is what makes sharing a group safe. The default (`single`) holds
+# only one pending run, so a third push cancels the second before it starts --
+# that is how core/adk v1.1.0 were silently dropped. `max` queues up to 100 in
+# FIFO order instead. Requires cancel-in-progress: false.
 concurrency:
   group: api-docs-deploy
   cancel-in-progress: false
+  queue: max
 
 jobs:
   deploy:
@@ -81,8 +86,9 @@ jobs:
           # Route the git ref to the package(s) and version to build.
           # A per-package tag builds that one package; pushes to main (and manual
           # dispatch) build both as "dev". JS release tags are hyphenated
-          # (core-vX.Y.Z, adk-vX.Y.Z); the trigger filter admits only those, and
-          # the refs/tags/* catch-all stays as a backstop for anything else.
+          # (core-vX.Y.Z, adk-vX.Y.Z). The trigger only filters out
+          # release-please-*, so any other tag still reaches this step; the
+          # refs/tags/* catch-all resolves it to no package and skips the build.
           REF="${GITHUB_REF}"
           case "$REF" in
             refs/tags/core-v*) echo "packages=core"     >> "$GITHUB_OUTPUT"; echo "version=${REF#refs/tags/core-}" >> "$GITHUB_OUTPUT" ;;

@@ -17,6 +17,7 @@ import {ToolboxTool} from '../../src/toolbox_core/tool.js';
 import {
   Protocol,
   getSupportedMcpVersions,
+  isVersionAtLeast,
 } from '../../src/toolbox_core/protocol.js';
 
 import {jest} from '@jest/globals';
@@ -135,6 +136,9 @@ testBaseUrls.forEach(testBaseUrl => {
             'get-n-rows',
             'search-rows',
             'process-data',
+            ...(isVersionAtLeast(protocolVersion, Protocol.MCP_v20260728)
+              ? ['my-secure-tool']
+              : []),
           ]);
           expect(loadedToolNames).toEqual(expectedDefaultTools);
 
@@ -625,6 +629,104 @@ testBaseUrls.forEach(testBaseUrl => {
             /user_scores\.user4: Expected number, received string/,
           );
         });
+      });
+
+      describe('Secure Parameters E2E Tests', () => {
+        if (isVersionAtLeast(protocolVersion, Protocol.MCP_v20260728)) {
+          it('should successfully load a tool with secure parameters and invoke it', async () => {
+            const secureTool = await commonToolboxClient.loadTool(
+              'my-secure-tool',
+              {},
+              {},
+              {name: 'Alice'},
+            );
+            expect(secureTool.getSecureParams()).toHaveLength(0);
+            expect(secureTool.getBoundSecureParams()).toEqual({name: 'Alice'});
+
+            const response = await secureTool({id: 1});
+            expect(typeof response).toBe('string');
+            expect(response).toContain('Alice');
+          });
+
+          it('should successfully load a toolset with secure parameters and invoke it', async () => {
+            const loadedTools = await commonToolboxClient.loadToolset(
+              'my-secure-toolset',
+              {},
+              {},
+              false,
+              {name: 'Alice'},
+            );
+            expect(loadedTools).toHaveLength(1);
+
+            const secureTool = loadedTools.find(
+              tool => tool.getName() === 'my-secure-tool',
+            );
+            expect(secureTool).toBeDefined();
+            expect(secureTool!.getSecureParams()).toHaveLength(0);
+            expect(secureTool!.getBoundSecureParams()).toEqual({name: 'Alice'});
+
+            const response = await secureTool!({id: 1});
+            expect(typeof response).toBe('string');
+            expect(response).toContain('Alice');
+          });
+
+          it('should bind a secure parameter post-load and invoke', async () => {
+            const secureTool =
+              await commonToolboxClient.loadTool('my-secure-tool');
+            expect(secureTool.getSecureParams()).toHaveLength(1);
+            expect(secureTool.getSecureParams()[0].name).toBe('name');
+
+            const boundTool = secureTool.bindSecureParam('name', 'Alice');
+            const response = await boundTool({id: 1});
+            expect(typeof response).toBe('string');
+            expect(response).toContain('Alice');
+          });
+
+          it('should re-evaluate dynamic secure parameter getters per invocation', async () => {
+            let counter = 0;
+            const dynamicGetter = () => {
+              counter += 1;
+              return `User${counter}`;
+            };
+
+            const secureTool = await commonToolboxClient.loadTool(
+              'my-secure-tool',
+              {},
+              {},
+              {name: dynamicGetter},
+            );
+
+            const res1 = await secureTool({id: 1});
+            expect(res1).toContain('User1');
+
+            const res2 = await secureTool({id: 1});
+            expect(res2).toContain('User2');
+          });
+
+          it('should maintain schema isolation (secure params not in public param schema)', async () => {
+            const secureTool =
+              await commonToolboxClient.loadTool('my-secure-tool');
+            const paramSchema = secureTool.getParamSchema();
+            expect(paramSchema.shape).toHaveProperty('id');
+            expect(paramSchema.shape).not.toHaveProperty('name');
+          });
+
+          it('should throw guidance error when calling bindParam on a secure parameter', async () => {
+            const secureTool =
+              await commonToolboxClient.loadTool('my-secure-tool');
+            expect(() => secureTool.bindParam('name', 'val')).toThrow(
+              "parameter 'name' is a secure parameter; use bindSecureParam/bindSecureParams instead",
+            );
+          });
+
+          it('should throw guidance error when calling bindSecureParam on a regular parameter', async () => {
+            const secureTool =
+              await commonToolboxClient.loadTool('my-secure-tool');
+            expect(() => secureTool.bindSecureParam('id', 'val')).toThrow(
+              "parameter 'id' is a regular parameter; use bindParam/bindParams instead",
+            );
+          });
+        }
       });
     },
   );

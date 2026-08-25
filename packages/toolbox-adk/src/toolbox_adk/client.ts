@@ -67,6 +67,7 @@ export class ToolboxClient {
    * @param {string} name - The unique name or identifier of the tool to load.
    * @param {AuthTokenGetters | null} [authTokenGetters] - Optional map of auth service names to token getters.
    * @param {BoundParams | null} [boundParams] - Optional parameters to pre-bind to the tool.
+   * @param {BoundParams | null} [secureParams] - Optional secure parameters to pre-bind to the tool.
    * @returns {Promise<ToolboxTool>} A promise that resolves to an ADK ToolboxTool,
    * ready for execution.
    */
@@ -74,11 +75,13 @@ export class ToolboxClient {
     name: string,
     authTokenGetters: AuthTokenGetters | null = {},
     boundParams: BoundParams | null = {},
+    secureParams: BoundParams | null = {},
   ): Promise<ToolboxTool> {
     const coreTool: CoreTool = await this.coreClient.loadTool(
       name,
       authTokenGetters,
       boundParams,
+      secureParams,
     );
     return new ToolboxTool(coreTool);
   }
@@ -90,6 +93,7 @@ export class ToolboxClient {
    * @param {AuthTokenGetters | null} [authTokenGetters] - Optional map of auth service names to token getters.
    * @param {BoundParams | null} [boundParams] - Optional parameters to pre-bind to the tools in the toolset.
    * @param {boolean} [strict=false] - If true, throws an error if any provided auth token or bound param is not used by at least one tool.
+   * @param {BoundParams | null} [secureParams] - Optional secure parameters to pre-bind to the tools in the toolset.
    * @returns {Promise<Array<ToolboxTool>>} A promise that resolves to a list of
    * ADK ToolboxTool instances, ready for execution.
    */
@@ -98,12 +102,14 @@ export class ToolboxClient {
     authTokenGetters: AuthTokenGetters | null = {},
     boundParams: BoundParams | null = {},
     strict = false,
+    secureParams: BoundParams | null = {},
   ): Promise<Array<ToolboxTool>> {
     const coreTools: CoreTool[] = await this.coreClient.loadToolset(
       name,
       authTokenGetters,
       boundParams,
       strict,
+      secureParams,
     );
     return coreTools.map(coreTool => new ToolboxTool(coreTool));
   }

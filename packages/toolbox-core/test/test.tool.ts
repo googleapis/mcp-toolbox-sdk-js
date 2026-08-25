@@ -655,4 +655,240 @@ describe('ToolboxTool', () => {
       );
     });
   });
+
+  describe('Secure Parameters', () => {
+    const sampleSecureParams: import('../src/toolbox_core/protocol.js').ParameterSchema[] =
+      [
+        {
+          name: 'apiKey',
+          type: 'string',
+          description: 'Secret API Key',
+          required: true,
+        },
+        {
+          name: 'dbPassword',
+          type: 'string',
+          description: 'Database Password',
+          required: false,
+        },
+      ];
+
+    let secureTool: ReturnType<typeof ToolboxTool>;
+
+    beforeEach(() => {
+      secureTool = ToolboxTool(
+        mockTransport,
+        toolName,
+        toolDescription,
+        basicParamSchema,
+        {},
+        {},
+        [],
+        {},
+        {},
+        sampleSecureParams,
+      );
+    });
+
+    it('should assign secureParams and getSecureParams()', () => {
+      expect(secureTool.secureParams).toEqual(sampleSecureParams);
+      expect(secureTool.getSecureParams()).toEqual(sampleSecureParams);
+      expect(secureTool.boundSecureParams).toEqual({});
+      expect(secureTool.getBoundSecureParams()).toEqual({});
+    });
+
+    it('should return frozen boundSecureParams to prevent tool state mutation', () => {
+      const boundTool = secureTool.bindSecureParam('apiKey', 'secret-123');
+      const boundObj = boundTool.getBoundSecureParams();
+
+      expect(Object.isFrozen(boundObj)).toBe(true);
+      expect(Object.isFrozen(boundTool.boundSecureParams)).toBe(true);
+
+      // Attempting mutation on getBoundSecureParams() should throw in strict mode
+      expect(() => {
+        (boundObj as Record<string, unknown>).apiKey = 'tampered-key';
+      }).toThrow(TypeError);
+
+      expect(() => {
+        (boundObj as Record<string, unknown>).newKey = 'injected';
+      }).toThrow(TypeError);
+
+      // Verify internal tool state was not mutated
+      expect(boundTool.getBoundSecureParams()).toEqual({apiKey: 'secret-123'});
+      expect(boundTool.boundSecureParams).toEqual({apiKey: 'secret-123'});
+    });
+
+    it('should return deep-cloned secureParams from getSecureParams() to prevent tool state mutation', () => {
+      const schemas = secureTool.getSecureParams();
+      expect(schemas).toEqual(sampleSecureParams);
+      expect(schemas).not.toBe(secureTool.secureParams);
+
+      // Mutating the returned array should not affect tool state
+      schemas.pop();
+      expect(schemas).toHaveLength(1);
+      expect(secureTool.getSecureParams()).toHaveLength(2);
+      expect(secureTool.secureParams).toHaveLength(2);
+
+      // Mutating an element inside the returned array should not affect tool state
+      const schemas2 = secureTool.getSecureParams();
+      schemas2[0].name = 'tampered-name';
+      expect(secureTool.getSecureParams()[0].name).toBe('apiKey');
+      expect(secureTool.secureParams[0].name).toBe('apiKey');
+    });
+
+    it('should preserve schema isolation (secure params not in public params)', () => {
+      const publicShape = secureTool.params.shape;
+      expect(publicShape).toHaveProperty('query');
+      expect(publicShape).toHaveProperty('limit');
+      expect(publicShape).not.toHaveProperty('apiKey');
+      expect(publicShape).not.toHaveProperty('dbPassword');
+    });
+
+    it('should successfully bind a single secure parameter with a static value', async () => {
+      const boundTool = secureTool.bindSecureParam('apiKey', 'secret-123');
+
+      expect(boundTool).not.toBe(secureTool);
+      expect(boundTool.secureParams).toHaveLength(1);
+      expect(boundTool.secureParams[0].name).toBe('dbPassword');
+      expect(boundTool.boundSecureParams).toEqual({apiKey: 'secret-123'});
+      // Original tool unchanged
+      expect(secureTool.secureParams).toHaveLength(2);
+      expect(secureTool.boundSecureParams).toEqual({});
+
+      mockTransport.toolInvoke.mockResolvedValueOnce('Success');
+      await boundTool({query: 'hello'});
+
+      expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
+        toolName,
+        {query: 'hello'},
+        {},
+        {apiKey: 'secret-123'},
+      );
+    });
+
+    it('should bind secure parameters with sync and async callables', async () => {
+      const boundTool = secureTool.bindSecureParams({
+        apiKey: () => 'dynamic-api-key',
+        dbPassword: async () => 'async-db-pass',
+      });
+
+      mockTransport.toolInvoke.mockResolvedValueOnce('Success');
+      await boundTool({query: 'hello'});
+
+      expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
+        toolName,
+        {query: 'hello'},
+        {},
+        {
+          apiKey: 'dynamic-api-key',
+          dbPassword: 'async-db-pass',
+        },
+      );
+    });
+
+    it('should support secure parameter chaining', () => {
+      const boundTool = secureTool
+        .bindSecureParam('apiKey', 'key1')
+        .bindSecureParam('dbPassword', 'pass1');
+
+      expect(boundTool.secureParams).toHaveLength(0);
+      expect(boundTool.boundSecureParams).toEqual({
+        apiKey: 'key1',
+        dbPassword: 'pass1',
+      });
+    });
+
+    it('should throw when re-binding an already bound secure parameter', () => {
+      const boundTool = secureTool.bindSecureParam('apiKey', 'secret1');
+      expect(() => boundTool.bindSecureParam('apiKey', 'secret2')).toThrow(
+        "Cannot re-bind secure parameter: parameter 'apiKey' is already bound in tool 'myTestTool'.",
+      );
+    });
+
+    it('should throw when calling bindParam on a secure parameter', () => {
+      expect(() => secureTool.bindParam('apiKey', 'val')).toThrow(
+        "parameter 'apiKey' is a secure parameter; use bindSecureParam/bindSecureParams instead",
+      );
+    });
+
+    it('should throw when calling bindSecureParam on a regular parameter', () => {
+      expect(() => secureTool.bindSecureParam('query', 'val')).toThrow(
+        "parameter 'query' is a regular parameter; use bindParam/bindParams instead",
+      );
+    });
+
+    it('should throw when calling bindSecureParam on an unknown parameter', () => {
+      expect(() => secureTool.bindSecureParam('unknownParam', 'val')).toThrow(
+        "unable to bind secure parameters: no secure parameter named 'unknownParam' in tool 'myTestTool'.",
+      );
+    });
+
+    it('should fast-fail when missing required secure parameter before transport call', async () => {
+      // apiKey is required and unbound
+      await expect(secureTool({query: 'hello'})).rejects.toThrow(
+        "Missing required secure parameter(s) ['apiKey'] for tool 'myTestTool'",
+      );
+      expect(mockTransport.toolInvoke).not.toHaveBeenCalled();
+    });
+
+    it('should fast-fail when missing secure parameter that omits required field (defaults to required)', async () => {
+      const toolWithOmittedRequired = ToolboxTool(
+        mockTransport,
+        toolName,
+        toolDescription,
+        basicParamSchema,
+        {},
+        {},
+        [],
+        {},
+        {},
+        [
+          {
+            name: 'secretToken',
+            type: 'string',
+            description: 'Secret Token without explicit required field',
+          },
+        ],
+      );
+
+      await expect(toolWithOmittedRequired({query: 'hello'})).rejects.toThrow(
+        "Missing required secure parameter(s) ['secretToken'] for tool 'myTestTool'",
+      );
+      expect(mockTransport.toolInvoke).not.toHaveBeenCalled();
+
+      // Should succeed when bound
+      const boundTool = toolWithOmittedRequired.bindSecureParam(
+        'secretToken',
+        'my-secret',
+      );
+      mockTransport.toolInvoke.mockResolvedValueOnce('Success');
+      await boundTool({query: 'hello'});
+      expect(mockTransport.toolInvoke).toHaveBeenCalledWith(
+        toolName,
+        {query: 'hello'},
+        {},
+        {secretToken: 'my-secret'},
+      );
+    });
+
+    it('should throw prompt-injection error if secure parameter name is provided in callArguments', async () => {
+      const boundTool = secureTool.bindSecureParam('apiKey', 'secret-123');
+
+      await expect(
+        boundTool({query: 'hello', apiKey: 'injected'}),
+      ).rejects.toThrow("unexpected parameter 'apiKey' provided");
+
+      expect(mockTransport.toolInvoke).not.toHaveBeenCalled();
+    });
+
+    it('should throw prompt-injection error if unbound secure parameter name is provided in callArguments', async () => {
+      const boundTool = secureTool.bindSecureParam('apiKey', 'secret-123');
+
+      await expect(
+        boundTool({query: 'hello', dbPassword: 'injected'}),
+      ).rejects.toThrow("unexpected parameter 'dbPassword' provided");
+
+      expect(mockTransport.toolInvoke).not.toHaveBeenCalled();
+    });
+  });
 });

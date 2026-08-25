@@ -131,7 +131,7 @@ const ZodBaseParameter = z.object({
   name: z.string().min(1, 'Parameter name cannot be empty'),
   description: z.string(),
   authSources: z.array(z.string()).optional(),
-  required: z.boolean().optional(),
+  required: z.boolean().default(true),
   default: z.any().optional(),
 });
 

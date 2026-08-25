@@ -15,6 +15,7 @@
 import {ZodObject, ZodError, ZodRawShape} from 'zod';
 
 import {ITransport} from './transport.types.js';
+import {ParameterSchema} from './protocol.js';
 import {
   BoundParams,
   BoundValue,
@@ -43,9 +44,13 @@ export interface ToolboxTool {
   requiredAuthnParams: RequiredAuthnParams;
   requiredAuthzTokens: string[];
   clientHeaders: ClientHeadersConfig;
+  secureParams: ParameterSchema[];
+  boundSecureParams: BoundParams;
   getName(): string;
   getDescription(): string;
   getParamSchema(): ZodObject<ZodRawShape>;
+  getSecureParams(): ParameterSchema[];
+  getBoundSecureParams(): BoundParams;
   addAuthTokenGetters(newAuthTokenGetters: AuthTokenGetters): ToolboxTool;
   addAuthTokenGetter(
     authSource: string,
@@ -53,6 +58,8 @@ export interface ToolboxTool {
   ): ToolboxTool;
   bindParams(paramsToBind: BoundParams): ToolboxTool;
   bindParam(paramName: string, paramValue: BoundValue): ToolboxTool;
+  bindSecureParams(paramsToBind: BoundParams): ToolboxTool;
+  bindSecureParam(paramName: string, paramValue: BoundValue): ToolboxTool;
 }
 
 /**
@@ -77,6 +84,8 @@ function getAuthHeaderName(authTokenName: string): string {
  * @param {string[]} [requiredAuthzTokens] - Optional list of auth tokens that still need satisfying.
  * @param {BoundParams} [boundParams] - Optional parameters to pre-bind to the tool.
  * @param {ClientHeadersConfig} [clientHeaders] - Optional client-specific headers.
+ * @param {ParameterSchema[]} [secureParams] - Optional secure parameters of the tool.
+ * @param {BoundParams} [boundSecureParams] - Optional secure parameters to pre-bind to the tool.
  * @returns {ToolboxTool} An async function that, when
  * called, invokes the tool with the provided arguments.
  */
@@ -90,8 +99,14 @@ export function ToolboxTool(
   requiredAuthzTokens: string[] = [],
   boundParams: BoundParams = {},
   clientHeaders: ClientHeadersConfig = {},
+  secureParams: ParameterSchema[] = [],
+  boundSecureParams: BoundParams = {},
 ): ToolboxTool {
   const boundKeys = Object.keys(boundParams);
+  const internalSecureParams = Object.freeze(
+    secureParams.map(p => Object.freeze({...p})),
+  );
+  const internalBoundSecureParams = Object.freeze({...boundSecureParams});
   // Params bound at load time are already excluded from paramSchema by the
   // client, so only omit keys the schema actually has. zod v3 ignored absent
   // mask keys; v4 throws on them.
@@ -118,6 +133,35 @@ export function ToolboxTool(
         `One or more of the following authn services are required to invoke this tool: ${[
           ...reqAuthServices,
         ].join(',')}`,
+      );
+    }
+
+    // Fast-fail on missing required secure parameters before network request
+    const missingSecure = internalSecureParams
+      .filter(
+        p =>
+          p.required !== false &&
+          (p.default === undefined || p.default === null) &&
+          !(p.name in internalBoundSecureParams),
+      )
+      .map(p => p.name);
+    if (missingSecure.length > 0) {
+      throw new Error(
+        `Missing required secure parameter(s) [${missingSecure.map(k => `'${k}'`).join(', ')}] for tool '${name}'`,
+      );
+    }
+
+    // Prompt-injection defense: Reject bound keys or secure parameter names passed in callArguments
+    const secureKeys = [
+      ...internalSecureParams.map(p => p.name),
+      ...Object.keys(internalBoundSecureParams),
+    ];
+    const providedSecureKeys = Object.keys(callArguments).filter(k =>
+      secureKeys.includes(k),
+    );
+    if (providedSecureKeys.length > 0) {
+      throw new Error(
+        `unexpected parameter '${providedSecureKeys[0]}' provided`,
       );
     }
 
@@ -168,6 +212,19 @@ export function ToolboxTool(
       {} as Record<string, unknown>,
     );
 
+    // Resolve secure bound parameters
+    const resolvedSecureEntries = await Promise.all(
+      Object.entries(internalBoundSecureParams).map(async ([key, value]) => {
+        const resolved = await resolveValue(value);
+        return [key, resolved];
+      }),
+    );
+    const resolvedBoundSecureParams = Object.fromEntries(
+      resolvedSecureEntries.filter(
+        ([, value]) => value !== null && value !== undefined,
+      ),
+    );
+
     const headers: Record<string, string> = {};
     for (const [headerName, headerValue] of Object.entries(clientHeaders)) {
       const resolvedHeaderValue = await resolveValue(headerValue);
@@ -190,6 +247,14 @@ export function ToolboxTool(
 
     warnIfHttpAndHeaders(transport.baseUrl, headers);
 
+    if (Object.keys(resolvedBoundSecureParams).length > 0) {
+      return await transport.toolInvoke(
+        name,
+        filteredPayload,
+        headers,
+        resolvedBoundSecureParams,
+      );
+    }
     return await transport.toolInvoke(name, filteredPayload, headers);
   };
   callable.toolName = name;
@@ -200,6 +265,8 @@ export function ToolboxTool(
   callable.requiredAuthnParams = requiredAuthnParams;
   callable.requiredAuthzTokens = requiredAuthzTokens;
   callable.clientHeaders = clientHeaders;
+  callable.secureParams = internalSecureParams as ParameterSchema[];
+  callable.boundSecureParams = internalBoundSecureParams as BoundParams;
 
   callable.getName = function () {
     return this.toolName;
@@ -209,6 +276,12 @@ export function ToolboxTool(
   };
   callable.getParamSchema = function () {
     return this.params;
+  };
+  callable.getSecureParams = function () {
+    return structuredClone(this.secureParams);
+  };
+  callable.getBoundSecureParams = function () {
+    return Object.freeze({...this.boundSecureParams});
   };
 
   callable.addAuthTokenGetters = function (
@@ -262,6 +335,8 @@ export function ToolboxTool(
       newReqAuthzTokens,
       this.boundParams,
       this.clientHeaders,
+      this.secureParams,
+      this.boundSecureParams,
     );
   };
 
@@ -274,10 +349,19 @@ export function ToolboxTool(
 
   callable.bindParams = function (paramsToBind: BoundParams) {
     const originalParamKeys = Object.keys(this.params.shape);
+    const secureParamKeys = [
+      ...this.secureParams.map(p => p.name),
+      ...Object.keys(this.boundSecureParams),
+    ];
     for (const paramName of Object.keys(paramsToBind)) {
       if (paramName in this.boundParams) {
         throw new Error(
           `Cannot re-bind parameter: parameter '${paramName}' is already bound in tool '${this.toolName}'.`,
+        );
+      }
+      if (secureParamKeys.includes(paramName)) {
+        throw new Error(
+          `parameter '${paramName}' is a secure parameter; use bindSecureParam/bindSecureParams instead`,
         );
       }
       if (!originalParamKeys.includes(paramName)) {
@@ -298,11 +382,67 @@ export function ToolboxTool(
       this.requiredAuthzTokens,
       newBoundParams,
       this.clientHeaders,
+      this.secureParams,
+      this.boundSecureParams,
     );
   };
 
   callable.bindParam = function (paramName: string, paramValue: BoundValue) {
     return this.bindParams({[paramName]: paramValue});
   };
+
+  callable.bindSecureParams = function (paramsToBind: BoundParams) {
+    const secureParamKeys = this.secureParams.map(p => p.name);
+    const regularParamKeys = [
+      ...Object.keys(this.params.shape),
+      ...Object.keys(this.boundParams),
+    ];
+
+    for (const paramName of Object.keys(paramsToBind)) {
+      if (paramName in this.boundSecureParams) {
+        throw new Error(
+          `Cannot re-bind secure parameter: parameter '${paramName}' is already bound in tool '${this.toolName}'.`,
+        );
+      }
+      if (regularParamKeys.includes(paramName)) {
+        throw new Error(
+          `parameter '${paramName}' is a regular parameter; use bindParam/bindParams instead`,
+        );
+      }
+      if (!secureParamKeys.includes(paramName)) {
+        throw new Error(
+          `unable to bind secure parameters: no secure parameter named '${paramName}' in tool '${this.toolName}'.`,
+        );
+      }
+    }
+
+    const boundNames = new Set(Object.keys(paramsToBind));
+    const newSecureParams = this.secureParams.filter(
+      p => !boundNames.has(p.name),
+    );
+    const newBoundSecureParams = {...this.boundSecureParams, ...paramsToBind};
+
+    return ToolboxTool(
+      transport,
+      this.toolName,
+      this.description,
+      this.params,
+      this.authTokenGetters,
+      this.requiredAuthnParams,
+      this.requiredAuthzTokens,
+      this.boundParams,
+      this.clientHeaders,
+      newSecureParams,
+      newBoundSecureParams,
+    );
+  };
+
+  callable.bindSecureParam = function (
+    paramName: string,
+    paramValue: BoundValue,
+  ) {
+    return this.bindSecureParams({[paramName]: paramValue});
+  };
+
   return callable as unknown as ToolboxTool;
 }

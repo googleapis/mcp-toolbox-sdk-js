@@ -220,6 +220,15 @@ describe('ZodParameterSchema', () => {
     expectParseSuccess(ZodParameterSchema, data);
   });
 
+  it('should default required to true when omitted', () => {
+    const data = {name: 'testParam', description: 'A param', type: 'string'};
+    const result = ZodParameterSchema.safeParse(data);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.required).toBe(true);
+    }
+  });
+
   it('should invalidate if type is missing', () => {
     const data = {name: 'testParam', description: 'A param'}; // type is missing
     expectParseFailure(ZodParameterSchema, data, (_errors, codes) => {

@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.2.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v1.1.0...core-v1.2.0) (2026-09-01)
+
+
+### Features
+
+* **core:** client tool and toolset loading with secure parameters ([71d6b89](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/71d6b89e4d8d22b51df94fe614643ab35c3ddb47))
+* **core:** protocol and wire transport support for secure parameters ([bb96632](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/bb96632092ea16cda01b831e93df0f9fd0d5a5ca))
+* **core:** tool-level secure parameter binding, fast-fail and validation ([1d97342](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/1d9734213d67135ef42e830e21937d09b36518e6))
+* support zod v4 alongside v3 ([#438](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/438)) ([ac0a539](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/ac0a539dbff107c482c3904be0fd74a71ccdbd30))
+
+
+### Miscellaneous Chores
+
+* **deps:** drop uuid in favor of node:crypto randomUUID ([#441](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/441)) ([0c8b8dc](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/0c8b8dc14d989bf408aa40beee2a39b97fac39c8))
+
 ## [1.1.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v1.0.1...core-v1.1.0) (2026-07-29)
 
 

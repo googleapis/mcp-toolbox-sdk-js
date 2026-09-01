@@ -11,10 +11,6 @@
 * support zod v4 alongside v3 ([#438](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/438)) ([ac0a539](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/ac0a539dbff107c482c3904be0fd74a71ccdbd30))
 
 
-### Miscellaneous Chores
-
-* **deps:** drop uuid in favor of node:crypto randomUUID ([#441](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/441)) ([0c8b8dc](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/0c8b8dc14d989bf408aa40beee2a39b97fac39c8))
-
 ## [1.1.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v1.0.1...core-v1.1.0) (2026-07-29)
 
 

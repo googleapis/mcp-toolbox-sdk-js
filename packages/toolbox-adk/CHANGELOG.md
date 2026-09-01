@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v1.1.0...adk-v1.2.0) (2026-09-01)
+
+
+### Features
+
+* **adk:** support secure parameters in ADK tools and client ([30c4b42](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/30c4b42381a9c400370cea96fc85cf2e39f5e112))
+* support zod v4 alongside v3 ([#438](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/438)) ([ac0a539](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/ac0a539dbff107c482c3904be0fd74a71ccdbd30))
+
 ## [1.1.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v1.0.0...adk-v1.1.0) (2026-07-29)
 
 

@@ -53,7 +53,7 @@
         "prepack": "npx turbo run build --filter=@toolbox-sdk/adk"
     },
     "dependencies": {
-        "@google/adk": "^1.0.0",
+        "@google/adk": "^2.0.0",
         "@google/genai": "^2.0.0",
         "@modelcontextprotocol/sdk": "1.29.0",
         "@toolbox-sdk/core": "^1.2.0",

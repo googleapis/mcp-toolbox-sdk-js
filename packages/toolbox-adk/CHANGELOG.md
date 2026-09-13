@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v1.2.0...adk-v1.2.1) (2026-09-10)
+
+
+### Miscellaneous Chores
+
+* **deps:** bump qs, @google/adk and express ([#453](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/453)) ([d9f07cf](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/d9f07cf080164ae1a72c166c5abcfd00740d2a7c))
+
 ## [1.2.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v1.1.0...adk-v1.2.0) (2026-09-01)
 
 

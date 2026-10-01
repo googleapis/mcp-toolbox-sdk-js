@@ -58,7 +58,7 @@
         "prepack": "npx turbo run build --filter=@toolbox-sdk/core"
     },
     "dependencies": {
-        "axios": "^1.16.0",
+        "axios": "^1.20.0",
         "google-auth-library": "^10.0.0"
     },
     "peerDependencies": {

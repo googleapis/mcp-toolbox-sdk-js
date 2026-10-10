@@ -25,7 +25,7 @@
     "cross-env": "^10.1.0",
     "eslint": "^10.0.0",
     "fs-extra": "^11.3.2",
-    "google-auth-library": "^10.4.2",
+    "google-auth-library": "^11.0.0",
     "gts": "^7.0.0",
     "jest": "^30.2.0",
     "rimraf": "^6.1.2",

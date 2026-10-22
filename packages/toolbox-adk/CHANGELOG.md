@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.2.1](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v1.2.0...adk-v1.2.1) (2026-10-22)
+
+
+### Miscellaneous Chores
+
+* **deps:** bump axios from 1.18.0 to 1.20.0 ([#463](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/463)) ([545de0d](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/545de0dde9744bc53b7401c0127c569cf071fd85))
+* **deps:** bump qs, @google/adk and express ([#453](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/453)) ([d9f07cf](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/d9f07cf080164ae1a72c166c5abcfd00740d2a7c))
+* **deps:** update js-ts-nonmajor ([#466](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/466)) ([90e91a2](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/90e91a2b333313e3e6c0e021747367a1a0b3aade))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @toolbox-sdk/core bumped from ^1.2.0 to ^1.2.1
+
 ## [1.2.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/adk-v1.1.0...adk-v1.2.0) (2026-09-01)
 
 

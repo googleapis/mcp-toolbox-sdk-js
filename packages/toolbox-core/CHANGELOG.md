@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.1](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v1.2.0...core-v1.2.1) (2026-10-22)
+
+
+### Miscellaneous Chores
+
+* **deps:** bump axios from 1.18.0 to 1.20.0 ([#463](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/463)) ([545de0d](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/545de0dde9744bc53b7401c0127c569cf071fd85))
+* **deps:** update dependency google-auth-library to v11 ([#470](https://github.com/googleapis/mcp-toolbox-sdk-js/issues/470)) ([7e94cbb](https://github.com/googleapis/mcp-toolbox-sdk-js/commit/7e94cbb450f9415794950d550ac5980eddce3141))
+
 ## [1.2.0](https://github.com/googleapis/mcp-toolbox-sdk-js/compare/core-v1.1.0...core-v1.2.0) (2026-09-01)
 
 

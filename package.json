@@ -15,7 +15,7 @@
     "clean": "turbo run clean"
   },
   "devDependencies": {
-    "@google-cloud/secret-manager": "^6.1.1",
+    "@google-cloud/secret-manager": "^7.0.0",
     "@google-cloud/storage": "^7.19.0",
     "@jest/globals": "^30.2.0",
     "@types/fs-extra": "^11.0.4",

@@ -15,9 +15,6 @@
 name: core
 on:
   pull_request:
-    paths:
-      - 'packages/toolbox-core/**'
-      - '!packages/toolbox-core/**/*.md'
 
 # Declare default permissions as read only.
 permissions: read-all

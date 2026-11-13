@@ -15,9 +15,6 @@
 name: adk
 on:
   pull_request:
-    paths:
-      - 'packages/toolbox-adk/**'
-      - '!packages/toolbox-adk/**/*.md'
 
 # Declare default permissions as read only.
 permissions: read-all

@@ -20,7 +20,7 @@
     "@jest/globals": "^30.2.0",
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^30.0.0",
-    "@types/node": "^24.9.1",
+    "@types/node": "^26.0.0",
     "@types/tmp": "^0.2.6",
     "cross-env": "^10.1.0",
     "eslint": "^10.0.0",

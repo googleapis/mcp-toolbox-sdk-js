@@ -1,6 +1,6 @@
 {
     "name": "@toolbox-sdk/adk",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "type": "module",
     "description": "JavaScript ADK SDK for interacting with the Toolbox service",
     "license": "Apache-2.0",
@@ -56,7 +56,7 @@
         "@google/adk": "^2.0.0",
         "@google/genai": "^2.0.0",
         "@modelcontextprotocol/sdk": "1.32.1",
-        "@toolbox-sdk/core": "^1.2.0",
+        "@toolbox-sdk/core": "^1.2.1",
         "axios": "^1.20.0",
         "openapi-types": "^12.1.3"
     },

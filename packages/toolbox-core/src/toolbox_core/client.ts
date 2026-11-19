@@ -415,12 +415,17 @@ class ToolboxClient {
    * @throws {Error} If the manifest structure is invalid or if there's an error fetching data from the API.
    */
   async loadToolset(
-    name?: string,
+    name?: string | null,
     authTokenGetters: AuthTokenGetters | null = {},
     boundParams: BoundParams | null = {},
     strict = false,
     secureParams: BoundParams | null = {},
   ): Promise<ToolboxTool[]> {
+    if (name !== undefined && name !== null && typeof name !== 'string') {
+      throw new TypeError(
+        `Invalid toolset name: expected string, got ${typeof name}.`,
+      );
+    }
     warnIfHttpAndHeaders(this.#transport.baseUrl, authTokenGetters);
     const toolsetName = name || '';
     const headers = await this.#resolveClientHeaders();

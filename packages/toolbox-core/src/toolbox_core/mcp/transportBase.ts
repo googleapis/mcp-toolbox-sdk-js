@@ -53,15 +53,65 @@ interface ToolDefinition {
 const TOOLSET_NAME_CHARS_TO_ENCODE = /[%/\\?#\x00-\x20\x7F]/g;
 
 /**
+ * Extracts a `Location` header value via `headers.get` when available, or by
+ * case-insensitive key lookup on plain header objects.
+ */
+function getLocationHeader(headers: unknown): string | undefined {
+  if (!headers || typeof headers !== 'object') {
+    return undefined;
+  }
+  const maybeGet = (headers as {get?: unknown}).get;
+  if (typeof maybeGet === 'function') {
+    const val = (maybeGet as (name: string) => unknown).call(
+      headers,
+      'location',
+    );
+    if (typeof val === 'string' && val.length > 0) {
+      return val;
+    }
+  }
+  for (const [key, value] of Object.entries(headers)) {
+    if (key.toLowerCase() === 'location') {
+      if (typeof value === 'string' && value.length > 0) {
+        return value;
+      }
+      if (
+        Array.isArray(value) &&
+        typeof value[0] === 'string' &&
+        value[0].length > 0
+      ) {
+        return value[0];
+      }
+    }
+  }
+  return undefined;
+}
+
+function redirectError(status: number, headers: unknown): Error {
+  const location = getLocationHeader(headers);
+  const target = location ? ` to '${location}'` : '';
+  return new Error(
+    `Toolbox server responded with HTTP ${status} redirect${target}. Automatic redirects are disabled for security. Configure the client with the final server URL.`,
+  );
+}
+
+/**
+ * Node HTTP (`follow-redirects`) hook that blocks redirects even if a custom
+ * Axios request interceptor overrides `maxRedirects`.
+ */
+function rejectRedirect(
+  _options: Record<string, unknown>,
+  responseDetails: {headers: Record<string, string>; statusCode: number},
+): void {
+  throw redirectError(responseDetails.statusCode, responseDetails.headers);
+}
+
+/**
  * Throws a descriptive error if the response is an HTTP redirect (3xx).
  */
 function throwIfRedirect(response: AxiosResponse): void {
   if (response.status >= 300 && response.status < 400) {
-    const location = response.headers?.location;
-    const target = location ? ` to '${location}'` : '';
-    throw new Error(
-      `Toolbox server responded with HTTP ${response.status} redirect${target}. Automatic redirects are disabled for security. Configure the client with the final server URL.`,
-    );
+    throw redirectError(response.status, response.headers);
   }
 }
 
@@ -120,8 +170,16 @@ export abstract class McpHttpTransportBase implements ITransport {
     return this._mcpBaseUrl;
   }
 
-  protected appendToolsetPath(toolsetName?: string): string {
-    if (!toolsetName) {
+  protected appendToolsetPath(toolsetName?: string | null): string {
+    if (toolsetName === undefined || toolsetName === null) {
+      return this._mcpBaseUrl;
+    }
+    if (typeof toolsetName !== 'string') {
+      throw new TypeError(
+        `Invalid toolset name: expected string, got ${typeof toolsetName}.`,
+      );
+    }
+    if (toolsetName === '') {
       return this._mcpBaseUrl;
     }
     if (toolsetName === '.' || toolsetName === '..') {
@@ -135,7 +193,7 @@ export abstract class McpHttpTransportBase implements ITransport {
     // keeps sequences such as '%2e' literal, and encoding the controls stops
     // the URL parser from stripping tab/LF/CR (which would turn '.\t.' into
     // '..'). The pathname setter handles every other character as before.
-    const segment = String(toolsetName).replace(
+    const segment = toolsetName.replace(
       TOOLSET_NAME_CHARS_TO_ENCODE,
       c => '%' + c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0'),
     );
@@ -161,6 +219,7 @@ export abstract class McpHttpTransportBase implements ITransport {
       response = await this._session.post(url, payload, {
         headers,
         maxRedirects: 0,
+        beforeRedirect: rejectRedirect,
       });
     } catch (error) {
       // The default `validateStatus` rejects 3xx responses.

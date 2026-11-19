@@ -111,7 +111,7 @@ class TestMcpTransport extends McpHttpTransportBase {
     return this.processToolResultContent(content);
   }
 
-  public testAppendToolsetPath(toolsetName?: string): string {
+  public testAppendToolsetPath(toolsetName?: string | null): string {
     return this.appendToolsetPath(toolsetName);
   }
 
@@ -606,7 +606,17 @@ describe('McpHttpTransportBase', () => {
     it('should return the base URL if no toolset name is provided', () => {
       const transport = new TestMcpTransport(testBaseUrl);
       expect(transport.testAppendToolsetPath()).toBe(`${testBaseUrl}/mcp/`);
+      expect(transport.testAppendToolsetPath(null)).toBe(`${testBaseUrl}/mcp/`);
       expect(transport.testAppendToolsetPath('')).toBe(`${testBaseUrl}/mcp/`);
+    });
+
+    it('should throw TypeError for non-string toolset names', () => {
+      const transport = new TestMcpTransport(testBaseUrl);
+      for (const invalid of [['..'], ['.'], 123, {toString: () => '..'}]) {
+        expect(() => transport.testAppendToolsetPath(invalid as any)).toThrow(
+          TypeError,
+        );
+      }
     });
 
     // Legitimate names must produce exactly the URL produced before toolset
@@ -743,7 +753,48 @@ describe('McpHttpTransportBase', () => {
       expect(mockSession.post).toHaveBeenCalledWith(
         url,
         {method: 'tools/list'},
-        {headers, maxRedirects: 0},
+        {
+          headers,
+          maxRedirects: 0,
+          beforeRedirect: expect.any(Function),
+        },
+      );
+    });
+
+    it('should block redirects via beforeRedirect if maxRedirects is overridden', async () => {
+      mockSession.post.mockImplementationOnce((_u, _p, config: any) => {
+        config.beforeRedirect(
+          {},
+          {statusCode: 307, headers: {Location: 'https://evil.example/'}},
+        );
+        return Promise.resolve({status: 200, data: {}, headers: {}} as any);
+      });
+
+      await expect(transport.testPostToServer(url, {})).rejects.toThrow(
+        "Toolbox server responded with HTTP 307 redirect to 'https://evil.example/'. Automatic redirects are disabled for security.",
+      );
+    });
+
+    it('should read Location header via headers.get or case-insensitive keys', async () => {
+      mockSession.post.mockResolvedValueOnce({
+        status: 301,
+        data: '',
+        headers: {Location: 'https://upper.example/'},
+      } as any);
+      await expect(transport.testPostToServer(url, {})).rejects.toThrow(
+        "Toolbox server responded with HTTP 301 redirect to 'https://upper.example/'.",
+      );
+
+      mockSession.post.mockResolvedValueOnce({
+        status: 302,
+        data: '',
+        headers: {
+          get: (name: string) =>
+            name === 'location' ? 'https://getter.example/' : undefined,
+        },
+      } as any);
+      await expect(transport.testPostToServer(url, {})).rejects.toThrow(
+        "Toolbox server responded with HTTP 302 redirect to 'https://getter.example/'.",
       );
     });
 

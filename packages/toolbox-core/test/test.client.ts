@@ -508,6 +508,17 @@ describe('ToolboxClient', () => {
       // The client converts undefined to '' string for toolsList
       expect(mockTransport.toolsList).toHaveBeenCalledWith('', {});
       expect(tools).toHaveLength(1);
+
+      await client.loadToolset(null);
+      expect(mockTransport.toolsList).toHaveBeenLastCalledWith('', {});
+    });
+
+    it('should throw TypeError if toolset name is not a string', async () => {
+      client = new ToolboxClient(testBaseUrl);
+      await expect(
+        client.loadToolset(['..'] as unknown as string),
+      ).rejects.toThrow(TypeError);
+      expect(mockTransport.toolsList).not.toHaveBeenCalled();
     });
 
     it('should propagate errors from keysList', async () => {

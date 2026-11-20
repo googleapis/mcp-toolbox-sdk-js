@@ -15,7 +15,7 @@
 import {ProtocolNegotiationError} from '../../src/toolbox_core/errorUtils.js';
 import {McpHttpTransportV20250326} from '../../src/toolbox_core/mcp/v20250326/mcp.js';
 import {jest} from '@jest/globals';
-import axios, {AxiosInstance} from 'axios';
+import axios, {AxiosError, AxiosInstance} from 'axios';
 
 import {Protocol} from '../../src/toolbox_core/protocol.js';
 
@@ -952,6 +952,49 @@ describe('McpHttpTransportV20250326', () => {
       );
 
       expect(consoleWarnSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('redirects', () => {
+    it('should not follow redirects and should surface them as errors', async () => {
+      const config =
+        {} as unknown as import('axios').InternalAxiosRequestConfig;
+      const response = {
+        status: 307,
+        statusText: 'Temporary Redirect',
+        headers: {location: 'https://evil.example/'},
+        config,
+        data: '',
+      } as unknown as import('axios').AxiosResponse;
+      mockSession.post.mockRejectedValueOnce(
+        new AxiosError(
+          'Request failed with status code 307',
+          undefined,
+          config,
+          {},
+          response,
+        ),
+      );
+
+      const errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+      await expect(
+        transport.toolInvoke('testTool', {}, {my_service_token: 'secret'}),
+      ).rejects.toThrow(
+        "Toolbox server responded with HTTP 307 redirect to 'https://evil.example/'.",
+      );
+      errorSpy.mockRestore();
+
+      expect(mockSession.post).toHaveBeenCalledTimes(1);
+      expect(mockSession.post).toHaveBeenCalledWith(
+        `${testBaseUrl}/mcp/`,
+        expect.any(Object),
+        expect.objectContaining({
+          headers: expect.objectContaining({my_service_token: 'secret'}),
+          maxRedirects: 0,
+        }),
+      );
     });
   });
 });

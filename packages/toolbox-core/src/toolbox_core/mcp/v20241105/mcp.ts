@@ -52,7 +52,7 @@ export class McpHttpTransportV20241105 extends McpHttpTransportBase {
     }
 
     try {
-      const response = await this._session.post(url, payload, {headers});
+      const response = await this.postToServer(url, payload, headers);
 
       if (
         response.status !== 200 &&

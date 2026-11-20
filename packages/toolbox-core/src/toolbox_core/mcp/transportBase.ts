@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import axios, {AxiosInstance} from 'axios';
+import axios, {AxiosInstance, AxiosResponse, isAxiosError} from 'axios';
 import {ITransport} from '../transport.types.js';
 import {
   ParameterSchema,
@@ -43,6 +43,76 @@ interface ToolDefinition {
     'toolbox/authParam'?: Record<string, string[]>;
     'toolbox/authInvoke'?: string[];
   };
+}
+
+/**
+ * Characters that are percent-encoded in toolset names: '%', '/', '\', '?',
+ * '#', space and the ASCII control characters (U+0000 to U+001F and U+007F).
+ */
+// eslint-disable-next-line no-control-regex
+const TOOLSET_NAME_CHARS_TO_ENCODE = /[%/\\?#\x00-\x20\x7F]/g;
+
+/**
+ * Extracts a `Location` header value via `headers.get` when available, or by
+ * case-insensitive key lookup on plain header objects.
+ */
+function getLocationHeader(headers: unknown): string | undefined {
+  if (!headers || typeof headers !== 'object') {
+    return undefined;
+  }
+  const maybeGet = (headers as {get?: unknown}).get;
+  if (typeof maybeGet === 'function') {
+    const val = (maybeGet as (name: string) => unknown).call(
+      headers,
+      'location',
+    );
+    if (typeof val === 'string' && val.length > 0) {
+      return val;
+    }
+  }
+  for (const [key, value] of Object.entries(headers)) {
+    if (key.toLowerCase() === 'location') {
+      if (typeof value === 'string' && value.length > 0) {
+        return value;
+      }
+      if (
+        Array.isArray(value) &&
+        typeof value[0] === 'string' &&
+        value[0].length > 0
+      ) {
+        return value[0];
+      }
+    }
+  }
+  return undefined;
+}
+
+function redirectError(status: number, headers: unknown): Error {
+  const location = getLocationHeader(headers);
+  const target = location ? ` to '${location}'` : '';
+  return new Error(
+    `Toolbox server responded with HTTP ${status} redirect${target}. Automatic redirects are disabled for security. Configure the client with the final server URL.`,
+  );
+}
+
+/**
+ * Node HTTP (`follow-redirects`) hook that blocks redirects even if a custom
+ * Axios request interceptor overrides `maxRedirects`.
+ */
+function rejectRedirect(
+  _options: Record<string, unknown>,
+  responseDetails: {headers: Record<string, string>; statusCode: number},
+): void {
+  throw redirectError(responseDetails.statusCode, responseDetails.headers);
+}
+
+/**
+ * Throws a descriptive error if the response is an HTTP redirect (3xx).
+ */
+function throwIfRedirect(response: AxiosResponse): void {
+  if (response.status >= 300 && response.status < 400) {
+    throw redirectError(response.status, response.headers);
+  }
 }
 
 export abstract class McpHttpTransportBase implements ITransport {
@@ -100,13 +170,67 @@ export abstract class McpHttpTransportBase implements ITransport {
     return this._mcpBaseUrl;
   }
 
-  protected appendToolsetPath(toolsetName?: string): string {
-    if (!toolsetName) {
+  protected appendToolsetPath(toolsetName?: string | null): string {
+    if (toolsetName === undefined || toolsetName === null) {
       return this._mcpBaseUrl;
     }
+    if (typeof toolsetName !== 'string') {
+      throw new TypeError(
+        `Invalid toolset name: expected string, got ${typeof toolsetName}.`,
+      );
+    }
+    if (toolsetName === '') {
+      return this._mcpBaseUrl;
+    }
+    if (toolsetName === '.' || toolsetName === '..') {
+      throw new Error(
+        `Invalid toolset name '${toolsetName}'. Toolset names must not be '.' or '..'.`,
+      );
+    }
     const parsed = new URL(this._mcpBaseUrl);
-    parsed.pathname = parsed.pathname.replace(/\/+$/, '') + '/' + toolsetName;
+    // Keep the name in exactly one path segment by percent-encoding (as two
+    // uppercase hex digits) only TOOLSET_NAME_CHARS_TO_ENCODE. Encoding '%'
+    // keeps sequences such as '%2e' literal, and encoding the controls stops
+    // the URL parser from stripping tab/LF/CR (which would turn '.\t.' into
+    // '..'). The pathname setter handles every other character as before.
+    const segment = toolsetName.replace(
+      TOOLSET_NAME_CHARS_TO_ENCODE,
+      c => '%' + c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0'),
+    );
+    parsed.pathname = parsed.pathname.replace(/\/+$/, '') + '/' + segment;
     return parsed.toString();
+  }
+
+  /**
+   * Sends a POST request to the Toolbox server.
+   *
+   * Automatic redirects are disabled on every request, including when a
+   * custom Axios instance is provided, so that auth headers and request
+   * bodies (which may carry secure parameters) are never re-sent to another
+   * URL. Any 3xx response is surfaced as an error instead.
+   */
+  protected async postToServer(
+    url: string,
+    payload: unknown,
+    headers?: Record<string, string>,
+  ): Promise<AxiosResponse> {
+    let response: AxiosResponse;
+    try {
+      response = await this._session.post(url, payload, {
+        headers,
+        maxRedirects: 0,
+        beforeRedirect: rejectRedirect,
+      });
+    } catch (error) {
+      // The default `validateStatus` rejects 3xx responses.
+      if (isAxiosError(error) && error.response) {
+        throwIfRedirect(error.response);
+      }
+      throw error;
+    }
+    // A custom `validateStatus` may resolve 3xx responses instead.
+    throwIfRedirect(response);
+    return response;
   }
 
   protected convertToolSchema(toolData: unknown): {

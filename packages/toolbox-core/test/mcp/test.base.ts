@@ -110,6 +110,18 @@ class TestMcpTransport extends McpHttpTransportBase {
   ): string {
     return this.processToolResultContent(content);
   }
+
+  public testAppendToolsetPath(toolsetName?: string | null): string {
+    return this.appendToolsetPath(toolsetName);
+  }
+
+  public testPostToServer(
+    url: string,
+    payload: unknown,
+    headers?: Record<string, string>,
+  ) {
+    return this.postToServer(url, payload, headers);
+  }
 }
 
 describe('McpHttpTransportBase', () => {
@@ -587,6 +599,234 @@ describe('McpHttpTransportBase', () => {
     it('should return "null" if no text content is found', () => {
       const content = [{type: 'image', data: '...'}];
       expect(transport.testProcessToolResultContent(content)).toBe('null');
+    });
+  });
+
+  describe('appendToolsetPath', () => {
+    it('should return the base URL if no toolset name is provided', () => {
+      const transport = new TestMcpTransport(testBaseUrl);
+      expect(transport.testAppendToolsetPath()).toBe(`${testBaseUrl}/mcp/`);
+      expect(transport.testAppendToolsetPath(null)).toBe(`${testBaseUrl}/mcp/`);
+      expect(transport.testAppendToolsetPath('')).toBe(`${testBaseUrl}/mcp/`);
+    });
+
+    it('should throw TypeError for non-string toolset names', () => {
+      const transport = new TestMcpTransport(testBaseUrl);
+      for (const invalid of [['..'], ['.'], 123, {toString: () => '..'}]) {
+        expect(() => transport.testAppendToolsetPath(invalid as any)).toThrow(
+          TypeError,
+        );
+      }
+    });
+
+    // Legitimate names must produce exactly the URL produced before toolset
+    // names were encoded, when they were assigned to URL.pathname as is.
+    const unchangedToolsetUrlTestCases = [
+      {toolsetName: 'my-toolset', expected: 'http://test.loc/mcp/my-toolset'},
+      {
+        toolsetName: "a+b:c@d=e;f,g$h&i!j'k(l)m*n",
+        expected: "http://test.loc/mcp/a+b:c@d=e;f,g$h&i!j'k(l)m*n",
+      },
+      {toolsetName: 'a b', expected: 'http://test.loc/mcp/a%20b'},
+      {toolsetName: 'caf\u00e9', expected: 'http://test.loc/mcp/caf%C3%A9'},
+    ];
+
+    unchangedToolsetUrlTestCases.forEach(({toolsetName, expected}) => {
+      it(`should keep the previous URL for toolset name ${JSON.stringify(toolsetName)}`, () => {
+        const transport = new TestMcpTransport(testBaseUrl);
+        expect(transport.testAppendToolsetPath(toolsetName)).toBe(expected);
+      });
+    });
+
+    const encodedToolsetUrlTestCases = [
+      {
+        baseUrl: testBaseUrl,
+        toolsetName: 'a/b',
+        expected: 'http://test.loc/mcp/a%2Fb',
+      },
+      {
+        baseUrl: testBaseUrl,
+        toolsetName: '../../admin',
+        expected: 'http://test.loc/mcp/..%2F..%2Fadmin',
+      },
+      {
+        baseUrl: testBaseUrl,
+        toolsetName: '..\\admin',
+        expected: 'http://test.loc/mcp/..%5Cadmin',
+      },
+      {
+        baseUrl: testBaseUrl,
+        toolsetName: '%2e%2e',
+        expected: 'http://test.loc/mcp/%252e%252e',
+      },
+      {
+        baseUrl: testBaseUrl,
+        toolsetName: 'a?b#c',
+        expected: 'http://test.loc/mcp/a%3Fb%23c',
+      },
+      {
+        baseUrl: testBaseUrl,
+        toolsetName: '.\t.',
+        expected: 'http://test.loc/mcp/.%09.',
+      },
+      {
+        baseUrl: testBaseUrl,
+        toolsetName: '\t..',
+        expected: 'http://test.loc/mcp/%09..',
+      },
+      {
+        baseUrl: testBaseUrl,
+        toolsetName: '..\n',
+        expected: 'http://test.loc/mcp/..%0A',
+      },
+      {
+        baseUrl: testBaseUrl,
+        toolsetName: '.\r.',
+        expected: 'http://test.loc/mcp/.%0D.',
+      },
+      {
+        baseUrl: testBaseUrl,
+        toolsetName: '.\t',
+        expected: 'http://test.loc/mcp/.%09',
+      },
+      {
+        baseUrl: testBaseUrl,
+        toolsetName: 'a\tb',
+        expected: 'http://test.loc/mcp/a%09b',
+      },
+      {
+        baseUrl: testBaseUrl,
+        toolsetName: '.. ',
+        expected: 'http://test.loc/mcp/..%20',
+      },
+      {
+        baseUrl: testBaseUrl,
+        toolsetName: '..\x00',
+        expected: 'http://test.loc/mcp/..%00',
+      },
+      {
+        baseUrl: testBaseUrl,
+        toolsetName: '..\x1f',
+        expected: 'http://test.loc/mcp/..%1F',
+      },
+      {
+        baseUrl: 'http://test.loc/mcp/?proj=xyz',
+        toolsetName: 'a/b',
+        expected: 'http://test.loc/mcp/a%2Fb?proj=xyz',
+      },
+    ];
+
+    encodedToolsetUrlTestCases.forEach(({baseUrl, toolsetName, expected}) => {
+      it(`should keep toolset name ${JSON.stringify(toolsetName)} in a single path segment of ${baseUrl}`, () => {
+        const transport = new TestMcpTransport(baseUrl);
+        expect(transport.testAppendToolsetPath(toolsetName)).toBe(expected);
+      });
+    });
+
+    ['.', '..'].forEach(toolsetName => {
+      it(`should throw for toolset name '${toolsetName}'`, () => {
+        const transport = new TestMcpTransport(testBaseUrl);
+        expect(() => transport.testAppendToolsetPath(toolsetName)).toThrow(
+          `Invalid toolset name '${toolsetName}'. Toolset names must not be '.' or '..'.`,
+        );
+      });
+    });
+  });
+
+  describe('postToServer', () => {
+    const url = `${testBaseUrl}/mcp/`;
+    let transport: TestMcpTransport;
+
+    beforeEach(() => {
+      transport = new TestMcpTransport(testBaseUrl, mockSession);
+    });
+
+    it('should disable automatic redirects on the request', async () => {
+      const response = {status: 200, data: {result: {}}, headers: {}};
+      mockSession.post.mockResolvedValueOnce(response);
+      const headers = {Authorization: 'Bearer token'};
+
+      await expect(
+        transport.testPostToServer(url, {method: 'tools/list'}, headers),
+      ).resolves.toBe(response);
+
+      expect(mockSession.post).toHaveBeenCalledWith(
+        url,
+        {method: 'tools/list'},
+        {
+          headers,
+          maxRedirects: 0,
+          beforeRedirect: expect.any(Function),
+        },
+      );
+    });
+
+    it('should block redirects via beforeRedirect if maxRedirects is overridden', async () => {
+      mockSession.post.mockImplementationOnce((_u, _p, config: any) => {
+        config.beforeRedirect(
+          {},
+          {statusCode: 307, headers: {Location: 'https://evil.example/'}},
+        );
+        return Promise.resolve({status: 200, data: {}, headers: {}} as any);
+      });
+
+      await expect(transport.testPostToServer(url, {})).rejects.toThrow(
+        "Toolbox server responded with HTTP 307 redirect to 'https://evil.example/'. Automatic redirects are disabled for security.",
+      );
+    });
+
+    it('should read Location header via headers.get or case-insensitive keys', async () => {
+      mockSession.post.mockResolvedValueOnce({
+        status: 301,
+        data: '',
+        headers: {Location: 'https://upper.example/'},
+      } as any);
+      await expect(transport.testPostToServer(url, {})).rejects.toThrow(
+        "Toolbox server responded with HTTP 301 redirect to 'https://upper.example/'.",
+      );
+
+      mockSession.post.mockResolvedValueOnce({
+        status: 302,
+        data: '',
+        headers: {
+          get: (name: string) =>
+            name === 'location' ? 'https://getter.example/' : undefined,
+        },
+      } as any);
+      await expect(transport.testPostToServer(url, {})).rejects.toThrow(
+        "Toolbox server responded with HTTP 302 redirect to 'https://getter.example/'.",
+      );
+    });
+
+    it('should throw for a redirect response accepted by a custom validateStatus', async () => {
+      mockSession.post.mockResolvedValueOnce({
+        status: 308,
+        data: '',
+        headers: {location: 'https://evil.example/'},
+      });
+
+      await expect(transport.testPostToServer(url, {})).rejects.toThrow(
+        "Toolbox server responded with HTTP 308 redirect to 'https://evil.example/'. Automatic redirects are disabled for security. Configure the client with the final server URL.",
+      );
+    });
+
+    it('should throw for a redirect response without a Location header', async () => {
+      mockSession.post.mockResolvedValueOnce({
+        status: 302,
+        data: '',
+        headers: {},
+      });
+
+      await expect(transport.testPostToServer(url, {})).rejects.toThrow(
+        'Toolbox server responded with HTTP 302 redirect. Automatic redirects are disabled for security.',
+      );
+    });
+
+    it('should rethrow non-redirect errors unchanged', async () => {
+      const error = new Error('Network Error');
+      mockSession.post.mockRejectedValueOnce(error);
+
+      await expect(transport.testPostToServer(url, {})).rejects.toBe(error);
     });
   });
 });
